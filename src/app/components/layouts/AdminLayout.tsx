@@ -1,0 +1,202 @@
+import { Outlet, Link, useLocation } from "react-router";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  FolderTree,
+  Tag,
+  Ticket,
+  MessageSquare,
+  CreditCard,
+  BarChart3,
+  Settings,
+  FileSpreadsheet,
+  Bell,
+  Search,
+  LogOut,
+  Baby,
+  Menu,
+  X
+} from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Badge } from "../ui/badge";
+import { useState } from "react";
+import { cn } from "../ui/utils";
+
+export default function AdminLayout() {
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navigation = [
+    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { name: "Products", href: "/admin/products", icon: Package },
+    { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
+    { name: "Inventory", href: "/admin/inventory", icon: FileSpreadsheet },
+    { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Categories", href: "/admin/categories", icon: FolderTree },
+    { name: "Brands", href: "/admin/brands", icon: Tag },
+    { name: "Coupons", href: "/admin/coupons", icon: Ticket },
+    { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },
+    { name: "Payments", href: "/admin/payments", icon: CreditCard },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
+  ];
+
+  return (
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* Sidebar - Desktop */}
+      <aside
+        className={cn(
+          "hidden lg:flex flex-col bg-card border-r border-border transition-all duration-300",
+          sidebarOpen ? "w-64" : "w-20"
+        )}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          {sidebarOpen && (
+            <Link to="/admin" className="flex items-center gap-2 text-xl font-bold text-primary">
+              <Baby className="size-7" />
+              <span>Admin Portal</span>
+            </Link>
+          )}
+          {!sidebarOpen && (
+            <Link to="/admin" className="mx-auto">
+              <Baby className="size-7 text-primary" />
+            </Link>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href ||
+              (item.href !== "/admin" && location.pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-secondary"
+                )}
+              >
+                <item.icon className="size-5 flex-shrink-0" />
+                {sidebarOpen && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Back to Store */}
+        <div className="p-4 border-t border-border">
+          <Link to="/">
+            <Button variant="outline" className="w-full" size={sidebarOpen ? "default" : "icon"}>
+              {sidebarOpen ? "Back to Store" : "←"}
+            </Button>
+          </Link>
+        </div>
+      </aside>
+
+      {/* Mobile Sidebar */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
+          <aside className="w-64 h-full bg-card border-r border-border" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <Link to="/admin" className="flex items-center gap-2 text-xl font-bold text-primary">
+                <Baby className="size-7" />
+                <span>Admin Portal</span>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+                <X className="size-5" />
+              </Button>
+            </div>
+            <nav className="p-4 space-y-1">
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href ||
+                  (item.href !== "/admin" && location.pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-secondary"
+                    )}
+                  >
+                    <item.icon className="size-5 flex-shrink-0" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <header className="bg-card border-b border-border px-4 lg:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                <Menu className="size-5" />
+              </Button>
+              <div className="relative hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search..."
+                  className="pl-10 w-80 bg-secondary"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="size-5" />
+                <Badge className="absolute -top-1 -right-1 size-4 flex items-center justify-center p-0 bg-destructive text-[10px]">
+                  5
+                </Badge>
+              </Button>
+
+              <div className="flex items-center gap-3 pl-3 border-l border-border">
+                <Avatar className="size-9">
+                  <AvatarImage src="" alt="Admin" />
+                  <AvatarFallback className="bg-primary text-primary-foreground">AD</AvatarFallback>
+                </Avatar>
+                <div className="hidden md:block">
+                  <div className="text-sm font-medium">Admin User</div>
+                  <div className="text-xs text-muted-foreground">admin@babystore.com</div>
+                </div>
+              </div>
+
+              <Button variant="ghost" size="icon">
+                <LogOut className="size-5" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

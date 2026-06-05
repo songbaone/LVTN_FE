@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    // Định dạng môi trường cho Vite/Bundler
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+
+    // Cấu hình import linh hoạt (không bắt buộc ghi đuôi .js)
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+
+    // Tắt các chế độ bắt lỗi nghiêm ngặt để thoải mái dùng 'any'
+    "strict": false,
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+
+    // Bỏ qua kiểm tra lỗi trong thư viện node_modules
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Cấu hình đầu ra (Tùy chọn cho build dự án)
+    "sourceMap": true,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src"]
+}
