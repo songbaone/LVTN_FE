@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router";
 import { useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 
@@ -23,6 +29,7 @@ import CustomerReviewManagement from "./components/customer/ReviewManagement";
 import NotificationCenter from "./components/customer/NotificationCenter";
 
 // Admin Portal Pages
+import LoginAdmin from "./components/layouts/LoginAdmin";
 import AdminLayout from "./components/layouts/AdminLayout";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import ProductManagement from "./components/admin/ProductManagement";
@@ -51,77 +58,112 @@ import StaffSupport from "./components/staff/StaffSupport";
 import AIChatbot from "./components/widgets/AIChatbot";
 import LiveSupportChat from "./components/widgets/LiveSupportChat";
 
-export default function App() {
+function AppContent() {
   const [showAIChat, setShowAIChat] = useState(false);
   const [showLiveChat, setShowLiveChat] = useState(false);
 
+  const location = useLocation();
+
+  const hideWidgets =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/staff") ||
+    location.pathname === "/admin-login";
+
+  return (
+    <div className="size-full bg-background">
+      <Routes>
+        {/* Customer Website Routes */}
+        <Route path="/" element={<CustomerLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="products" element={<ProductListing />} />
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="cart" element={<ShoppingCart />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="orders" element={<OrderHistory />} />
+          <Route path="orders/:id" element={<OrderDetail />} />
+          <Route path="profile" element={<CustomerProfile />} />
+          <Route path="wishlist" element={<Wishlist />} />
+          <Route path="auth" element={<Auth />} />
+          {/* Account Center Routes */}
+          <Route path="account" element={<AccountCenter />} />
+          <Route path="account/personal" element={<PersonalInformation />} />
+          <Route path="account/change-password" element={<ChangePassword />} />
+          <Route path="account/addresses" element={<AddressManagement />} />
+          <Route path="account/wishlist" element={<WishlistManagement />} />
+          <Route
+            path="account/reviews"
+            element={<CustomerReviewManagement />}
+          />
+          <Route
+            path="account/notifications"
+            element={<NotificationCenter />}
+          />
+        </Route>
+
+        {/* Admin Portal Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="products" element={<ProductManagement />} />
+          <Route path="products/new" element={<ProductForm />} />
+          <Route path="products/:id/edit" element={<ProductForm />} />
+          <Route path="orders" element={<OrderManagement />} />
+          <Route path="orders/:id" element={<AdminOrderDetail />} />
+          <Route path="inventory" element={<InventoryManagement />} />
+          <Route
+            path="inventory/import"
+            element={<ExcelImport type="inventory" />}
+          />
+          <Route
+            path="products/import"
+            element={<ExcelImport type="products" />}
+          />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="categories" element={<CategoryManagement />} />
+          <Route path="brands" element={<BrandManagement />} />
+          <Route path="coupons" element={<CouponManagement />} />
+          <Route path="reviews" element={<ReviewManagement />} />
+          <Route path="payments" element={<PaymentManagement />} />
+          <Route path="reports" element={<ReportsAnalytics />} />
+          <Route path="settings" element={<SystemSettings />} />
+        </Route>
+
+        {/* Admin Login Route */}
+        <Route path="/admin-login" element={<LoginAdmin />} />
+
+        {/* Staff Portal Routes */}
+        <Route path="/staff" element={<StaffLayout />}>
+          <Route index element={<StaffDashboard />} />
+          <Route path="orders" element={<StaffOrderProcessing />} />
+          <Route path="inventory" element={<StaffInventory />} />
+          <Route path="support" element={<StaffSupport />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {!hideWidgets && (
+        <>
+          <AIChatbot
+            isOpen={showAIChat}
+            onToggle={() => setShowAIChat(!showAIChat)}
+          />
+
+          <LiveSupportChat
+            isOpen={showLiveChat}
+            onToggle={() => setShowLiveChat(!showLiveChat)}
+          />
+
+          <Toaster position="top-right" />
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function App() {
   return (
     <BrowserRouter>
-      <div className="size-full bg-background">
-        <Routes>
-          {/* Customer Website Routes */}
-          <Route path="/" element={<CustomerLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="products" element={<ProductListing />} />
-            <Route path="product/:id" element={<ProductDetail />} />
-            <Route path="cart" element={<ShoppingCart />} />
-            <Route path="checkout" element={<Checkout />} />
-            <Route path="orders" element={<OrderHistory />} />
-            <Route path="orders/:id" element={<OrderDetail />} />
-            <Route path="profile" element={<CustomerProfile />} />
-            <Route path="wishlist" element={<Wishlist />} />
-            <Route path="auth" element={<Auth />} />
-            {/* Account Center Routes */}
-            <Route path="account" element={<AccountCenter />} />
-            <Route path="account/personal" element={<PersonalInformation />} />
-            <Route path="account/change-password" element={<ChangePassword />} />
-            <Route path="account/addresses" element={<AddressManagement />} />
-            <Route path="account/wishlist" element={<WishlistManagement />} />
-            <Route path="account/reviews" element={<CustomerReviewManagement />} />
-            <Route path="account/notifications" element={<NotificationCenter />} />
-          </Route>
-
-          {/* Admin Portal Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<ProductManagement />} />
-            <Route path="products/new" element={<ProductForm />} />
-            <Route path="products/:id/edit" element={<ProductForm />} />
-            <Route path="orders" element={<OrderManagement />} />
-            <Route path="orders/:id" element={<AdminOrderDetail />} />
-            <Route path="inventory" element={<InventoryManagement />} />
-            <Route path="inventory/import" element={<ExcelImport type="inventory" />} />
-            <Route path="products/import" element={<ExcelImport type="products" />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="categories" element={<CategoryManagement />} />
-            <Route path="brands" element={<BrandManagement />} />
-            <Route path="coupons" element={<CouponManagement />} />
-            <Route path="reviews" element={<ReviewManagement />} />
-            <Route path="payments" element={<PaymentManagement />} />
-            <Route path="reports" element={<ReportsAnalytics />} />
-            <Route path="settings" element={<SystemSettings />} />
-          </Route>
-
-          {/* Staff Portal Routes */}
-          <Route path="/staff" element={<StaffLayout />}>
-            <Route index element={<StaffDashboard />} />
-            <Route path="orders" element={<StaffOrderProcessing />} />
-            <Route path="inventory" element={<StaffInventory />} />
-            <Route path="support" element={<StaffSupport />} />
-          </Route>
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-
-        {/* AI Chatbot Widget */}
-        <AIChatbot isOpen={showAIChat} onToggle={() => setShowAIChat(!showAIChat)} />
-
-        {/* Live Support Chat Widget */}
-        <LiveSupportChat isOpen={showLiveChat} onToggle={() => setShowLiveChat(!showLiveChat)} />
-
-        {/* Toast Notifications */}
-        <Toaster position="top-right" />
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }

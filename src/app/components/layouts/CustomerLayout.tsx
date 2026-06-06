@@ -24,14 +24,15 @@ export default function CustomerLayout() {
     "Diapers & Bath",
     "Toys & Entertainment",
     "Nursery & Gear",
-    "Health & Safety"
+    "Health & Safety",
   ];
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top Banner */}
       <div className="bg-accent text-accent-foreground py-2 px-4 text-center text-sm">
-        🎉 Flash Sale: Up to 50% OFF on Baby Clothing | Free Shipping on Orders Over 500,000 VND
+        🎉 Flash Sale: Up to 50% OFF on Baby Clothing | Free Shipping on Orders
+        Over 500,000 VND
       </div>
 
       {/* Header */}
@@ -39,7 +40,10 @@ export default function CustomerLayout() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-2xl font-bold text-primary"
+            >
               <Baby className="size-8" />
               <span>BabyStore</span>
             </Link>
@@ -115,7 +119,9 @@ export default function CustomerLayout() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80">
                   <nav className="flex flex-col gap-4">
-                    <h2 className="text-lg font-semibold text-primary">Categories</h2>
+                    <h2 className="text-lg font-semibold text-primary">
+                      Categories
+                    </h2>
                     {categories.map((cat) => (
                       <Link
                         key={cat}
@@ -172,27 +178,86 @@ export default function CustomerLayout() {
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-semibold text-lg mb-4 text-primary">About BabyStore</h3>
+              <h3 className="font-semibold text-lg mb-4 text-primary">
+                About BabyStore
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Your trusted partner for premium baby products. Quality, safety, and care for your little ones.
+                Your trusted partner for premium baby products. Quality, safety,
+                and care for your little ones.
               </p>
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Customer Service</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/help" className="text-muted-foreground hover:text-primary">Help Center</Link></li>
-                <li><Link to="/shipping" className="text-muted-foreground hover:text-primary">Shipping Info</Link></li>
-                <li><Link to="/returns" className="text-muted-foreground hover:text-primary">Returns</Link></li>
-                <li><Link to="/contact" className="text-muted-foreground hover:text-primary">Contact Us</Link></li>
+                <li>
+                  <Link
+                    to="/help"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/shipping"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Shipping Info
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/returns"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Returns
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/contact"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Contact Us
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/products" className="text-muted-foreground hover:text-primary">Shop All</Link></li>
-                <li><Link to="/brands" className="text-muted-foreground hover:text-primary">Brands</Link></li>
-                <li><Link to="/blog" className="text-muted-foreground hover:text-primary">Blog</Link></li>
-                <li><Link to="/auth" className="text-muted-foreground hover:text-primary">Sign In</Link></li>
+                <li>
+                  <Link
+                    to="/products"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Shop All
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/brands"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Brands
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/blog"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/auth"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Sign In
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -201,8 +266,14 @@ export default function CustomerLayout() {
                 Get updates on new products and special offers
               </p>
               <div className="flex gap-2">
-                <Input type="email" placeholder="Your email" className="bg-secondary" />
-                <Button className="bg-accent hover:bg-accent/90">Subscribe</Button>
+                <Input
+                  type="email"
+                  placeholder="Your email"
+                  className="bg-secondary"
+                />
+                <Button className="bg-accent hover:bg-accent/90">
+                  Subscribe
+                </Button>
               </div>
             </div>
           </div>
