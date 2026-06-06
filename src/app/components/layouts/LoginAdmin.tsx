@@ -1,238 +1,177 @@
 "use client";
 
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 export default function LoginAdmin() {
-  const [lang, setLang] = useState<"en" | "vi">("en");
+  const navigate = useNavigate();
 
-  const en = {
-    title: "Admin Login",
-    description: "Please sign in to continue managing your store.",
-    emailLabel: "Email address",
-    passwordLabel: "Password",
-    emailPlaceholder: "your@email.com",
-    passwordPlaceholder: "••••••••",
+  const [lang, setLang] = useState<"en" | "vi">("vi");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const text = {
+    en: {
+      portal: "Admin Portal",
+      title: "Kids Store Management System",
+      description: "Please sign in to continue managing your store.",
+      email: "Email Address",
+      password: "Password",
+      emailPlaceholder: "Enter your email",
+      passwordPlaceholder: "Enter your password",
+      login: "Sign In",
+      loggingIn: "Signing In...",
+      clear: "Clear",
+      note: "Never share your login information with anyone else.",
+      required: "Please enter email and password",
+    },
+    vi: {
+      portal: "Cổng thông tin quản trị",
+      title: "Hệ thống quản trị cửa hàng đồ trẻ em",
+      description: "Vui lòng đăng nhập để tiếp tục quản lý cửa hàng.",
+      email: "Địa chỉ email",
+      password: "Mật khẩu",
+      emailPlaceholder: "Vui lòng nhập email",
+      passwordPlaceholder: "Vui lòng nhập mật khẩu",
+      login: "Đăng nhập",
+      loggingIn: "Đang đăng nhập...",
+      clear: "Đặt lại",
+      note: "Đừng bao giờ chia sẻ thông tin đăng nhập với người khác để bảo vệ tài khoản.",
+      required: "Vui lòng nhập email và mật khẩu",
+    },
   };
 
-  const vi = {
-    title: "Đăng nhập quản trị",
-    description: "Vui lòng đăng nhập để tiếp tục quản lý cửa hàng của bạn.",
-    emailLabel: "Địa chỉ email",
-    passwordLabel: "Mật khẩu",
-    emailPlaceholder: "email@cua hang.com",
-    passwordPlaceholder: "••••••••",
-  };
+  const t = text[lang];
 
-  const switchLanguage = (newLang: "en" | "vi") => {
-    setLang(newLang);
-    if (newLang === "en") {
-      console.log("Switched to English");
-    } else {
-      console.log("Switched to Vietnamese");
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      alert(t.required);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://localhost:3000/api/admin/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/admin");
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleClear = () => {
+    setEmail("");
+    setPassword("");
+  };
+
   return (
-    <div className="px-4 py-8  flex flex-col items-center justify-center min-h-screen">
-      <div className="absolute top-0 right-0 p-4">
+    <div className="min-h-screen flex items-center justify-center w-full bg-slate-100 px-4">
+      <div className="absolute top-4 right-4 flex gap-2">
         <button
-          className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          onClick={() => switchLanguage("en")}
-          title="Change language to English"
+          onClick={() => setLang("en")}
+          className={`px-3 py-2 rounded-md border ${
+            lang === "en" ? "bg-blue-600 text-white" : "bg-white"
+          }`}
         >
           English
         </button>
+
         <button
-          className="ml-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-md shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          onClick={() => switchLanguage("vi")}
-          title="Chuyển đổi ngôn ngữ sang tiếng Việt"
+          onClick={() => setLang("vi")}
+          className={`px-3 py-2 rounded-md border ${
+            lang === "vi" ? "bg-blue-600 text-white" : "bg-white"
+          }`}
         >
-          Vietnamese
+          Tiếng Việt
         </button>
       </div>
-      <div className="logo flex-row space-y-2 shadow-lg p-15 rounded-lg bg-white">
-        {lang === "en" ? (
+
+      <div className="bg-white shadow-xl rounded-xl p-10 w-full max-w-md">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">🧸</span>
+          <span className="font-semibold">{t.portal}</span>
+        </div>
+
+        <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
+
+        <p className="text-gray-600 mb-6">{t.description}</p>
+
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <div className="flex items-center space-x-5 mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                className="lucide lucide-baby size-8"
-              >
-                <path d="M9 12h.01"></path>
-                <path d="M15 12h.01"></path>
-                <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"></path>
-                <path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"></path>
-              </svg>
-              <span>Admin Portal</span>
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-4">
-                Kids Store Management System
-              </h1>
-            </div>
-            <div>
-              <p className="text-gray-600">
-                Please sign in to continue managing your store.
-              </p>
+            <label className="block mb-2 text-sm font-medium">{t.email}</label>
 
-              <form className="space-y-4 mt-6">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Please enter your email"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Please enter your password"
-                  />
-                </div>
-                <div className="flex items-center justify-center gap-4">
-                  <div>
-                    <button
-                      type="button"
-                      className="  py-2 px-4 text-sm font-medium border border-transparent rounded-md shadow-sm text-blue-600 hover:text-blue-500"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <button
-                    type="submit"
-                    className=" py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Sign In
-                  </button>
-                </div>
-              </form>
-
-              <div className="note mt-5">
-                <p className="text-sm text-gray-500 mt-4">
-                  <span className="font-medium">Note:</span>{" "}
-                  <span className="italic">
-                    {" "}
-                    Never share your login information with anyone else to
-                    protect your account from unauthorized access.
-                  </span>
-                </p>
-              </div>
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t.emailPlaceholder}
+              className="w-full border rounded-md px-3 py-2"
+            />
           </div>
-        ) : (
+
           <div>
-            <div className="flex items-center space-x-5 mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                className="lucide lucide-baby size-8"
-              >
-                <path d="M9 12h.01"></path>
-                <path d="M15 12h.01"></path>
-                <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"></path>
-                <path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"></path>
-              </svg>
-              <span>Cổng thông tin quản trị</span>
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-4">
-                Hệ thống quản trị cửa hàng đồ trẻ em
-              </h1>
-            </div>
-            <div>
-              <p className="text-gray-600">
-                Vui lòng đăng nhập để tiếp tục quản lý cửa hàng của bạn.
-              </p>
+            <label className="block mb-2 text-sm font-medium">
+              {t.password}
+            </label>
 
-              <form className="space-y-4 mt-6">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Địa chỉ email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Vui lòng nhập email của bạn"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Mật khẩu
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Vui lòng nhập mật khẩu"
-                  />
-                </div>
-                <div className="flex items-center justify-center gap-4">
-                  <div>
-                    <button
-                      type="button"
-                      className="  py-2 px-4 text-sm font-medium border border-transparent rounded-md shadow-sm text-blue-600 hover:text-blue-500"
-                    >
-                      Đặt lại
-                    </button>
-                  </div>
-                  <button
-                    type="submit"
-                    className=" py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Đăng nhập
-                  </button>
-                </div>
-              </form>
-
-              <div className="note mt-5"></div>
-              <p className="text-sm text-gray-500">
-                <span className="font-medium"> Nhắc nhờ: </span>{" "}
-                <span className="italic">
-                  {" "}
-                  Đừng bao giờ chia sẻ thông tin đăng nhập của bạn với người
-                  khác để bảo vệ tài khoản của bạn khỏi truy cập trái phép.
-                </span>
-              </p>
-            </div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t.passwordPlaceholder}
+              className="w-full border rounded-md px-3 py-2"
+            />
           </div>
-        )}
+
+          <div className="flex justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="px-4 py-2 text-blue-600"
+            >
+              {t.clear}
+            </button>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-5 py-2 rounded-md disabled:opacity-50"
+            >
+              {loading ? t.loggingIn : t.login}
+            </button>
+          </div>
+        </form>
+
+        <p className="text-sm text-gray-500 italic mt-6">{t.note}</p>
       </div>
     </div>
   );
