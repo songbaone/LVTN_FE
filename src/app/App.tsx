@@ -9,6 +9,9 @@ import { useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 
 // Customer Website Pages
+import AutCustomerLayout from "./components/layouts/AutCustomerLayout";
+import Login from "./components/customer/Login";
+import Register from "./components/customer/Register";
 import CustomerLayout from "./components/layouts/CustomerLayout";
 import HomePage from "./components/customer/HomePage";
 import ProductListing from "./components/customer/ProductListing";
@@ -57,6 +60,7 @@ import StaffSupport from "./components/staff/StaffSupport";
 // Shared Widgets
 import AIChatbot from "./components/widgets/AIChatbot";
 import LiveSupportChat from "./components/widgets/LiveSupportChat";
+import AuthCustomerLayout from "./components/layouts/AutCustomerLayout";
 
 function AppContent() {
   const [showAIChat, setShowAIChat] = useState(false);
@@ -72,8 +76,13 @@ function AppContent() {
   return (
     <div className="size-full bg-background">
       <Routes>
+        {/* Layout authentication route */}
+        <Route path="/" element={<AuthCustomerLayout />}>
+          <Route index element={<Login />} />
+          <Route path="register" element={<Register />} />
+        </Route>
         {/* Customer Website Routes */}
-        <Route path="/" element={<CustomerLayout />}>
+        <Route path="/home/" element={<CustomerLayout />}>
           <Route index element={<HomePage />} />
           <Route path="products" element={<ProductListing />} />
           <Route path="product/:id" element={<ProductDetail />} />
