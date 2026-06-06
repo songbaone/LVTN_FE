@@ -10,7 +10,7 @@ export default function LoginAdmin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
+  // test
   const text = {
     en: {
       portal: "Admin Portal",
