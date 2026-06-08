@@ -1,13 +1,17 @@
 import { Link } from "react-router";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef } from "react";
+
 export default function Login() {
   const [lang, setLang] = useState<"en" | "vi">("vi");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const GOOGLE_CLIENT_ID =
+    "65152859119-976obaec8uj3mcqa4am015ce1dodr76t.apps.googleusercontent.com";
   const text = {
     en: {
       title: "Nice to see you again!",
@@ -18,6 +22,7 @@ export default function Login() {
       titleRegister: "Don't have an account?",
       register: "Get Started",
       forgotPassword: "Forgot password?",
+      signInWith: "Or sign in with",
     },
     vi: {
       title: "Chào mừng bạn đến với cửa hàng của chúng tôi!",
@@ -28,8 +33,59 @@ export default function Login() {
       titleRegister: "Bạn chưa có tài khoản?",
       register: "Đăng ký ngay",
       forgotPassword: "Quên mật khẩu?",
+      signInWith: "Hoặc đăng nhập với",
     },
   };
+
+  const handleGoogleCredential = async (response: any) => {
+    try {
+      const idToken = response.credential;
+
+      console.log("Google ID Token:", idToken);
+
+      const apiResponse = await fetch(
+        "http://localhost:3000/api/v1/auth/google",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            id_token: idToken,
+          }),
+        },
+      );
+
+      const result = await apiResponse.json();
+      localStorage.setItem("AccessToken", result.data.access_token);
+      console.log(result);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (window.google && googleButtonRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+
+          callback: handleGoogleCredential,
+        });
+
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: "outline",
+          size: "large",
+          width: 300,
+        });
+
+        clearInterval(interval);
+      }
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="size-full flex items-center justify-center bg-background">
@@ -115,6 +171,16 @@ export default function Login() {
             >
               {loading ? text[lang].loggingIn : text[lang].login}
             </button>
+          </div>
+
+          <div className="flex justify-center">
+            <p className="text-sm text-gray-500">{text[lang].signInWith}</p>
+          </div>
+
+          <div className="flex justify-center gap-4">
+            <div className="flex justify-center">
+              <div ref={googleButtonRef}></div>
+            </div>
           </div>
 
           <hr />

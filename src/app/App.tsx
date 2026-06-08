@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 
 // Customer Website Pages
-import AutCustomerLayout from "./components/layouts/AutCustomerLayout";
+import PublicRoute from "./components/PublicRoute";
 import Login from "./components/customer/Login";
 import Register from "./components/customer/Register";
 import CustomerLayout from "./components/layouts/CustomerLayout";
@@ -61,6 +61,7 @@ import StaffSupport from "./components/staff/StaffSupport";
 import AIChatbot from "./components/widgets/AIChatbot";
 import LiveSupportChat from "./components/widgets/LiveSupportChat";
 import AuthCustomerLayout from "./components/layouts/AutCustomerLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppContent() {
   const [showAIChat, setShowAIChat] = useState(false);
@@ -77,36 +78,43 @@ function AppContent() {
     <div className="size-full bg-background">
       <Routes>
         {/* Layout authentication route */}
-        <Route path="/" element={<AuthCustomerLayout />}>
-          <Route index element={<Login />} />
-          <Route path="register" element={<Register />} />
+        <Route element={<PublicRoute />}>
+          <Route path="/" element={<AuthCustomerLayout />}>
+            <Route index element={<Login />} />
+            <Route path="register" element={<Register />} />
+          </Route>
         </Route>
         {/* Customer Website Routes */}
-        <Route path="/home/" element={<CustomerLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="products" element={<ProductListing />} />
-          <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="cart" element={<ShoppingCart />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="orders" element={<OrderHistory />} />
-          <Route path="orders/:id" element={<OrderDetail />} />
-          <Route path="profile" element={<CustomerProfile />} />
-          <Route path="wishlist" element={<Wishlist />} />
-          <Route path="auth" element={<Auth />} />
-          {/* Account Center Routes */}
-          <Route path="account" element={<AccountCenter />} />
-          <Route path="account/personal" element={<PersonalInformation />} />
-          <Route path="account/change-password" element={<ChangePassword />} />
-          <Route path="account/addresses" element={<AddressManagement />} />
-          <Route path="account/wishlist" element={<WishlistManagement />} />
-          <Route
-            path="account/reviews"
-            element={<CustomerReviewManagement />}
-          />
-          <Route
-            path="account/notifications"
-            element={<NotificationCenter />}
-          />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<CustomerLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="products" element={<ProductListing />} />
+            <Route path="product/:id" element={<ProductDetail />} />
+            <Route path="cart" element={<ShoppingCart />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="orders" element={<OrderHistory />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="profile" element={<CustomerProfile />} />
+            <Route path="wishlist" element={<Wishlist />} />
+            <Route path="auth" element={<Auth />} />
+            {/* Account Center Routes */}
+            <Route path="account" element={<AccountCenter />} />
+            <Route path="account/personal" element={<PersonalInformation />} />
+            <Route
+              path="account/change-password"
+              element={<ChangePassword />}
+            />
+            <Route path="account/addresses" element={<AddressManagement />} />
+            <Route path="account/wishlist" element={<WishlistManagement />} />
+            <Route
+              path="account/reviews"
+              element={<CustomerReviewManagement />}
+            />
+            <Route
+              path="account/notifications"
+              element={<NotificationCenter />}
+            />
+          </Route>
         </Route>
 
         {/* Admin Portal Routes */}
