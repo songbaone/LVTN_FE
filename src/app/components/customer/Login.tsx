@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useRef } from "react";
+import Swal from "sweetalert2";
 
 export default function Login() {
   const [lang, setLang] = useState<"en" | "vi">("vi");
@@ -62,6 +63,81 @@ export default function Login() {
       console.log(result);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleLogin = async (email: string, password: string) => {
+    if (!email.trim() || !password.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: lang === "vi" ? "Thiếu thông tin" : "Missing Information",
+        text:
+          lang === "vi"
+            ? "Vui lòng nhập email và mật khẩu"
+            : "Please enter email and password",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.message ||
+            (lang === "vi" ? "Đăng nhập thất bại" : "Login failed"),
+        );
+      }
+
+      // Lưu token
+      localStorage.setItem("AccessToken", result.data.access_token);
+
+      if (result.data.refresh_token) {
+        localStorage.setItem("RefreshToken", result.data.refresh_token);
+      }
+
+      if (result.data.user) {
+        localStorage.setItem("User", JSON.stringify(result.data.user));
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: lang === "vi" ? "Đăng nhập thành công" : "Login Successful",
+        text: lang === "vi" ? "Chào mừng bạn quay trở lại!" : "Welcome back!",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      window.location.href = "/home";
+    } catch (error) {
+      console.error(error);
+
+      Swal.fire({
+        icon: "error",
+        title: lang === "vi" ? "Đăng nhập thất bại" : "Login Failed",
+        text:
+          error instanceof Error
+            ? error.message
+            : lang === "vi"
+              ? "Có lỗi xảy ra"
+              : "Something went wrong",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,13 +237,9 @@ export default function Login() {
 
           <div className="flex justify-center">
             <button
-              className="px-4 py-2 w-full rounded-lg bg-[#2d2d2d] text-white shadow hover:bg-primary-hover"
-              onClick={() => {
-                setLoading(true);
-                setTimeout(() => {
-                  setLoading(false);
-                }, 2000);
-              }}
+              disabled={loading}
+              className="px-4 py-2 w-full rounded-lg bg-[#2d2d2d] text-white shadow hover:bg-primary-hover disabled:opacity-50"
+              onClick={() => handleLogin(email, password)}
             >
               {loading ? text[lang].loggingIn : text[lang].login}
             </button>
