@@ -77,27 +77,32 @@ function AppContent() {
   return (
     <div className="size-full bg-background">
       <Routes>
-        {/* Layout authentication route */}
+        {/* Public Routes */}
         <Route element={<PublicRoute />}>
-          <Route path="/" element={<AuthCustomerLayout />}>
-            <Route index element={<Login />} />
-            <Route path="register" element={<Register />} />
+          <Route element={<AuthCustomerLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Route>
         </Route>
-        {/* Customer Website Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/home" element={<CustomerLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="products" element={<ProductListing />} />
-            <Route path="product/:id" element={<ProductDetail />} />
+
+        {/* Customer Layout */}
+        <Route path="/" element={<CustomerLayout />}>
+          {/* Public pages */}
+          <Route index element={<HomePage />} />
+          <Route path="products" element={<ProductListing />} />
+          <Route path="product/:id" element={<ProductDetail />} />
+
+          {/* Protected pages */}
+          <Route element={<ProtectedRoute />}>
             <Route path="cart" element={<ShoppingCart />} />
             <Route path="checkout" element={<Checkout />} />
+
             <Route path="orders" element={<OrderHistory />} />
             <Route path="orders/:id" element={<OrderDetail />} />
+
             <Route path="profile" element={<CustomerProfile />} />
             <Route path="wishlist" element={<Wishlist />} />
-            <Route path="auth" element={<Auth />} />
-            {/* Account Center Routes */}
+
             <Route path="account" element={<AccountCenter />} />
             <Route path="account/personal" element={<PersonalInformation />} />
             <Route

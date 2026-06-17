@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, Navigate, useLocation } from "react-router";
 import { Heart, ShoppingCart, User, Search, Menu, Baby } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -12,11 +12,14 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { useNavigate } from "react-router";
+import Swal from "sweetalert2";
 
 export default function CustomerLayout() {
   const location = useLocation();
   const [cartCount] = useState(3);
   const [wishlistCount] = useState(5);
+  const navigate = useNavigate();
 
   const categories = [
     "Clothing & Apparel",
@@ -27,17 +30,40 @@ export default function CustomerLayout() {
     "Health & Safety",
   ];
 
+  const loginExisting = async () => {
+    const token = localStorage.getItem("AccessToken");
+
+    if (!token) {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Bạn chưa đăng nhập",
+        text: "Bạn có muốn đăng nhập để tiếp tục không?",
+        showCancelButton: true,
+        confirmButtonText: "Đăng nhập",
+        cancelButtonText: "Ở lại trang này",
+      });
+
+      if (result.isConfirmed) {
+        navigate("/login");
+      }
+      navigate("/");
+    }
+    navigate("/cart");
+
+    return false;
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-screen">
       {/* Top Banner */}
-      <div className="bg-accent text-accent-foreground py-2 px-4 text-center text-sm">
+      <div className="px-4 py-2 text-sm text-center bg-accent text-accent-foreground">
         🎉 Flash Sale: Up to 50% OFF on Baby Clothing | Free Shipping on Orders
         Over 500,000 VND
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
+      <header className="sticky top-0 z-50 border-b shadow-sm bg-card border-border">
+        <div className="container px-4 py-4 mx-auto">
           <div className="flex items-center justify-between gap-4">
             {/* Logo */}
             <Link
@@ -49,13 +75,13 @@ export default function CustomerLayout() {
             </Link>
 
             {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl">
+            <div className="flex-1 hidden max-w-2xl md:flex">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+                <Search className="absolute -translate-y-1/2 left-3 top-1/2 size-5 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search for baby products..."
-                  className="pl-10 pr-4 py-6 bg-secondary border-primary-200"
+                  className="py-6 pl-10 pr-4 bg-secondary border-primary-200"
                 />
               </div>
             </div>
@@ -67,7 +93,7 @@ export default function CustomerLayout() {
                 <Link to="/wishlist">
                   <Heart className="size-5" />
                   {wishlistCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 bg-accent">
+                    <Badge className="absolute flex items-center justify-center p-0 -top-1 -right-1 size-5 bg-accent">
                       {wishlistCount}
                     </Badge>
                   )}
@@ -75,15 +101,21 @@ export default function CustomerLayout() {
               </Button>
 
               {/* Cart */}
-              <Button variant="ghost" size="icon" asChild className="relative">
-                <Link to="/cart">
+              <Button
+                onClick={loginExisting}
+                variant="ghost"
+                size="icon"
+                asChild
+                className="relative"
+              >
+                <div>
                   <ShoppingCart className="size-5" />
                   {cartCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 bg-accent">
+                    <Badge className="absolute flex items-center justify-center p-0 -top-1 -right-1 size-5 bg-accent">
                       {cartCount}
                     </Badge>
                   )}
-                </Link>
+                </div>
               </Button>
 
               {/* User Menu */}
@@ -126,7 +158,7 @@ export default function CustomerLayout() {
                       <Link
                         key={cat}
                         to={`/products?category=${cat}`}
-                        className="text-foreground hover:text-primary transition-colors"
+                        className="transition-colors text-foreground hover:text-primary"
                       >
                         {cat}
                       </Link>
@@ -138,9 +170,9 @@ export default function CustomerLayout() {
           </div>
 
           {/* Search Bar - Mobile */}
-          <div className="md:hidden mt-3">
+          <div className="mt-3 md:hidden">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+              <Search className="absolute -translate-y-1/2 left-3 top-1/2 size-5 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search products..."
@@ -151,14 +183,14 @@ export default function CustomerLayout() {
         </div>
 
         {/* Categories Navigation - Desktop */}
-        <div className="hidden md:block bg-primary-50 border-t border-primary-100">
-          <div className="container mx-auto px-4">
-            <nav className="flex items-center gap-6 overflow-x-auto py-3">
+        <div className="hidden border-t md:block bg-primary-50 border-primary-100">
+          <div className="container px-4 mx-auto">
+            <nav className="flex items-center gap-6 py-3 overflow-x-auto">
               {categories.map((cat) => (
                 <Link
                   key={cat}
                   to={`/products?category=${cat}`}
-                  className="whitespace-nowrap text-sm text-foreground hover:text-accent transition-colors"
+                  className="text-sm transition-colors whitespace-nowrap text-foreground hover:text-accent"
                 >
                   {cat}
                 </Link>
@@ -174,11 +206,11 @@ export default function CustomerLayout() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border mt-12">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <footer className="mt-12 border-t bg-card border-border">
+        <div className="container px-4 py-12 mx-auto">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
             <div>
-              <h3 className="font-semibold text-lg mb-4 text-primary">
+              <h3 className="mb-4 text-lg font-semibold text-primary">
                 About BabyStore
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -187,7 +219,7 @@ export default function CustomerLayout() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4">Customer Service</h3>
+              <h3 className="mb-4 text-lg font-semibold">Customer Service</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
@@ -224,7 +256,7 @@ export default function CustomerLayout() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
+              <h3 className="mb-4 text-lg font-semibold">Quick Links</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
@@ -261,8 +293,8 @@ export default function CustomerLayout() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4">Newsletter</h3>
-              <p className="text-sm text-muted-foreground mb-3">
+              <h3 className="mb-4 text-lg font-semibold">Newsletter</h3>
+              <p className="mb-3 text-sm text-muted-foreground">
                 Get updates on new products and special offers
               </p>
               <div className="flex gap-2">
@@ -277,7 +309,7 @@ export default function CustomerLayout() {
               </div>
             </div>
           </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
+          <div className="pt-8 mt-8 text-sm text-center border-t border-border text-muted-foreground">
             © 2026 BabyStore. All rights reserved.
           </div>
         </div>

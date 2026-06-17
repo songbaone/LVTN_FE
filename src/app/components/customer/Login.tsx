@@ -59,10 +59,34 @@ export default function Login() {
       );
 
       const result = await apiResponse.json();
-      localStorage.setItem("AccessToken", result.data.access_token);
       console.log(result);
+      if (result.error) {
+        window.location.href = "/";
+      } else {
+        localStorage.setItem("AccessToken", result.data.access_token);
+
+        await Swal.fire({
+          icon: "success",
+          title: lang === "vi" ? "Đăng nhập thành công" : "Login Successful",
+          text: lang === "vi" ? "Chào mừng bạn quay trở lại!" : "Welcome back!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        window.location.href = "/home";
+      }
     } catch (error) {
       console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: lang === "vi" ? "Đăng nhập thất bại" : "Login Failed",
+        text:
+          error instanceof Error
+            ? error.message
+            : lang === "vi"
+              ? "Có lỗi xảy ra"
+              : "Something went wrong",
+      });
     }
   };
 
@@ -146,7 +170,6 @@ export default function Login() {
       if (window.google && googleButtonRef.current) {
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
-
           callback: handleGoogleCredential,
         });
 
