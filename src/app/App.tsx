@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 
 // Customer Website Pages
-import PublicRoute from "./components/PublicRoute";
+import PublicRoute from "./components/protectedRouteCus/PublicRoute";
 import Login from "./components/customer/Login";
 import Register from "./components/customer/Register";
 import CustomerLayout from "./components/layouts/CustomerLayout";
@@ -32,6 +32,7 @@ import CustomerReviewManagement from "./components/customer/ReviewManagement";
 import NotificationCenter from "./components/customer/NotificationCenter";
 
 // Admin Portal Pages
+import PublicRouteAdmin from "./components/protectedRouteAdmin/PublicRouteAdmin";
 import LoginAdmin from "./components/layouts/LoginAdmin";
 import AdminLayout from "./components/layouts/AdminLayout";
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -61,7 +62,9 @@ import StaffSupport from "./components/staff/StaffSupport";
 import AIChatbot from "./components/widgets/AIChatbot";
 import LiveSupportChat from "./components/widgets/LiveSupportChat";
 import AuthCustomerLayout from "./components/layouts/AutCustomerLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/protectedRouteCus/ProtectedRoute";
+import AuthAdminLayout from "./components/layouts/AutAdminLayout";
+import ProtectedRouteAdmin from "./components/protectedRouteAdmin/ProtectedRouteAdmin";
 
 function AppContent() {
   const [showAIChat, setShowAIChat] = useState(false);
@@ -123,34 +126,40 @@ function AppContent() {
         </Route>
 
         {/* Admin Portal Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="products" element={<ProductManagement />} />
-          <Route path="products/new" element={<ProductForm />} />
-          <Route path="products/:id/edit" element={<ProductForm />} />
-          <Route path="orders" element={<OrderManagement />} />
-          <Route path="orders/:id" element={<AdminOrderDetail />} />
-          <Route path="inventory" element={<InventoryManagement />} />
-          <Route
-            path="inventory/import"
-            element={<ExcelImport type="inventory" />}
-          />
-          <Route
-            path="products/import"
-            element={<ExcelImport type="products" />}
-          />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="categories" element={<CategoryManagement />} />
-          <Route path="brands" element={<BrandManagement />} />
-          <Route path="coupons" element={<CouponManagement />} />
-          <Route path="reviews" element={<ReviewManagement />} />
-          <Route path="payments" element={<PaymentManagement />} />
-          <Route path="reports" element={<ReportsAnalytics />} />
-          <Route path="settings" element={<SystemSettings />} />
+        {/* Admin Login Route */}
+        <Route element={<PublicRouteAdmin />}>
+          <Route element={<AuthAdminLayout />}>
+            <Route path="/admin-login" element={<LoginAdmin />} />
+          </Route>
         </Route>
 
-        {/* Admin Login Route */}
-        <Route path="/admin-login" element={<LoginAdmin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route element={<ProtectedRouteAdmin />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="products/new" element={<ProductForm />} />
+            <Route path="products/:id/edit" element={<ProductForm />} />
+            <Route path="orders" element={<OrderManagement />} />
+            <Route path="orders/:id" element={<AdminOrderDetail />} />
+            <Route path="inventory" element={<InventoryManagement />} />
+            <Route
+              path="inventory/import"
+              element={<ExcelImport type="inventory" />}
+            />
+            <Route
+              path="products/import"
+              element={<ExcelImport type="products" />}
+            />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="brands" element={<BrandManagement />} />
+            <Route path="coupons" element={<CouponManagement />} />
+            <Route path="reviews" element={<ReviewManagement />} />
+            <Route path="payments" element={<PaymentManagement />} />
+            <Route path="reports" element={<ReportsAnalytics />} />
+            <Route path="settings" element={<SystemSettings />} />
+          </Route>
+        </Route>
 
         {/* Staff Portal Routes */}
         <Route path="/staff" element={<StaffLayout />}>
