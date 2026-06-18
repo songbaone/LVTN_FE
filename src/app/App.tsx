@@ -8,7 +8,7 @@ import {
 import { useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 
-// Customer Website Pages
+// Customer Website Pages -tesst
 import PublicRoute from "./components/protectedRouteCus/PublicRoute";
 import Login from "./components/customer/Login";
 import Register from "./components/customer/Register";

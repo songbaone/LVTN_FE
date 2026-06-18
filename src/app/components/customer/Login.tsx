@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useRef } from "react";
 import Swal from "sweetalert2";
-
 export default function Login() {
   const [lang, setLang] = useState<"en" | "vi">("vi");
   const [email, setEmail] = useState("");
@@ -11,8 +10,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
-  const GOOGLE_CLIENT_ID =
-    "65152859119-976obaec8uj3mcqa4am015ce1dodr76t.apps.googleusercontent.com";
+
   const text = {
     en: {
       title: "Nice to see you again!",
@@ -169,7 +167,7 @@ export default function Login() {
     const interval = setInterval(() => {
       if (window.google && googleButtonRef.current) {
         window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           callback: handleGoogleCredential,
         });
 
