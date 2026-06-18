@@ -7,13 +7,9 @@ import {
   Package,
   Users,
   DollarSign,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "../ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import {
   LineChart,
   Line,
@@ -37,37 +33,37 @@ import {
 export default function AdminDashboard() {
   const kpis = [
     {
-      title: "Total Revenue",
+      title: "Tổng doanh thu",
       value: "₫45,230,000",
       change: "+12.5%",
       trend: "up",
       icon: DollarSign,
-      color: "text-accent"
+      color: "text-accent",
     },
     {
-      title: "Total Orders",
+      title: "Tổng đơn hàng",
       value: "1,234",
       change: "+8.2%",
       trend: "up",
       icon: ShoppingCart,
-      color: "text-info"
+      color: "text-info",
     },
     {
-      title: "Total Products",
+      title: "Số lượng sản phẩm",
       value: "856",
       change: "+5.1%",
       trend: "up",
       icon: Package,
-      color: "text-warning"
+      color: "text-warning",
     },
     {
-      title: "Total Customers",
+      title: "Số lượng khách hàng",
       value: "3,421",
       change: "-2.3%",
       trend: "down",
       icon: Users,
-      color: "text-success"
-    }
+      color: "text-success",
+    },
   ];
 
   const revenueData = [
@@ -90,24 +86,72 @@ export default function AdminDashboard() {
   ];
 
   const lowStockProducts = [
-    { id: 1, name: "Organic Cotton Onesie Set", sku: "BC-OCS-001", stock: 5, threshold: 10 },
-    { id: 2, name: "Baby Monitor Premium", sku: "SM-BMP-002", stock: 3, threshold: 8 },
-    { id: 3, name: "Silicone Feeding Set", sku: "SF-SFS-003", stock: 2, threshold: 15 },
-    { id: 4, name: "Soft Plush Toy Bear", sku: "CT-SPT-004", stock: 7, threshold: 20 },
+    {
+      id: 1,
+      name: "Organic Cotton Onesie Set",
+      sku: "BC-OCS-001",
+      stock: 5,
+      threshold: 10,
+    },
+    {
+      id: 2,
+      name: "Baby Monitor Premium",
+      sku: "SM-BMP-002",
+      stock: 3,
+      threshold: 8,
+    },
+    {
+      id: 3,
+      name: "Silicone Feeding Set",
+      sku: "SF-SFS-003",
+      stock: 2,
+      threshold: 15,
+    },
+    {
+      id: 4,
+      name: "Soft Plush Toy Bear",
+      sku: "CT-SPT-004",
+      stock: 7,
+      threshold: 20,
+    },
   ];
 
   const recentOrders = [
-    { id: "ORD-1234", customer: "Nguyễn Thu Hương", amount: 1250000, status: "Processing", date: "2026-06-04 10:30" },
-    { id: "ORD-1235", customer: "Trần Minh Anh", amount: 450000, status: "Shipping", date: "2026-06-04 09:15" },
-    { id: "ORD-1236", customer: "Lê Thanh Mai", amount: 890000, status: "Delivered", date: "2026-06-03 16:45" },
-    { id: "ORD-1237", customer: "Phạm Văn Nam", amount: 2100000, status: "Processing", date: "2026-06-03 14:20" },
+    {
+      id: "ORD-1234",
+      customer: "Nguyễn Thu Hương",
+      amount: 1250000,
+      status: "Processing",
+      date: "2026-06-04 10:30",
+    },
+    {
+      id: "ORD-1235",
+      customer: "Trần Minh Anh",
+      amount: 450000,
+      status: "Shipping",
+      date: "2026-06-04 09:15",
+    },
+    {
+      id: "ORD-1236",
+      customer: "Lê Thanh Mai",
+      amount: 890000,
+      status: "Delivered",
+      date: "2026-06-03 16:45",
+    },
+    {
+      id: "ORD-1237",
+      customer: "Phạm Văn Nam",
+      amount: 2100000,
+      status: "Processing",
+      date: "2026-06-03 14:20",
+    },
   ];
 
   const statusColors: Record<string, string> = {
-    "Processing": "bg-warning",
-    "Shipping": "bg-info",
-    "Delivered": "bg-success",
-    "Cancelled": "bg-destructive"
+    Processing: "bg-warning",
+    Shipping: "bg-info",
+    Delivered: "bg-success",
+    Cancelled: "bg-destructive",
   };
 
   return (
@@ -115,9 +159,11 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+          <p className="text-muted-foreground">
+            Chào mừng bạn đã quay trở lại! Đây là những gì diễn ra hôm nay.
+          </p>
         </div>
-        <Button className="bg-accent hover:bg-accent/90">Download Report</Button>
+        <Button className="bg-accent hover:bg-accent/90">Tải báo cáo</Button>
       </div>
 
       {/* KPI Cards */}
@@ -129,13 +175,21 @@ export default function AdminDashboard() {
                 <div className={`p-3 rounded-lg bg-secondary ${kpi.color}`}>
                   <kpi.icon className="size-6" />
                 </div>
-                <div className={`flex items-center gap-1 text-sm ${kpi.trend === "up" ? "text-success" : "text-destructive"}`}>
-                  {kpi.trend === "up" ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+                <div
+                  className={`flex items-center gap-1 text-sm ${kpi.trend === "up" ? "text-success" : "text-destructive"}`}
+                >
+                  {kpi.trend === "up" ? (
+                    <TrendingUp className="size-4" />
+                  ) : (
+                    <TrendingDown className="size-4" />
+                  )}
                   <span>{kpi.change}</span>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">{kpi.title}</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  {kpi.title}
+                </p>
                 <p className="text-2xl font-bold">{kpi.value}</p>
               </div>
             </CardContent>
@@ -148,7 +202,7 @@ export default function AdminDashboard() {
         {/* Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue Trend (6 Months)</CardTitle>
+            <CardTitle>Doanh thu trong 6 tháng gần đây</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer
@@ -166,7 +220,12 @@ export default function AdminDashboard() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line type="monotone" dataKey="revenue" stroke="var(--color-accent)" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="var(--color-accent)"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -211,7 +270,9 @@ export default function AdminDashboard() {
               <AlertTriangle className="size-5 text-warning" />
               Low Stock Alerts
             </CardTitle>
-            <Button variant="link" className="text-accent">View All</Button>
+            <Button variant="link" className="text-accent">
+              View All
+            </Button>
           </CardHeader>
           <CardContent>
             <Table>
@@ -225,10 +286,17 @@ export default function AdminDashboard() {
               <TableBody>
                 {lowStockProducts.map((product) => (
                   <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{product.sku}</TableCell>
+                    <TableCell className="font-medium">
+                      {product.name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {product.sku}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Badge variant="secondary" className="bg-destructive/10 text-destructive">
+                      <Badge
+                        variant="secondary"
+                        className="bg-destructive/10 text-destructive"
+                      >
                         {product.stock} left
                       </Badge>
                     </TableCell>
@@ -243,7 +311,9 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Orders</CardTitle>
-            <Button variant="link" className="text-accent">View All</Button>
+            <Button variant="link" className="text-accent">
+              View All
+            </Button>
           </CardHeader>
           <CardContent>
             <Table>
@@ -262,7 +332,9 @@ export default function AdminDashboard() {
                     <TableCell>{order.customer}</TableCell>
                     <TableCell>{order.amount.toLocaleString()} ₫</TableCell>
                     <TableCell>
-                      <Badge className={statusColors[order.status]}>{order.status}</Badge>
+                      <Badge className={statusColors[order.status]}>
+                        {order.status}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}
