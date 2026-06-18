@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { use, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
+import { formatDateTime } from "../../../helpers/format";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   Select,
@@ -49,23 +50,24 @@ import {
   MapPin,
   CheckSquare,
   Square,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { get } from "react-hook-form";
 
 interface User {
-  id: string;
-  name: string;
+  user_id: number;
+  full_name: string;
   email: string;
-  phone: string;
-  role: "admin" | "staff" | "customer";
-  status: "active" | "suspended" | "banned";
-  avatar: string;
-  joinedDate: string;
-  lastActive: string;
-  totalOrders: number;
-  totalSpent: number;
-  address: string;
+  phone: string | null;
+
+  role: {
+    role_id: number;
+    role_name: "ADMIN" | "STAFF" | "CUSTOMER";
+  };
+
+  status: boolean;
+  created_at: string;
 }
 
 interface OrderHistoryItem {
@@ -84,187 +86,97 @@ interface ActivityLog {
 
 export default function UserManagement() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("joined-desc");
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const [users] = useState<User[]>([
-    {
-      id: "CUST-123",
-      name: "Nguyễn Thu Hương",
-      email: "nguyen.huong@email.com",
-      phone: "+84 912 345 678",
-      role: "customer",
-      status: "active",
-      avatar: "NH",
-      joinedDate: "2025-01-15",
-      lastActive: "2026-06-05 16:30",
-      totalOrders: 24,
-      totalSpent: 15750000,
-      address: "123 Nguyễn Huệ, Q1, HCM"
-    },
-    {
-      id: "STAFF-001",
-      name: "Trần Minh Anh",
-      email: "tran.anh@babystore.com",
-      phone: "+84 987 654 321",
-      role: "staff",
-      status: "active",
-      avatar: "TMA",
-      joinedDate: "2024-06-01",
-      lastActive: "2026-06-05 17:00",
-      totalOrders: 0,
-      totalSpent: 0,
-      address: "456 Lê Lợi, Q3, HCM"
-    },
-    {
-      id: "ADMIN-001",
-      name: "Lê Văn Quân",
-      email: "le.quan@babystore.com",
-      phone: "+84 901 234 567",
-      role: "admin",
-      status: "active",
-      avatar: "LVQ",
-      joinedDate: "2023-01-01",
-      lastActive: "2026-06-05 18:00",
-      totalOrders: 0,
-      totalSpent: 0,
-      address: "789 Điện Biên Phủ, Q10, HCM"
-    },
-    {
-      id: "CUST-124",
-      name: "Phạm Thị Mai",
-      email: "pham.mai@email.com",
-      phone: "+84 913 456 789",
-      role: "customer",
-      status: "active",
-      avatar: "PTM",
-      joinedDate: "2025-03-20",
-      lastActive: "2026-06-04 10:15",
-      totalOrders: 8,
-      totalSpent: 4250000,
-      address: "234 Hai Bà Trưng, Q1, HCM"
-    },
-    {
-      id: "CUST-125",
-      name: "Hoàng Văn Đức",
-      email: "hoang.duc@email.com",
-      phone: "+84 914 567 890",
-      role: "customer",
-      status: "suspended",
-      avatar: "HVD",
-      joinedDate: "2024-11-10",
-      lastActive: "2026-05-20 14:30",
-      totalOrders: 3,
-      totalSpent: 890000,
-      address: "567 Nguyễn Trãi, Q5, HCM"
-    },
-    {
-      id: "STAFF-002",
-      name: "Vũ Thị Lan",
-      email: "vu.lan@babystore.com",
-      phone: "+84 988 765 432",
-      role: "staff",
-      status: "active",
-      avatar: "VTL",
-      joinedDate: "2024-09-15",
-      lastActive: "2026-06-05 16:45",
-      totalOrders: 0,
-      totalSpent: 0,
-      address: "890 CMT8, Q10, HCM"
-    },
-    {
-      id: "CUST-126",
-      name: "Đặng Minh Tuấn",
-      email: "dang.tuan@email.com",
-      phone: "+84 915 678 901",
-      role: "customer",
-      status: "banned",
-      avatar: "DMT",
-      joinedDate: "2024-07-05",
-      lastActive: "2026-04-15 09:20",
-      totalOrders: 1,
-      totalSpent: 250000,
-      address: "321 Võ Văn Tần, Q3, HCM"
+  const [users, setUsers] = useState<User[]>([]);
+  const token = localStorage.getItem("AccessTokenAdmin");
+  const getUsers = async (page: number) => {
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/v1/users?page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const result = await res.json();
+      if (res.status == 200) {
+        setUsers(result.data.users);
+      }
+    } catch (error) {
+      console.error(error);
     }
-  ]);
-
-  const roleColors: Record<string, string> = {
-    "admin": "bg-destructive text-destructive-foreground",
-    "staff": "bg-info text-info-foreground",
-    "customer": "bg-primary text-primary-foreground"
   };
+  useEffect(() => {
+    getUsers(1);
+  }, []);
 
-  const statusColors: Record<string, string> = {
-    "active": "bg-success",
-    "suspended": "bg-warning",
-    "banned": "bg-destructive"
+  const roleColors: Record<number, string> = {
+    1: "bg-red-100 text-red-800",
+    2: "bg-blue-100 text-blue-800",
+    3: "bg-green-100 text-green-800",
+  };
+  const statusColors = {
+    true: "bg-green-100 text-green-800",
+    false: "bg-red-100 text-red-800",
   };
 
   // Statistics
   const stats = {
     total: users.length,
-    active: users.filter(u => u.status === "active").length,
-    newThisMonth: users.filter(u => {
-      const joinDate = new Date(u.joinedDate);
+    active: users.filter((u) => u.status === true).length,
+    newThisMonth: users.filter((u) => {
       const now = new Date();
-      return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
     }).length,
     byRole: {
-      admin: users.filter(u => u.role === "admin").length,
-      staff: users.filter(u => u.role === "staff").length,
-      customer: users.filter(u => u.role === "customer").length
-    }
+      admin: users.filter((u) => u.role.role_id === 1).length,
+      staff: users.filter((u) => u.role.role_id === 2).length,
+      customer: users.filter((u) => u.role.role_id === 3).length,
+    },
   };
 
   // Mock data for user detail view
   const orderHistory: OrderHistoryItem[] = [
     { id: "ORD-001", date: "2026-06-04", total: 2420000, status: "Delivered" },
     { id: "ORD-002", date: "2026-06-02", total: 1890000, status: "Shipping" },
-    { id: "ORD-003", date: "2026-05-28", total: 980000, status: "Delivered" }
-  ];
-
-  const activityLog: ActivityLog[] = [
-    { id: "1", action: "Logged in", timestamp: "2026-06-05 16:30", details: "Web - Chrome" },
-    { id: "2", action: "Placed order", timestamp: "2026-06-04 10:30", details: "ORD-001" },
-    { id: "3", action: "Updated profile", timestamp: "2026-06-01 14:15", details: "Changed phone number" },
-    { id: "4", action: "Logged in", timestamp: "2026-06-01 14:10", details: "Web - Chrome" }
+    { id: "ORD-003", date: "2026-05-28", total: 980000, status: "Delivered" },
   ];
 
   // Filtering and Sorting
-  const filteredUsers = users.filter(user => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.id.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredUsers = users
+    .filter((user) => {
+      const matchesSearch =
+        user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+      const matchesRole =
+        roleFilter === "all" || user.role.role_id === Number(roleFilter);
+      const matchesStatus =
+        statusFilter === "all" || String(user.status) === statusFilter;
 
-    return matchesSearch && matchesRole && matchesStatus;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case "joined-desc":
-        return new Date(b.joinedDate).getTime() - new Date(a.joinedDate).getTime();
-      case "joined-asc":
-        return new Date(a.joinedDate).getTime() - new Date(b.joinedDate).getTime();
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "spent-desc":
-        return b.totalSpent - a.totalSpent;
-      default:
-        return 0;
-    }
-  });
+      return matchesSearch && matchesRole && matchesStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.full_name.localeCompare(b.full_name);
 
-  const handleSelectUser = (id: string) => {
-    setSelectedUsers(prev =>
-      prev.includes(id)
-        ? prev.filter(userId => userId !== id)
-        : [...prev, id]
+        default:
+          return 0;
+      }
+    });
+
+  const handleSelectUser = (userId: number) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
     );
   };
 
@@ -272,7 +184,7 @@ export default function UserManagement() {
     if (selectedUsers.length === filteredUsers.length) {
       setSelectedUsers([]);
     } else {
-      setSelectedUsers(filteredUsers.map(u => u.id));
+      setSelectedUsers(filteredUsers.map((user) => user.user_id));
     }
   };
 
@@ -281,15 +193,15 @@ export default function UserManagement() {
     setIsViewDialogOpen(true);
   };
 
-  const handleSuspend = (userId: string) => {
+  const handleSuspend = (userId: number) => {
     toast.success("User suspended");
   };
 
-  const handleBan = (userId: string) => {
+  const handleBan = (userId: number) => {
     toast.success("User banned");
   };
 
-  const handleDelete = (userId: string) => {
+  const handleDelete = (userId: number) => {
     toast.success("User deleted");
   };
 
@@ -302,7 +214,9 @@ export default function UserManagement() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-muted-foreground">Manage users, roles, and permissions</p>
+        <p className="text-muted-foreground">
+          Manage users, roles, and permissions
+        </p>
       </div>
 
       {/* KPI Cards */}
@@ -316,7 +230,9 @@ export default function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">All registered users</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              All registered users
+            </p>
           </CardContent>
         </Card>
 
@@ -328,8 +244,12 @@ export default function UserManagement() {
             <UserCheck className="size-5 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-success">{stats.active}</div>
-            <p className="text-xs text-muted-foreground mt-1">Currently active</p>
+            <div className="text-3xl font-bold text-success">
+              {stats.active}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Currently active
+            </p>
           </CardContent>
         </Card>
 
@@ -341,7 +261,9 @@ export default function UserManagement() {
             <UserPlus className="size-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-accent">{stats.newThisMonth}</div>
+            <div className="text-3xl font-bold text-accent">
+              {stats.newThisMonth}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">June 2026</p>
           </CardContent>
         </Card>
@@ -395,9 +317,9 @@ export default function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="customer">Customer</SelectItem>
+                  <SelectItem value="1">Admin</SelectItem>
+                  <SelectItem value="2">Staff</SelectItem>
+                  <SelectItem value="3">Customer</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -407,9 +329,8 @@ export default function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="banned">Banned</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -453,22 +374,22 @@ export default function UserManagement() {
               <TableRow>
                 <TableHead className="w-12">
                   <button onClick={handleSelectAll}>
-                    {selectedUsers.length === filteredUsers.length && filteredUsers.length > 0 ? (
+                    {selectedUsers.length === filteredUsers.length &&
+                    filteredUsers.length > 0 ? (
                       <CheckSquare className="size-4 text-accent" />
                     ) : (
                       <Square className="size-4" />
                     )}
                   </button>
                 </TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Contact</TableHead>
+                <TableHead>User id</TableHead>
+                <TableHead>Full name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Last Active</TableHead>
-                <TableHead className="text-center">Orders</TableHead>
-                <TableHead className="text-right">Total Spent</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Created at</TableHead>
+                <TableHead>View Detail</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -479,7 +400,9 @@ export default function UserManagement() {
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                         <Users className="size-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">No users found</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        No users found
+                      </h3>
                       <p className="text-muted-foreground text-sm">
                         Try adjusting your search or filters
                       </p>
@@ -488,59 +411,75 @@ export default function UserManagement() {
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-secondary/50">
+                  <TableRow
+                    key={user.user_id}
+                    className="hover:bg-secondary/50"
+                  >
                     <TableCell>
-                      <button onClick={() => handleSelectUser(user.id)}>
-                        {selectedUsers.includes(user.id) ? (
+                      <button onClick={() => handleSelectUser(user.user_id)}>
+                        {selectedUsers.includes(user.user_id) ? (
                           <CheckSquare className="size-4 text-accent" />
                         ) : (
                           <Square className="size-4" />
                         )}
                       </button>
                     </TableCell>
+
+                    {/* User id */}
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="size-10">
-                          <AvatarFallback className="bg-primary text-primary-foreground">
-                            {user.avatar}
-                          </AvatarFallback>
-                        </Avatar>
                         <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{user.id}</p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {user.user_id}
+                          </p>
                         </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Full name */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <p className="font-medium">{user.full_name}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Email */}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <p className="text-sm">{user.email}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <p className="text-sm">{user.email}</p>
-                        <p className="text-xs text-muted-foreground">{user.phone}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.phone == null ? (
+                            <>
+                              <p className="text-xs  text-red-500">
+                                Chưa cập nhật
+                              </p>
+                            </>
+                          ) : (
+                            user.phone
+                          )}
+                        </p>
                       </div>
                     </TableCell>
+
                     <TableCell>
-                      <Badge className={roleColors[user.role]}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      <Badge className={roleColors[user.role.role_id]}>
+                        {user.role.role_name.replace("_", " ")}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[user.status]}>
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                      <Badge className={statusColors[String(user.status)]}>
+                        {user.status ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {new Date(user.joinedDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(user.lastActive).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {user.totalOrders}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-accent">
-                      {user.totalSpent > 0 ? `${user.totalSpent.toLocaleString()} ₫` : "-"}
-                    </TableCell>
+                    <TableCell>{formatDateTime(user.created_at)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
+                      <div className="flex gap-1 justify-start">
                         <Button
                           variant="outline"
                           size="sm"
@@ -572,24 +511,25 @@ export default function UserManagement() {
             <div className="space-y-6">
               {/* Profile Section */}
               <div className="flex items-start gap-6">
-                <Avatar className="size-24 border-4 border-primary">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    {viewingUser.avatar}
-                  </AvatarFallback>
-                </Avatar>
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h2 className="text-2xl font-bold mb-1">{viewingUser.name}</h2>
+                      <h2 className="text-2xl font-bold mb-1">
+                        {viewingUser.full_name}
+                      </h2>
                       <p className="text-sm text-muted-foreground mb-2">
-                        User ID: {viewingUser.id}
+                        User ID: {viewingUser.user_id}
                       </p>
                       <div className="flex gap-2">
-                        <Badge className={roleColors[viewingUser.role]}>
-                          {viewingUser.role.charAt(0).toUpperCase() + viewingUser.role.slice(1)}
+                        <Badge
+                          className={roleColors[viewingUser.role.role_name]}
+                        >
+                          {viewingUser.role.role_name}
                         </Badge>
-                        <Badge className={statusColors[viewingUser.status]}>
-                          {viewingUser.status.charAt(0).toUpperCase() + viewingUser.status.slice(1)}
+                        <Badge
+                          className={statusColors[String(viewingUser.status)]}
+                        >
+                          {viewingUser.status ? "Active" : "Inactive"}
                         </Badge>
                       </div>
                     </div>
@@ -598,11 +538,11 @@ export default function UserManagement() {
                         <Edit2 className="size-3 mr-1" />
                         Edit
                       </Button>
-                      {viewingUser.status === "active" && (
+                      {viewingUser.status === true && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleSuspend(viewingUser.id)}
+                          onClick={() => handleSuspend(viewingUser.user_id)}
                           className="text-warning"
                         >
                           <Ban className="size-3 mr-1" />
@@ -612,7 +552,7 @@ export default function UserManagement() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(viewingUser.id)}
+                        onClick={() => handleDelete(viewingUser.user_id)}
                         className="text-destructive"
                       >
                         <Trash2 className="size-3" />
@@ -631,15 +571,14 @@ export default function UserManagement() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="size-4 text-muted-foreground" />
-                      <span>Joined {new Date(viewingUser.joinedDate).toLocaleDateString()}</span>
+                      <span>Joined </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Activity className="size-4 text-muted-foreground" />
-                      <span>Last active {new Date(viewingUser.lastActive).toLocaleString()}</span>
+                      <span>Last active </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm col-span-2">
                       <MapPin className="size-4 text-muted-foreground" />
-                      <span>{viewingUser.address}</span>
                     </div>
                   </div>
                 </div>
@@ -648,7 +587,7 @@ export default function UserManagement() {
               <Separator />
 
               {/* Statistics Cards */}
-              {viewingUser.role === "customer" && (
+              {viewingUser.role.role_id === 3 && (
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
                     <CardHeader className="pb-3">
@@ -657,9 +596,7 @@ export default function UserManagement() {
                         Total Orders
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{viewingUser.totalOrders}</div>
-                    </CardContent>
+                    <CardContent></CardContent>
                   </Card>
                   <Card>
                     <CardHeader className="pb-3">
@@ -668,17 +605,13 @@ export default function UserManagement() {
                         Total Spent
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-accent">
-                        {viewingUser.totalSpent.toLocaleString()} ₫
-                      </div>
-                    </CardContent>
+                    <CardContent></CardContent>
                   </Card>
                 </div>
               )}
 
               {/* Tabs */}
-              {viewingUser.role === "customer" && (
+              {viewingUser.role.role_id === 3 && (
                 <Tabs defaultValue="orders">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="orders">Order History</TabsTrigger>
@@ -693,29 +626,17 @@ export default function UserManagement() {
                       >
                         <div>
                           <p className="font-semibold">{order.id}</p>
-                          <p className="text-sm text-muted-foreground">{order.date}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.date}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-accent">{order.total.toLocaleString()} ₫</p>
-                          <Badge variant="outline" className="text-xs">{order.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </TabsContent>
-
-                  <TabsContent value="activity" className="space-y-3 mt-4">
-                    {activityLog.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="flex items-start gap-3 p-4 rounded-lg border border-border"
-                      >
-                        <div className="size-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                          <Activity className="size-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{activity.action}</p>
-                          <p className="text-sm text-muted-foreground">{activity.details}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+                          <p className="font-bold text-accent">
+                            {order.total.toLocaleString()} ₫
+                          </p>
+                          <Badge variant="outline" className="text-xs">
+                            {order.status}
+                          </Badge>
                         </div>
                       </div>
                     ))}
@@ -726,7 +647,10 @@ export default function UserManagement() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewDialogOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>
