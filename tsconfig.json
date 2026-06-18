@@ -7,7 +7,7 @@
     "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-
+    "types": ["vite/client"],
     // Cấu hình import linh hoạt (không bắt buộc ghi đuôi .js)
     "esModuleInterop": true,
     "isolatedModules": true,
