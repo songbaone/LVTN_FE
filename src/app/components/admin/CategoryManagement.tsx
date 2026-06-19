@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router";
+
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -449,7 +451,6 @@ export default function CategoryManagement() {
                 onClick={() => handleOpenDetail(category)}
               >
                 <Eye className="size-3 mr-1" />
-                View
               </Button>
               <Button
                 variant="outline"
@@ -484,17 +485,16 @@ export default function CategoryManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Category Management</h1>
+          <h1 className="text-3xl font-bold mb-2">Quản lí danh mục</h1>
           <p className="text-muted-foreground">
-            Organize products into categories
+            Sắp xếp sản phẩm thành các danh mục
           </p>
         </div>
-        <Button
-          onClick={handleOpenCreate}
-          className="bg-accent hover:bg-accent/90"
-        >
-          <Plus className="size-4 mr-2" />
-          Add Category
+        <Button className="bg-accent hover:bg-accent/90" asChild>
+          <Link to="/admin/categories/new">
+            <Plus className="size-4 mr-2" />
+            Thêm danh mục mới
+          </Link>
         </Button>
       </div>
 
@@ -503,14 +503,14 @@ export default function CategoryManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Categories
+              Số lượng danh mục
             </CardTitle>
             <Folder className="size-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {stats.parents} parent categories
+              {stats.parents} Danh mục cha
             </p>
           </CardContent>
         </Card>
@@ -518,7 +518,7 @@ export default function CategoryManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Categories
+              Các danh mục đang hoạt động
             </CardTitle>
             <FolderOpen className="size-5 text-success" />
           </CardHeader>
@@ -526,16 +526,14 @@ export default function CategoryManagement() {
             <div className="text-3xl font-bold text-success">
               {stats.active}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Currently active
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Đang hoạt động</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Products
+              Tổng số sản phẩm
             </CardTitle>
             <Package className="size-5 text-accent" />
           </CardHeader>
@@ -544,7 +542,7 @@ export default function CategoryManagement() {
               {stats.totalProducts}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across all categories
+              Trên tất cả danh mục
             </p>
           </CardContent>
         </Card>
@@ -552,7 +550,7 @@ export default function CategoryManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg Products
+              Trung bình số lượng sản phẩm
             </CardTitle>
             <TrendingUp className="size-5 text-info" />
           </CardHeader>
@@ -560,7 +558,7 @@ export default function CategoryManagement() {
             <div className="text-3xl font-bold text-info">
               {Math.round(stats.totalProducts / stats.total)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Per category</p>
+            <p className="text-xs text-muted-foreground mt-1">Mỗi danh mục</p>
           </CardContent>
         </Card>
       </div>
@@ -572,7 +570,7 @@ export default function CategoryManagement() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search categories..."
+                placeholder="Tìm kiếm thông tin danh mục....."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -583,9 +581,9 @@ export default function CategoryManagement() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">Hoạt động</SelectItem>
+                <SelectItem value="inactive">Ngưng hoạt động</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -598,12 +596,12 @@ export default function CategoryManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Category Name</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead className="text-center">Products</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Tên danh mục</TableHead>
+                <TableHead>Danh mục cha</TableHead>
+                <TableHead className="text-center">Tổng sô sản phẩm</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead className="text-center">Công cụ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -615,17 +613,17 @@ export default function CategoryManagement() {
                         <Folder className="size-8 text-muted-foreground" />
                       </div>
                       <h3 className="text-lg font-semibold mb-2">
-                        No categories found
+                        Không có danh mục nào để hiển thị
                       </h3>
                       <p className="text-muted-foreground text-sm mb-4">
-                        Get started by creating your first category
+                        Bắt đầu tạo danh mục đầu tiên của bạn!
                       </p>
                       <Button
                         onClick={handleOpenCreate}
                         className="bg-accent hover:bg-accent/90"
                       >
                         <Plus className="size-4 mr-2" />
-                        Add Category
+                        Thêm mới
                       </Button>
                     </div>
                   </TableCell>

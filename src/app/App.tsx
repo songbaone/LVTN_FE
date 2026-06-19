@@ -43,6 +43,7 @@ import AdminOrderDetail from "./components/admin/AdminOrderDetail";
 import InventoryManagement from "./components/admin/InventoryManagement";
 import UserManagement from "./components/admin/UserManagement";
 import CategoryManagement from "./components/admin/CategoryManagement";
+import CategoryForm from "./components/admin/CategoryForm";
 import BrandManagement from "./components/admin/BrandManagement";
 import CouponManagement from "./components/admin/CouponManagement";
 import ReviewManagement from "./components/admin/ReviewManagement";
@@ -152,6 +153,7 @@ function AppContent() {
             />
             <Route path="users" element={<UserManagement />} />
             <Route path="categories" element={<CategoryManagement />} />
+            <Route path="categories/new" element={<CategoryForm />} />
             <Route path="brands" element={<BrandManagement />} />
             <Route path="coupons" element={<CouponManagement />} />
             <Route path="reviews" element={<ReviewManagement />} />

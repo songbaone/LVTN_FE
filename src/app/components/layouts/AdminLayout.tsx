@@ -134,7 +134,7 @@ export default function AdminLayout() {
               className="w-full"
               size={sidebarOpen ? "default" : "icon"}
             >
-              {sidebarOpen ? "Back to Store" : "←"}
+              {sidebarOpen ? "Trở về cửa hàng" : "←"}
             </Button>
           </Link>
         </div>
