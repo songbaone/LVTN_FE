@@ -189,9 +189,9 @@ function AppContent() {
             onToggle={() => setShowLiveChat(!showLiveChat)}
           />
 
-          <Toaster position="top-right" />
         </>
       )}
+      <Toaster position="top-right" />
     </div>
   );
 }
