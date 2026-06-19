@@ -34,17 +34,17 @@ export default function AdminLayout() {
 
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Products", href: "/admin/products", icon: Package },
-    { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { name: "Inventory", href: "/admin/inventory", icon: FileSpreadsheet },
-    { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Categories", href: "/admin/categories", icon: FolderTree },
-    { name: "Brands", href: "/admin/brands", icon: Tag },
-    { name: "Coupons", href: "/admin/coupons", icon: Ticket },
-    { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },
-    { name: "Payments", href: "/admin/payments", icon: CreditCard },
-    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "Sản phẩm", href: "/admin/products", icon: Package },
+    { name: "Đơn hàng", href: "/admin/orders", icon: ShoppingCart },
+    { name: "Tồn kho", href: "/admin/inventory", icon: FileSpreadsheet },
+    { name: "Người dùng", href: "/admin/users", icon: Users },
+    { name: "Danh mục sản phẩm", href: "/admin/categories", icon: FolderTree },
+    { name: "Thương hiệu", href: "/admin/brands", icon: Tag },
+    { name: "Khuyến mãi", href: "/admin/coupons", icon: Ticket },
+    { name: "Đánh giá", href: "/admin/reviews", icon: MessageSquare },
+    { name: "Thanh toán", href: "/admin/payments", icon: CreditCard },
+    { name: "Báo cáo", href: "/admin/reports", icon: BarChart3 },
+    { name: "Cài đặt", href: "/admin/settings", icon: Settings },
   ];
   const navigate = useNavigate();
   const handleLogout = async () => {

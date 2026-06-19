@@ -96,14 +96,22 @@ export default function UserManagement() {
 
   const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+
   const currentMonth = moment().format("MM");
   const currentYear = moment().format("YYYY");
 
-  const token = localStorage.getItem("AccessTokenAdmin");
   const getUsers = async (page: number) => {
     try {
+      const token = localStorage.getItem("AccessTokenAdmin");
+
       const res = await fetch(
         `http://localhost:3000/api/v1/users?page=${page}`,
         {
@@ -112,17 +120,20 @@ export default function UserManagement() {
           },
         },
       );
-      const result = await res.json();
-      if (res.status == 200) {
-        setUsers(result.data.users);
+
+      const data = await res.json();
+
+      if (data.success) {
+        setUsers(data.data.users);
+        setPagination(data.data.pagination);
       }
     } catch (error) {
       console.error(error);
     }
   };
   useEffect(() => {
-    getUsers(1);
-  }, []);
+    getUsers(currentPage);
+  }, [currentPage]);
 
   const roleColors: Record<number, string> = {
     1: "bg-red-100 text-red-800",
@@ -207,10 +218,6 @@ export default function UserManagement() {
 
   const handleSuspend = (userId: number) => {
     toast.success("User suspended");
-  };
-
-  const handleBan = (userId: number) => {
-    toast.success("User banned");
   };
 
   const handleDelete = (userId: number) => {
@@ -349,12 +356,6 @@ export default function UserManagement() {
 
             {/* Actions */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {filteredUsers.length} users
-                </span>
-              </div>
-
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleExport}>
                   <Download className="size-4 mr-2" />
@@ -495,38 +496,28 @@ export default function UserManagement() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
         <div className="flex items-center justify-center gap-2 mt-4 mb-4">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => getUsers(currentPage - 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
+          <Button
+            variant="outline"
+            disabled={!pagination.hasPrevPage}
+            onClick={() => setCurrentPage(currentPage - 1)}
           >
             Trước đó
-          </button>
+          </Button>
 
-          {[...Array(totalPages)].map((_, index) => {
-            const page = index + 1;
+          <span className="text-sm">
+            Trang {pagination.page} / {pagination.totalPages}
+          </span>
 
-            return (
-              <button
-                key={page}
-                onClick={() => getUsers(page)}
-                className={`px-2 py-1 border rounded ${
-                  currentPage === page ? "bg-pink-500 text-white" : "bg-white"
-                }`}
-              >
-                {page}
-              </button>
-            );
-          })}
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => getUsers(currentPage + 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
+          <Button
+            variant="outline"
+            disabled={!pagination.hasNextPage}
+            onClick={() => setCurrentPage(currentPage + 1)}
           >
             Kế tiếp
-          </button>
+          </Button>
         </div>
       </Card>
 
@@ -536,7 +527,7 @@ export default function UserManagement() {
           <DialogHeader>
             <DialogTitle>Chi tiết người dùng</DialogTitle>
             <DialogDescription>
-              View and manage user information
+              Xem và quản lí thông tin tài khoản
             </DialogDescription>
           </DialogHeader>
 
@@ -581,7 +572,7 @@ export default function UserManagement() {
                           className="text-warning"
                         >
                           <Ban className="size-3 mr-1" />
-                          Suspend
+                          Khóa
                         </Button>
                       )}
                       <Button
@@ -595,23 +586,34 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="size-4 text-muted-foreground" />
-                      <span>{viewingUser.email}</span>
+                  <div className="flex flex-col space-y-4 shrink">
+                    <div className="flex justify-between">
+                      {/* Email */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="size-4 shrink-0 text-muted-foreground" />
+                        <span>{viewingUser.email}</span>
+                      </div>
+
+                      {/* Phone */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="size-4 text-muted-foreground" />
+                        <span>{viewingUser.phone}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="size-4 text-muted-foreground" />
-                      <span>{viewingUser.phone}</span>
+
+                    <div className="flex justify-between">
+                      {/* birthday */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="size-4 text-muted-foreground" />
+                        <span>Brithday</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Activity className="size-4 text-muted-foreground" />
+                        <span>{formatDateTime(viewingUser.created_at)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="size-4 text-muted-foreground" />
-                      <span>Joined </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Activity className="size-4 text-muted-foreground" />
-                      <span>Last active </span>
-                    </div>
+
+                    {/* Address */}
                     <div className="flex items-center gap-2 text-sm col-span-2">
                       <MapPin className="size-4 text-muted-foreground" />
                     </div>
@@ -628,7 +630,7 @@ export default function UserManagement() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                         <ShoppingBag className="size-4" />
-                        Total Orders
+                        Tổng số đơn hàng
                       </CardTitle>
                     </CardHeader>
                     <CardContent></CardContent>
@@ -637,7 +639,7 @@ export default function UserManagement() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                         <Package className="size-4" />
-                        Total Spent
+                        Tổng tiền tích lũy
                       </CardTitle>
                     </CardHeader>
                     <CardContent></CardContent>
@@ -649,8 +651,10 @@ export default function UserManagement() {
               {viewingUser.role.role_id === 3 && (
                 <Tabs defaultValue="orders">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="orders">Order History</TabsTrigger>
-                    <TabsTrigger value="activity">Activity Log</TabsTrigger>
+                    <TabsTrigger value="orders">Lịch sử mua hàng</TabsTrigger>
+                    <TabsTrigger value="activity">
+                      Nhật kí hoạt động
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="orders" className="space-y-3 mt-4">
@@ -686,7 +690,7 @@ export default function UserManagement() {
               variant="outline"
               onClick={() => setIsViewDialogOpen(false)}
             >
-              Close
+              Đóng
             </Button>
           </DialogFooter>
         </DialogContent>
