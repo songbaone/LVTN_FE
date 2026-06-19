@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -43,256 +43,131 @@ import {
   Image as ImageIcon,
   Loader2,
   AlertCircle,
-  Tag,
-  BarChart3,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
   id: string;
   name: string;
-  slug: string;
   parentId: string | null;
   description: string;
   productCount: number;
   status: "active" | "inactive";
   createdAt: string;
-  banner: string;
-  seo: {
-    title: string;
-    description: string;
-    keywords: string;
-  };
+  imageUrl: string;
   children?: Category[];
 }
+
+
+
+const mapCategory = (item: any): Category => ({
+  id: String(item.category_id),
+  name: item.category_name,
+  parentId: item.parent_id
+    ? String(item.parent_id)
+    : null,
+
+  description: item.description || "",
+
+  productCount: item.product_count || 0,
+
+  status: item.status
+    ? "active"
+    : "inactive",
+
+  createdAt: new Date().toISOString(),
+
+  imageUrl: item.image_url || "",
+
+  children:
+    item.children?.map(mapCategory) || [],
+});
+
+import { useEffect } from "react";
+import { categoryService } from "./../../../services/category.service";
 
 export default function CategoryManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([
-    "1",
-    "2",
-    "4",
-  ]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["1", "2", "4"]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null,
-  );
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
     parentId: "",
     description: "",
     status: "active" as "active" | "inactive",
-    seoTitle: "",
-    seoDescription: "",
-    seoKeywords: "",
   });
 
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: "1",
-      name: "Baby Clothing",
-      slug: "baby-clothing",
-      parentId: null,
-      description: "Comfortable and safe clothing for babies",
-      productCount: 45,
-      status: "active",
-      createdAt: "2024-01-15",
-      banner: "🧸",
-      seo: {
-        title: "Baby Clothing - Soft & Comfortable",
-        description: "Shop premium baby clothing collection",
-        keywords: "baby clothes, infant wear, baby outfits",
-      },
-      children: [
-        {
-          id: "1-1",
-          name: "Onesies",
-          slug: "onesies",
-          parentId: "1",
-          description: "Cute onesies for babies",
-          productCount: 23,
-          status: "active",
-          createdAt: "2024-01-20",
-          banner: "👶",
-          seo: { title: "", description: "", keywords: "" },
-        },
-        {
-          id: "1-2",
-          name: "Sleepwear",
-          slug: "sleepwear",
-          parentId: "1",
-          description: "Comfortable sleepwear",
-          productCount: 15,
-          status: "active",
-          createdAt: "2024-01-25",
-          banner: "🌙",
-          seo: { title: "", description: "", keywords: "" },
-        },
-        {
-          id: "1-3",
-          name: "Outerwear",
-          slug: "outerwear",
-          parentId: "1",
-          description: "Jackets and coats for babies",
-          productCount: 7,
-          status: "active",
-          createdAt: "2024-02-01",
-          banner: "🧥",
-          seo: { title: "", description: "", keywords: "" },
-        },
-      ],
-    },
-    {
-      id: "2",
-      name: "Smart Monitoring",
-      slug: "smart-monitoring",
-      parentId: null,
-      description: "Smart devices to monitor your baby",
-      productCount: 18,
-      status: "active",
-      createdAt: "2024-01-10",
-      banner: "📹",
-      seo: {
-        title: "Smart Baby Monitors",
-        description: "Advanced baby monitoring solutions",
-        keywords: "baby monitor, smart camera, baby safety",
-      },
-      children: [
-        {
-          id: "2-1",
-          name: "Video Monitors",
-          slug: "video-monitors",
-          parentId: "2",
-          description: "HD video baby monitors",
-          productCount: 12,
-          status: "active",
-          createdAt: "2024-01-18",
-          banner: "🎥",
-          seo: { title: "", description: "", keywords: "" },
-        },
-        {
-          id: "2-2",
-          name: "Audio Monitors",
-          slug: "audio-monitors",
-          parentId: "2",
-          description: "Audio-only baby monitors",
-          productCount: 6,
-          status: "active",
-          createdAt: "2024-01-22",
-          banner: "🔊",
-          seo: { title: "", description: "", keywords: "" },
-        },
-      ],
-    },
-    {
-      id: "3",
-      name: "Feeding",
-      slug: "feeding",
-      parentId: null,
-      description: "Baby feeding essentials",
-      productCount: 34,
-      status: "active",
-      createdAt: "2024-01-12",
-      banner: "🍽️",
-      seo: {
-        title: "Baby Feeding Products",
-        description: "Safe and quality feeding products",
-        keywords: "baby bottles, feeding set, baby utensils",
-      },
-    },
-    {
-      id: "4",
-      name: "Travel",
-      slug: "travel",
-      parentId: null,
-      description: "Strollers and travel gear",
-      productCount: 22,
-      status: "active",
-      createdAt: "2024-01-08",
-      banner: "🚼",
-      seo: {
-        title: "Baby Travel Gear",
-        description: "Strollers, car seats, and travel accessories",
-        keywords: "baby stroller, car seat, travel gear",
-      },
-      children: [
-        {
-          id: "4-1",
-          name: "Strollers",
-          slug: "strollers",
-          parentId: "4",
-          description: "Lightweight and sturdy strollers",
-          productCount: 14,
-          status: "active",
-          createdAt: "2024-01-16",
-          banner: "🛒",
-          seo: { title: "", description: "", keywords: "" },
-        },
-        {
-          id: "4-2",
-          name: "Car Seats",
-          slug: "car-seats",
-          parentId: "4",
-          description: "Safety car seats for infants",
-          productCount: 8,
-          status: "inactive",
-          createdAt: "2024-01-19",
-          banner: "🚗",
-          seo: { title: "", description: "", keywords: "" },
-        },
-      ],
-    },
-    {
-      id: "5",
-      name: "Toys",
-      slug: "toys",
-      parentId: null,
-      description: "Educational and fun toys",
-      productCount: 56,
-      status: "active",
-      createdAt: "2024-01-05",
-      banner: "🧩",
-      seo: {
-        title: "Educational Baby Toys",
-        description: "Safe and educational toys for development",
-        keywords: "baby toys, educational toys, wooden toys",
-      },
-    },
-  ]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Statistics
-  const stats = {
-    total: categories.reduce(
-      (sum, cat) => sum + 1 + (cat.children?.length || 0),
-      0,
-    ),
-    active:
-      categories.filter((c) => c.status === "active").length +
-      categories
-        .flatMap((c) => c.children || [])
-        .filter((c) => c.status === "active").length,
-    totalProducts: categories.reduce((sum, cat) => sum + cat.productCount, 0),
-    parents: categories.length,
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [statistics, setStatistics] = useState({
+    total_categories: 0,
+    active_categories: 0,
+    total_products: 0,
+    average_products_per_category: 0,
+    parent_categories: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    loadCategories();
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await categoryService.getStatistics();
+      setStatistics(response.data.data);
+    } catch {
+      toast.error("Không thể tải thống kê danh mục");
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+
+      const response = await categoryService.getTree();
+
+      setCategories(
+        response.data.data.tree.map(mapCategory)
+      );
+
+    } catch (error) {
+      toast.error("Tải danh mục thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleExpand = (categoryId: string) => {
-    setExpandedCategories((prev) =>
+    setExpandedCategories(prev =>
       prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId],
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
     );
   };
 
   const getAllCategories = (): Category[] => {
     const all: Category[] = [];
-    categories.forEach((cat) => {
+    categories.forEach(cat => {
       all.push(cat);
       if (cat.children) {
         all.push(...cat.children);
@@ -301,30 +176,47 @@ export default function CategoryManagement() {
     return all;
   };
 
-  const filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || category.status === statusFilter;
+  const filteredCategories = categories.filter(category => {
+    const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || category.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setCurrentImageUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleOpenCreate = () => {
     setFormData({
       name: "",
-      slug: "",
       parentId: "",
       description: "",
       status: "active",
-      seoTitle: "",
-      seoDescription: "",
-      seoKeywords: "",
     });
+    setSelectedImage(null);
+    setImagePreview(null);
+    setCurrentImageUrl("");
     setIsCreateDialogOpen(true);
   };
 
@@ -332,14 +224,13 @@ export default function CategoryManagement() {
     setSelectedCategory(category);
     setFormData({
       name: category.name,
-      slug: category.slug,
       parentId: category.parentId || "",
       description: category.description,
       status: category.status,
-      seoTitle: category.seo.title,
-      seoDescription: category.seo.description,
-      seoKeywords: category.seo.keywords,
     });
+    setSelectedImage(null);
+    setImagePreview(null);
+    setCurrentImageUrl(category.imageUrl || "");
     setIsEditDialogOpen(true);
   };
 
@@ -355,30 +246,69 @@ export default function CategoryManagement() {
 
   const handleSaveCategory = async () => {
     if (!formData.name.trim()) {
-      toast.error("Category name is required");
+      toast.error("Vui lòng nhập tên danh mục");
       return;
     }
 
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    if (isEditDialogOpen && selectedCategory) {
-      toast.success("Category updated successfully");
-    } else {
-      toast.success("Category created successfully");
+    try {
+      const formPayload = new FormData();
+      formPayload.append("category_name", formData.name);
+
+      if (formData.parentId && formData.parentId !== "root") {
+        formPayload.append("parent_id", formData.parentId);
+      }
+
+      if (formData.description) {
+        formPayload.append("description", formData.description);
+      }
+
+      formPayload.append("status", formData.status === "active" ? "1" : "0");
+
+      if (selectedImage) {
+        formPayload.append("image", selectedImage);
+      }
+
+      if (isEditDialogOpen && selectedCategory) {
+        await categoryService.update(Number(selectedCategory.id), formPayload);
+        toast.success("Cập nhật danh mục thành công");
+      } else {
+        await categoryService.create(formPayload);
+        toast.success("Danh mục đã được tạo thành công");
+      }
+
+      setIsCreateDialogOpen(false);
+      setIsEditDialogOpen(false);
+      await Promise.all([loadCategories(), loadStatistics()]);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || (isEditDialogOpen ? "Không thể cập nhật danh mục" : "Không thể tạo danh mục");
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsSaving(false);
-    setIsCreateDialogOpen(false);
-    setIsEditDialogOpen(false);
   };
 
   const handleDelete = async () => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    toast.success("Category deleted successfully");
-    setIsSaving(false);
-    setIsDeleteDialogOpen(false);
+    if (!selectedCategory) return;
+
+    setIsDeleting(true);
+
+    try {
+      await categoryService.delete(Number(selectedCategory.id));
+      toast.success("Xóa danh mục thành công");
+      setIsDeleteDialogOpen(false);
+      await Promise.all([loadCategories(), loadStatistics()]);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Không thể xóa danh mục";
+      toast.error(message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    return status === "active" ? "Hoạt động" : "Ngừng hoạt động";
   };
 
   const renderCategoryRow = (category: Category, level: number = 0) => {
@@ -389,15 +319,9 @@ export default function CategoryManagement() {
       <>
         <TableRow key={category.id} className="hover:bg-secondary/50">
           <TableCell>
-            <div
-              className="flex items-center gap-2"
-              style={{ paddingLeft: `${level * 24}px` }}
-            >
+            <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 24}px` }}>
               {hasChildren ? (
-                <button
-                  onClick={() => toggleExpand(category.id)}
-                  className="hover:bg-secondary p-1 rounded"
-                >
+                <button onClick={() => toggleExpand(category.id)} className="hover:bg-secondary p-1 rounded">
                   {isExpanded ? (
                     <ChevronDown className="size-4" />
                   ) : (
@@ -409,37 +333,36 @@ export default function CategoryManagement() {
               )}
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-lg bg-secondary flex items-center justify-center text-2xl">
-                  {category.banner}
+                  {category.imageUrl ? (
+                    <img src={"http://localhost:3000" + category.imageUrl} alt={category.name} className="size-10 rounded-lg object-cover" />
+                  ) : (
+                    <Folder className="size-5 text-muted-foreground" />
+                  )}
                 </div>
                 <span className="font-medium">{category.name}</span>
+                <Badge variant="secondary" className="text-xs font-medium ml-1">
+                  {category.productCount}
+                </Badge>
               </div>
             </div>
           </TableCell>
           <TableCell>
             {category.parentId ? (
               <Badge variant="outline">
-                {categories.find((c) => c.id === category.parentId)?.name ||
-                  "N/A"}
+                {categories.find(c => c.id === category.parentId)?.name || "N/A"}
               </Badge>
             ) : (
-              <span className="text-muted-foreground text-sm">Root</span>
+              <span className="text-muted-foreground text-sm">Gốc</span>
             )}
           </TableCell>
-          <TableCell className="text-center font-medium">
-            {category.productCount}
-          </TableCell>
+          <TableCell className="text-center font-medium">{category.productCount}</TableCell>
           <TableCell>
-            <Badge
-              className={
-                category.status === "active" ? "bg-success" : "bg-warning"
-              }
-            >
-              {category.status.charAt(0).toUpperCase() +
-                category.status.slice(1)}
+            <Badge className={category.status === "active" ? "bg-success" : "bg-warning"}>
+              {getStatusText(category.status)}
             </Badge>
           </TableCell>
           <TableCell className="text-sm text-muted-foreground">
-            {new Date(category.createdAt).toLocaleDateString()}
+            {new Date(selectedCategory.createdAt).toLocaleDateString("vi-VN")}
           </TableCell>
           <TableCell className="text-right">
             <div className="flex gap-1 justify-end">
@@ -449,7 +372,7 @@ export default function CategoryManagement() {
                 onClick={() => handleOpenDetail(category)}
               >
                 <Eye className="size-3 mr-1" />
-                View
+                Xem
               </Button>
               <Button
                 variant="outline"
@@ -470,11 +393,7 @@ export default function CategoryManagement() {
           </TableCell>
         </TableRow>
 
-        {hasChildren &&
-          isExpanded &&
-          category.children!.map((child) =>
-            renderCategoryRow(child, level + 1),
-          )}
+        {hasChildren && isExpanded && category.children!.map(child => renderCategoryRow(child, level + 1))}
       </>
     );
   };
@@ -484,17 +403,12 @@ export default function CategoryManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Category Management</h1>
-          <p className="text-muted-foreground">
-            Organize products into categories
-          </p>
+          <h1 className="text-3xl font-bold mb-2">Quản Lý Danh Mục</h1>
+          <p className="text-muted-foreground">Quản lý và tổ chức danh mục sản phẩm</p>
         </div>
-        <Button
-          onClick={handleOpenCreate}
-          className="bg-accent hover:bg-accent/90"
-        >
+        <Button onClick={handleOpenCreate} className="bg-accent hover:bg-accent/90">
           <Plus className="size-4 mr-2" />
-          Add Category
+          Thêm Danh Mục
         </Button>
       </div>
 
@@ -503,14 +417,14 @@ export default function CategoryManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Categories
+              Tổng Danh Mục
             </CardTitle>
             <Folder className="size-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-3xl font-bold">{statsLoading ? "--" : statistics.total_categories}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {stats.parents} parent categories
+              {statsLoading ? "--" : `${statistics.parent_categories} danh mục cha`}
             </p>
           </CardContent>
         </Card>
@@ -518,49 +432,41 @@ export default function CategoryManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Categories
+              Danh Mục Hoạt Động
             </CardTitle>
             <FolderOpen className="size-5 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-success">
-              {stats.active}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Currently active
-            </p>
+            <div className="text-3xl font-bold text-success">{statsLoading ? "--" : statistics.active_categories}</div>
+            <p className="text-xs text-muted-foreground mt-1">Đang hoạt động</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Products
+              Tổng Sản Phẩm
             </CardTitle>
             <Package className="size-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-accent">
-              {stats.totalProducts}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all categories
-            </p>
+            <div className="text-3xl font-bold text-accent">{statsLoading ? "--" : statistics.total_products}</div>
+            <p className="text-xs text-muted-foreground mt-1">Trên toàn bộ danh mục</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg Products
+              Trung Bình Sản Phẩm
             </CardTitle>
             <TrendingUp className="size-5 text-info" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-info">
-              {Math.round(stats.totalProducts / stats.total)}
+              {statsLoading ? "--" : statistics.average_products_per_category}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Per category</p>
+            <p className="text-xs text-muted-foreground mt-1">Mỗi danh mục</p>
           </CardContent>
         </Card>
       </div>
@@ -572,7 +478,7 @@ export default function CategoryManagement() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search categories..."
+                placeholder="Tìm kiếm danh mục..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -583,9 +489,9 @@ export default function CategoryManagement() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">Hoạt động</SelectItem>
+                <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -598,12 +504,12 @@ export default function CategoryManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Category Name</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead className="text-center">Products</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Tên Danh Mục</TableHead>
+                <TableHead>Danh Mục Cha</TableHead>
+                <TableHead className="text-center">Sản Phẩm</TableHead>
+                <TableHead>Trạng Thái</TableHead>
+                <TableHead>Ngày Tạo</TableHead>
+                <TableHead className="text-right">Thao Tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -614,26 +520,19 @@ export default function CategoryManagement() {
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                         <Folder className="size-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">
-                        No categories found
-                      </h3>
+                      <h3 className="text-lg font-semibold mb-2">Không tìm thấy danh mục nào</h3>
                       <p className="text-muted-foreground text-sm mb-4">
-                        Get started by creating your first category
+                        Hãy bắt đầu bằng cách tạo danh mục đầu tiên
                       </p>
-                      <Button
-                        onClick={handleOpenCreate}
-                        className="bg-accent hover:bg-accent/90"
-                      >
+                      <Button onClick={handleOpenCreate} className="bg-accent hover:bg-accent/90">
                         <Plus className="size-4 mr-2" />
-                        Add Category
+                        Thêm Danh Mục
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCategories.map((category) =>
-                  renderCategoryRow(category),
-                )
+                filteredCategories.map(category => renderCategoryRow(category))
               )}
             </TableBody>
           </Table>
@@ -641,24 +540,19 @@ export default function CategoryManagement() {
       </Card>
 
       {/* Create/Edit Dialog */}
-      <Dialog
-        open={isCreateDialogOpen || isEditDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsCreateDialogOpen(false);
-            setIsEditDialogOpen(false);
-          }
-        }}
-      >
+      <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsCreateDialogOpen(false);
+          setIsEditDialogOpen(false);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {isEditDialogOpen ? "Edit Category" : "Create New Category"}
+              {isEditDialogOpen ? "Cập nhật danh mục" : "Thêm danh mục"}
             </DialogTitle>
             <DialogDescription>
-              {isEditDialogOpen
-                ? "Update category information"
-                : "Add a new product category"}
+              {isEditDialogOpen ? "Cập nhật thông tin danh mục" : "Thêm danh mục sản phẩm mới"}
             </DialogDescription>
           </DialogHeader>
 
@@ -666,117 +560,92 @@ export default function CategoryManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name">
-                  Category Name <span className="text-destructive">*</span>
+                  Tên danh mục <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="name"
+                  className="mt-2"
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
-                  placeholder="e.g., Baby Clothing"
+                  placeholder="VD: Quần áo trẻ em"
                 />
               </div>
 
               <div>
-                <Label htmlFor="slug">URL Slug</Label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => handleChange("slug", e.target.value)}
-                  placeholder="baby-clothing"
-                />
+                <Label htmlFor="parentId" className="mb-2">Danh mục cha</Label>
+                <Select value={formData.parentId} onValueChange={(value) => handleChange("parentId", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn danh mục cha (không bắt buộc)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="root">Không có (danh mục gốc)</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="parentId">Parent Category</Label>
-                <Select
-                  value={formData.parentId}
-                  onValueChange={(value) => handleChange("parentId", value)}
-                >
+                <Label htmlFor="status" className="mb-2">Trạng thái</Label>
+                <Select value={formData.status} onValueChange={(value: any) => handleChange("status", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select parent (optional)" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (Root Category)</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="active">Hoạt động</SelectItem>
+                    <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: any) => handleChange("status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Ảnh danh mục</Label>
+                <div className="mt-2 space-y-3">
+                  {(imagePreview || currentImageUrl) && (
+                    <div className="relative inline-block">
+                      <img
+                        src={imagePreview || "http://localhost:3000" + currentImageUrl}
+                        alt="Preview"
+                        className="size-24 rounded-lg object-cover border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute -top-2 -right-2 size-5 rounded-full bg-destructive text-white flex items-center justify-center hover:bg-destructive/90"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleImageSelect}
+                      className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-white hover:file:bg-accent/90 cursor-pointer"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Chấp nhận: JPEG, PNG, WebP
+                  </p>
+                </div>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Mô tả</Label>
               <Textarea
+                className="mt-2"
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="Brief description of this category"
+                placeholder="Mô tả ngắn về danh mục"
                 rows={3}
               />
-            </div>
-
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Tag className="size-4" />
-                SEO Information
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="seoTitle">SEO Title</Label>
-                  <Input
-                    id="seoTitle"
-                    value={formData.seoTitle}
-                    onChange={(e) => handleChange("seoTitle", e.target.value)}
-                    placeholder="Baby Clothing - Soft & Comfortable"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seoDescription">SEO Description</Label>
-                  <Textarea
-                    id="seoDescription"
-                    value={formData.seoDescription}
-                    onChange={(e) =>
-                      handleChange("seoDescription", e.target.value)
-                    }
-                    placeholder="Shop our premium baby clothing collection"
-                    rows={2}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seoKeywords">
-                    Keywords (comma separated)
-                  </Label>
-                  <Input
-                    id="seoKeywords"
-                    value={formData.seoKeywords}
-                    onChange={(e) =>
-                      handleChange("seoKeywords", e.target.value)
-                    }
-                    placeholder="baby clothes, infant wear, baby outfits"
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
@@ -789,7 +658,7 @@ export default function CategoryManagement() {
               }}
               disabled={isSaving}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               onClick={handleSaveCategory}
@@ -797,11 +666,7 @@ export default function CategoryManagement() {
               className="bg-accent hover:bg-accent/90"
             >
               {isSaving && <Loader2 className="size-4 mr-2 animate-spin" />}
-              {isSaving
-                ? "Saving..."
-                : isEditDialogOpen
-                  ? "Update Category"
-                  : "Create Category"}
+              {isSaving ? "Đang lưu..." : isEditDialogOpen ? "Cập nhật danh mục" : "Lưu"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -811,34 +676,24 @@ export default function CategoryManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
+            <DialogTitle>Xóa Danh Mục</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedCategory?.name}"?
-              {selectedCategory?.children &&
-                selectedCategory.children.length > 0 && (
-                  <span className="block mt-2 text-destructive">
-                    <AlertCircle className="size-4 inline mr-1" />
-                    This category has {selectedCategory.children.length}{" "}
-                    subcategories that will also be deleted.
-                  </span>
-                )}
+              Bạn có chắc chắn muốn xóa "{selectedCategory?.name}"?
+              {selectedCategory?.children && selectedCategory.children.length > 0 && (
+                <span className="block mt-2 text-destructive">
+                  <AlertCircle className="size-4 inline mr-1" />
+                  Danh mục này có {selectedCategory.children.length} danh mục con cũng sẽ bị xóa.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isSaving}
-            >
-              Cancel
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+              Hủy
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isSaving}
-            >
-              {isSaving && <Loader2 className="size-4 mr-2 animate-spin" />}
-              {isSaving ? "Deleting..." : "Delete"}
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting && <Loader2 className="size-4 mr-2 animate-spin" />}
+              {isDeleting ? "Đang xóa..." : "Xóa"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -848,31 +703,23 @@ export default function CategoryManagement() {
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Category Details</DialogTitle>
+            <DialogTitle>Chi Tiết Danh Mục</DialogTitle>
           </DialogHeader>
 
           {selectedCategory && (
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="size-20 rounded-lg bg-secondary flex items-center justify-center text-4xl">
-                  {selectedCategory.banner}
+                  {selectedCategory.imageUrl ? (
+                    <img src={"http://localhost:3000" + selectedCategory.imageUrl} alt={selectedCategory.name} className="size-20 rounded-lg object-cover" />
+                  ) : (
+                    <Folder className="size-8 text-muted-foreground" />
+                  )}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-1">
-                    {selectedCategory.name}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    /{selectedCategory.slug}
-                  </p>
-                  <Badge
-                    className={
-                      selectedCategory.status === "active"
-                        ? "bg-success"
-                        : "bg-warning"
-                    }
-                  >
-                    {selectedCategory.status.charAt(0).toUpperCase() +
-                      selectedCategory.status.slice(1)}
+                  <h2 className="text-2xl font-bold mb-1">{selectedCategory.name}</h2>
+                  <Badge className={selectedCategory.status === "active" ? "bg-success" : "bg-warning"}>
+                    {getStatusText(selectedCategory.status)}
                   </Badge>
                 </div>
               </div>
@@ -881,40 +728,34 @@ export default function CategoryManagement() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Products
+                      Sản Phẩm
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {selectedCategory.productCount}
-                    </div>
+                    <div className="text-2xl font-bold">{selectedCategory.productCount}</div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Subcategories
+                      Danh Mục Con
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {selectedCategory.children?.length || 0}
-                    </div>
+                    <div className="text-2xl font-bold">{selectedCategory.children?.length || 0}</div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Created
+                      Ngày Tạo
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm font-medium">
-                      {new Date(
-                        selectedCategory.createdAt,
-                      ).toLocaleDateString()}
+                      {new Date(selectedCategory.createdAt).toLocaleDateString("vi-VN")}
                     </div>
                   </CardContent>
                 </Card>
@@ -922,73 +763,39 @@ export default function CategoryManagement() {
 
               {selectedCategory.description && (
                 <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedCategory.description}
-                  </p>
+                  <h3 className="font-semibold mb-2">Mô Tả</h3>
+                  <p className="text-sm text-muted-foreground">{selectedCategory.description}</p>
                 </div>
               )}
 
-              {selectedCategory.seo.title && (
+              {selectedCategory.children && selectedCategory.children.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Tag className="size-4" />
-                    SEO Information
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">Title:</span>{" "}
-                      {selectedCategory.seo.title}
-                    </div>
-                    <div>
-                      <span className="font-medium">Description:</span>{" "}
-                      {selectedCategory.seo.description}
-                    </div>
-                    <div>
-                      <span className="font-medium">Keywords:</span>{" "}
-                      {selectedCategory.seo.keywords}
-                    </div>
+                  <h3 className="font-semibold mb-2">Danh Mục Con ({selectedCategory.children.length})</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedCategory.children.map(child => (
+                      <div key={child.id} className="flex items-center gap-2 p-2 rounded-lg border border-border">
+                        <div className="size-8 rounded bg-secondary flex items-center justify-center text-lg">
+                          {child.imageUrl ? (
+                            <img src={"http://localhost:3000" + child.imageUrl} alt={child.name} className="size-8 rounded object-cover" />
+                          ) : (
+                            <Folder className="size-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{child.name}</p>
+                          <p className="text-xs text-muted-foreground">{child.productCount} sản phẩm</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
-
-              {selectedCategory.children &&
-                selectedCategory.children.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">
-                      Subcategories ({selectedCategory.children.length})
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {selectedCategory.children.map((child) => (
-                        <div
-                          key={child.id}
-                          className="flex items-center gap-2 p-2 rounded-lg border border-border"
-                        >
-                          <div className="size-8 rounded bg-secondary flex items-center justify-center text-lg">
-                            {child.banner}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {child.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {child.productCount} products
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
             </div>
           )}
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDetailDialogOpen(false)}
-            >
-              Close
+            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+              Đóng
             </Button>
           </DialogFooter>
         </DialogContent>
