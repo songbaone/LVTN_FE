@@ -64,7 +64,7 @@ interface User {
 
   role: {
     role_id: number;
-    role_name: "Quản trị viên" | "Nhân viên" | "Khách hàng";
+    role_name: "ADMIN" | "STAFF" | "CUSTOMER";
   };
 
   status: boolean;
@@ -452,6 +452,8 @@ export default function UserManagement() {
                         <p className="text-sm">{user.email}</p>
                       </div>
                     </TableCell>
+
+                    {/* Phone */}
                     <TableCell>
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">
@@ -470,7 +472,11 @@ export default function UserManagement() {
 
                     <TableCell>
                       <Badge className={roleColors[user.role.role_id]}>
-                        {user.role.role_name.replace("_", " ")}
+                        {user.role.role_name === "ADMIN"
+                          ? "Quản trị viên"
+                          : user.role.role_name === "CUSTOMER"
+                            ? "Khách hàng"
+                            : "Nhân viên"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -548,7 +554,11 @@ export default function UserManagement() {
                         <Badge
                           className={roleColors[viewingUser.role.role_name]}
                         >
-                          {viewingUser.role.role_name}
+                          {viewingUser.role.role_name === "ADMIN"
+                            ? "Quản trị viên"
+                            : viewingUser.role.role_name === "STAFF"
+                              ? "Nhân viên"
+                              : "Khách hàng"}{" "}
                         </Badge>
                         <Badge
                           className={statusColors[String(viewingUser.status)]}
