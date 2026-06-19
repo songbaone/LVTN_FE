@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
-import { formatDateTime } from "../../../helpers/format";
+import { formatDateTime, formatDate } from "../../../helpers/format";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Link } from "react-router";
+import { Plus } from "lucide-react";
 import moment from "moment";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
@@ -64,7 +67,7 @@ interface User {
 
   role: {
     role_id: number;
-    role_name: "Quản trị viên" | "Nhân viên" | "Khách hàng";
+    role_name: "ADMIN" | "STAFF" | "CUSTOMER";
   };
 
   status: boolean;
@@ -85,25 +88,57 @@ interface ActivityLog {
   details: string;
 }
 
+interface UserDetail {
+  user: {
+    user_id: number;
+    full_name: string;
+    email: string;
+    phone: string | null;
+    gender: string | null;
+    birth_date: string | null;
+    avatar: string | null;
+    status: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+
+  role: {
+    role_id: number;
+    role_name: "ADMIN" | "STAFF" | "CUSTOMER";
+    description: string;
+  };
+
+  address_count: number;
+  order_count: number;
+}
+
 export default function UserManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("joined-desc");
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
-  const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [viewingUser, setViewingUser] = useState<UserDetail | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+
   const currentMonth = moment().format("MM");
   const currentYear = moment().format("YYYY");
 
-  const token = localStorage.getItem("AccessTokenAdmin");
   const getUsers = async (page: number) => {
     try {
+      const token = localStorage.getItem("AccessTokenAdmin");
+
       const res = await fetch(
         `http://localhost:3000/api/v1/users?page=${page}`,
         {
@@ -112,17 +147,20 @@ export default function UserManagement() {
           },
         },
       );
-      const result = await res.json();
-      if (res.status == 200) {
-        setUsers(result.data.users);
+
+      const data = await res.json();
+
+      if (data.success) {
+        setUsers(data.data.users);
+        setPagination(data.data.pagination);
       }
     } catch (error) {
       console.error(error);
     }
   };
   useEffect(() => {
-    getUsers(1);
-  }, []);
+    getUsers(currentPage);
+  }, [currentPage]);
 
   const roleColors: Record<number, string> = {
     1: "bg-red-100 text-red-800",
@@ -200,17 +238,31 @@ export default function UserManagement() {
     }
   };
 
-  const handleViewUser = (user: User) => {
-    setViewingUser(user);
-    setIsViewDialogOpen(true);
-  };
+  const handleViewUser = async (userId: number) => {
+    try {
+      const token = localStorage.getItem("AccessTokenAdmin");
 
+      const res = await fetch(`http://localhost:3000/api/v1/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setViewingUser(data.data);
+        setIsViewDialogOpen(true);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể tải thông tin người dùng");
+    }
+  };
   const handleSuspend = (userId: number) => {
     toast.success("User suspended");
-  };
-
-  const handleBan = (userId: number) => {
-    toast.success("User banned");
   };
 
   const handleDelete = (userId: number) => {
@@ -220,14 +272,296 @@ export default function UserManagement() {
   const handleExport = () => {
     toast.success("Exporting user data...");
   };
+  const [isCreateStaffOpen, setIsCreateStaffOpen] = useState(false);
 
+  const [staffForm, setStaffForm] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    phone: "",
+    gender: "",
+    birth_date: "",
+    role_id: "",
+    avatar: "",
+  });
+  const [uploading, setUploading] = useState(false);
+  const handleCreateStaff = async () => {
+    try {
+      const token = localStorage.getItem("AccessTokenAdmin");
+
+      const res = await fetch("http://localhost:3000/api/v1/staff", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...staffForm,
+          avatar: staffForm.avatar,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Tạo nhân viên thành công");
+
+        setIsCreateStaffOpen(false);
+
+        getUsers(currentPage);
+
+        setStaffForm({
+          full_name: "",
+          email: "",
+          password: "123@",
+          phone: "",
+          gender: "",
+          birth_date: "",
+          role_id: "",
+          avatar: "",
+        });
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra");
+    }
+  };
+  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setUploading(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const token = localStorage.getItem("AccessTokenAdmin");
+
+      const res = await fetch("http://localhost:3000/api/v1/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setStaffForm((prev) => ({
+          ...prev,
+          avatar: data.url,
+        }));
+
+        toast.success("Upload ảnh thành công");
+      }
+    } catch (error) {
+      toast.error("Upload ảnh thất bại");
+    } finally {
+      setUploading(false);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Quản lí người dùng</h1>
-        <p className="text-muted-foreground">Quản lí người dùng, phân quyền</p>
+      <div className="flex justify-between items-center">
+        <div className="flex-col">
+          <h1 className="text-3xl font-bold mb-2">Quản lí người dùng</h1>
+          <p className="text-muted-foreground">
+            Quản lí người dùng, phân quyền
+          </p>
+        </div>
+
+        <div>
+          <Button
+            className="bg-accent hover:bg-accent/90"
+            onClick={() => setIsCreateStaffOpen(true)}
+          >
+            <UserPlus className="size-4 mr-2" />
+            Thêm nhân viên
+          </Button>
+        </div>
       </div>
+
+      {/* Form tạo nhân viên mới */}
+      <Dialog open={isCreateStaffOpen} onOpenChange={setIsCreateStaffOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Thêm nhân viên mới</DialogTitle>
+            <DialogDescription>
+              Tạo tài khoản nhân viên cho hệ thống
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 py-4">
+            {/* Họ tên */}
+            <div className="col-span-2">
+              <Label className="mb-2">
+                Họ và tên <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={staffForm.full_name}
+                onChange={(e) =>
+                  setStaffForm({
+                    ...staffForm,
+                    full_name: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <Label className="mb-2">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="email"
+                value={staffForm.email}
+                onChange={(e) =>
+                  setStaffForm({
+                    ...staffForm,
+                    email: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <Label className="mb-2">
+                Mật khẩu <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="password"
+                value={staffForm.password}
+                onChange={(e) =>
+                  setStaffForm({
+                    ...staffForm,
+                    password: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Phone */}
+            <div>
+              <Label className="mb-2">Số điện thoại</Label>
+              <Input
+                value={staffForm.phone}
+                onChange={(e) =>
+                  setStaffForm({
+                    ...staffForm,
+                    phone: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Gender */}
+            <div>
+              <Label className="mb-2">Giới tính</Label>
+
+              <Select
+                value={staffForm.gender}
+                onValueChange={(value) =>
+                  setStaffForm({
+                    ...staffForm,
+                    gender: value,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn giới tính" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="Male">Nam</SelectItem>
+                  <SelectItem value="Female">Nữ</SelectItem>
+                  <SelectItem value="Other">Khác</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Birth Date */}
+            <div>
+              <Label className="mb-2">Ngày sinh</Label>
+
+              <Input
+                type="date"
+                value={staffForm.birth_date}
+                onChange={(e) =>
+                  setStaffForm({
+                    ...staffForm,
+                    birth_date: e.target.value,
+                  })
+                }
+              />
+            </div>
+            {/* Role*/}
+            <div>
+              <Label className="mb-2">Chức vụ</Label>
+
+              <Select
+                value={staffForm.role_id}
+                onValueChange={(value) =>
+                  setStaffForm({
+                    ...staffForm,
+                    role_id: value,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn chức vụ" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="1">Quản trị viên</SelectItem>
+                  <SelectItem value="2">Nhân viên</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="col-span-2">
+              <Label>Ảnh đại diện</Label>
+
+              <div className="flex items-center gap-4 mt-2">
+                {staffForm.avatar ? (
+                  <img
+                    src={staffForm.avatar}
+                    alt="Avatar Preview"
+                    className="w-20 h-20 rounded-full object-cover border"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full border flex items-center justify-center text-xs text-gray-500 p-5">
+                    Chưa có ảnh
+                  </div>
+                )}
+
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadAvatar}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateStaffOpen(false)}
+            >
+              Hủy
+            </Button>
+
+            <Button onClick={handleCreateStaff}>Tạo nhân viên</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -349,12 +683,6 @@ export default function UserManagement() {
 
             {/* Actions */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {filteredUsers.length} users
-                </span>
-              </div>
-
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleExport}>
                   <Download className="size-4 mr-2" />
@@ -451,6 +779,8 @@ export default function UserManagement() {
                         <p className="text-sm">{user.email}</p>
                       </div>
                     </TableCell>
+
+                    {/* Phone */}
                     <TableCell>
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">
@@ -469,7 +799,11 @@ export default function UserManagement() {
 
                     <TableCell>
                       <Badge className={roleColors[user.role.role_id]}>
-                        {user.role.role_name.replace("_", " ")}
+                        {user.role.role_name === "ADMIN"
+                          ? "Quản trị viên"
+                          : user.role.role_name === "CUSTOMER"
+                            ? "Khách hàng"
+                            : "Nhân viên"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -483,7 +817,7 @@ export default function UserManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleViewUser(user)}
+                          onClick={() => handleViewUser(user.user_id)}
                         >
                           <Eye className="size-3" />
                         </Button>
@@ -495,38 +829,28 @@ export default function UserManagement() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
         <div className="flex items-center justify-center gap-2 mt-4 mb-4">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => getUsers(currentPage - 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
+          <Button
+            variant="outline"
+            disabled={!pagination.hasPrevPage}
+            onClick={() => setCurrentPage(currentPage - 1)}
           >
             Trước đó
-          </button>
+          </Button>
 
-          {[...Array(totalPages)].map((_, index) => {
-            const page = index + 1;
+          <span className="text-sm">
+            Trang {pagination.page} / {pagination.totalPages}
+          </span>
 
-            return (
-              <button
-                key={page}
-                onClick={() => getUsers(page)}
-                className={`px-2 py-1 border rounded ${
-                  currentPage === page ? "bg-pink-500 text-white" : "bg-white"
-                }`}
-              >
-                {page}
-              </button>
-            );
-          })}
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => getUsers(currentPage + 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
+          <Button
+            variant="outline"
+            disabled={!pagination.hasNextPage}
+            onClick={() => setCurrentPage(currentPage + 1)}
           >
             Kế tiếp
-          </button>
+          </Button>
         </div>
       </Card>
 
@@ -536,7 +860,7 @@ export default function UserManagement() {
           <DialogHeader>
             <DialogTitle>Chi tiết người dùng</DialogTitle>
             <DialogDescription>
-              View and manage user information
+              Xem và quản lí thông tin tài khoản
             </DialogDescription>
           </DialogHeader>
 
@@ -548,21 +872,27 @@ export default function UserManagement() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h2 className="text-2xl font-bold mb-1">
-                        {viewingUser.full_name}
+                        {viewingUser.user.full_name}
                       </h2>
                       <p className="text-sm text-muted-foreground mb-2">
-                        Mã người dùng: {viewingUser.user_id}
+                        Mã người dùng: {viewingUser.user.user_id}
                       </p>
                       <div className="flex gap-2">
                         <Badge
                           className={roleColors[viewingUser.role.role_name]}
                         >
-                          {viewingUser.role.role_name}
+                          {viewingUser.role.role_name === "ADMIN"
+                            ? "Quản trị viên"
+                            : viewingUser.role.role_name === "STAFF"
+                              ? "Nhân viên"
+                              : "Khách hàng"}{" "}
                         </Badge>
                         <Badge
-                          className={statusColors[String(viewingUser.status)]}
+                          className={
+                            statusColors[String(viewingUser.user.status)]
+                          }
                         >
-                          {viewingUser.status
+                          {viewingUser.user.status
                             ? "Đang hoạt động"
                             : "Ngừng hoạt động"}
                         </Badge>
@@ -573,21 +903,23 @@ export default function UserManagement() {
                         <Edit2 className="size-3 mr-1" />
                         Chỉnh sửa
                       </Button>
-                      {viewingUser.status === true && (
+                      {viewingUser.user.status === true && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleSuspend(viewingUser.user_id)}
+                          onClick={() =>
+                            handleSuspend(viewingUser.user.user_id)
+                          }
                           className="text-warning"
                         >
                           <Ban className="size-3 mr-1" />
-                          Suspend
+                          Khóa
                         </Button>
                       )}
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(viewingUser.user_id)}
+                        onClick={() => handleDelete(viewingUser.user.user_id)}
                         className="text-destructive"
                       >
                         <Trash2 className="size-3" />
@@ -595,23 +927,36 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="size-4 text-muted-foreground" />
-                      <span>{viewingUser.email}</span>
+                  <div className="flex flex-col space-y-4 shrink">
+                    <div className="flex justify-between">
+                      {/* Email */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="size-4 shrink-0 text-muted-foreground" />
+                        <span>{viewingUser.user.email}</span>
+                      </div>
+
+                      {/* Phone */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="size-4 text-muted-foreground" />
+                        <span>{viewingUser.user.phone}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="size-4 text-muted-foreground" />
-                      <span>{viewingUser.phone}</span>
+
+                    <div className="flex justify-between">
+                      {/* birthday */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="size-4 text-muted-foreground" />
+                        <span>{formatDate(viewingUser.user.birth_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Activity className="size-4 text-muted-foreground" />
+                        <span>
+                          {formatDateTime(viewingUser.user.created_at)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="size-4 text-muted-foreground" />
-                      <span>Joined </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Activity className="size-4 text-muted-foreground" />
-                      <span>Last active </span>
-                    </div>
+
+                    {/* Address */}
                     <div className="flex items-center gap-2 text-sm col-span-2">
                       <MapPin className="size-4 text-muted-foreground" />
                     </div>
@@ -628,7 +973,7 @@ export default function UserManagement() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                         <ShoppingBag className="size-4" />
-                        Total Orders
+                        Tổng số đơn hàng
                       </CardTitle>
                     </CardHeader>
                     <CardContent></CardContent>
@@ -637,7 +982,7 @@ export default function UserManagement() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                         <Package className="size-4" />
-                        Total Spent
+                        Tổng tiền tích lũy
                       </CardTitle>
                     </CardHeader>
                     <CardContent></CardContent>
@@ -649,8 +994,10 @@ export default function UserManagement() {
               {viewingUser.role.role_id === 3 && (
                 <Tabs defaultValue="orders">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="orders">Order History</TabsTrigger>
-                    <TabsTrigger value="activity">Activity Log</TabsTrigger>
+                    <TabsTrigger value="orders">Lịch sử mua hàng</TabsTrigger>
+                    <TabsTrigger value="activity">
+                      Nhật kí hoạt động
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="orders" className="space-y-3 mt-4">
@@ -686,7 +1033,7 @@ export default function UserManagement() {
               variant="outline"
               onClick={() => setIsViewDialogOpen(false)}
             >
-              Close
+              Đóng
             </Button>
           </DialogFooter>
         </DialogContent>

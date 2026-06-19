@@ -35,7 +35,7 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Eye
+  Eye,
 } from "lucide-react";
 
 export default function ProductManagement() {
@@ -49,19 +49,21 @@ export default function ProductManagement() {
     brand: ["BabyComfort", "SafeFeed", "SmartBaby"][i % 3],
     price: Math.floor(Math.random() * 1000000) + 200000,
     stock: Math.floor(Math.random() * 100) + 5,
-    status: i % 5 === 0 ? "Out of Stock" : "In Stock",
-    image: "🧸"
+    status: i % 5 === 0 ? "Hết hàng" : "Còn hàng",
+    image: "🧸",
   }));
 
   const toggleProduct = (id: number) => {
-    setSelectedProducts(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelectedProducts((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
   const toggleAll = () => {
     setSelectedProducts(
-      selectedProducts.length === products.length ? [] : products.map(p => p.id)
+      selectedProducts.length === products.length
+        ? []
+        : products.map((p) => p.id),
     );
   };
 
@@ -69,24 +71,26 @@ export default function ProductManagement() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Product Management</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <h1 className="text-3xl font-bold">Quản lí sản phẩm</h1>
+          <p className="text-muted-foreground">
+            Quản lý danh mục sản phẩm của bạn
+          </p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" asChild>
             <Link to="/admin/products/import">
               <Upload className="size-4 mr-2" />
-              Import
+              Nhập danh sách sản phẩm
             </Link>
           </Button>
           <Button variant="outline">
             <Download className="size-4 mr-2" />
-            Export
+            Xuất danh sách sản phẩm
           </Button>
           <Button className="bg-accent hover:bg-accent/90" asChild>
             <Link to="/admin/products/new">
               <Plus className="size-4 mr-2" />
-              Add Product
+              Thêm sản phẩm mới{" "}
             </Link>
           </Button>
         </div>
@@ -98,18 +102,21 @@ export default function ProductManagement() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input placeholder="Search products..." className="pl-10" />
+              <Input
+                placeholder="Tìm kiếm thông tin sản phẩm...."
+                className="pl-10"
+              />
             </div>
             <Select defaultValue="all">
               <SelectTrigger>
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="clothing">Clothing</SelectItem>
-                <SelectItem value="feeding">Feeding</SelectItem>
-                <SelectItem value="toys">Toys</SelectItem>
-                <SelectItem value="nursery">Nursery</SelectItem>
+                <SelectItem value="all">Tất cả danh mục</SelectItem>
+                <SelectItem value="clothing">Quần áo</SelectItem>
+                <SelectItem value="feeding">Đồ chơi</SelectItem>
+                <SelectItem value="toys">Sữa</SelectItem>
+                <SelectItem value="nursery">Gia dụng</SelectItem>
               </SelectContent>
             </Select>
             <Select defaultValue="all">
@@ -117,10 +124,10 @@ export default function ProductManagement() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="in-stock">In Stock</SelectItem>
-                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                <SelectItem value="low-stock">Low Stock</SelectItem>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="in-stock">Có sẳn</SelectItem>
+                <SelectItem value="out-of-stock">Hết hàng</SelectItem>
+                <SelectItem value="low-stock">Số lượng còn ít</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -132,11 +139,19 @@ export default function ProductManagement() {
         <Card className="mb-4 border-accent">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <span className="font-medium">{selectedProducts.length} products selected</span>
+              <span className="font-medium">
+                {selectedProducts.length} sản phẩm đã chọn
+              </span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">Bulk Edit</Button>
-                <Button variant="outline" size="sm">Export Selected</Button>
-                <Button variant="destructive" size="sm">Delete Selected</Button>
+                <Button variant="outline" size="sm">
+                  Chỉnh sửa hàng loạt
+                </Button>
+                <Button variant="outline" size="sm">
+                  Xuất file danh sách đã chọn
+                </Button>
+                <Button variant="destructive" size="sm">
+                  Xóa những sản phẩm đã chọn
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -155,13 +170,13 @@ export default function ProductManagement() {
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
-                <TableHead>Product</TableHead>
+                <TableHead>Tên sản phẩm</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Brand</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Danh mục</TableHead>
+                <TableHead>Thương hiệu</TableHead>
+                <TableHead>Đơn giá</TableHead>
+                <TableHead>Tồn kho</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -182,20 +197,34 @@ export default function ProductManagement() {
                       <span className="font-medium">{product.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{product.sku}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {product.sku}
+                  </TableCell>
                   <TableCell>{product.category}</TableCell>
                   <TableCell>{product.brand}</TableCell>
-                  <TableCell className="font-medium">{product.price.toLocaleString()} ₫</TableCell>
+                  <TableCell className="font-medium">
+                    {product.price.toLocaleString()} ₫
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={product.stock < 10 ? "bg-destructive/10 text-destructive" : ""}
+                      className={
+                        product.stock < 10
+                          ? "bg-destructive/10 text-destructive"
+                          : ""
+                      }
                     >
                       {product.stock}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={product.status === "In Stock" ? "bg-success" : "bg-destructive"}>
+                    <Badge
+                      className={
+                        product.status === "Còn hàng"
+                          ? "bg-success"
+                          : "bg-destructive"
+                      }
+                    >
                       {product.status}
                     </Badge>
                   </TableCell>
@@ -239,11 +268,21 @@ export default function ProductManagement() {
           Showing 1 to {products.length} of 856 products
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled>Previous</Button>
-          <Button variant="default" size="sm" className="bg-primary">1</Button>
-          <Button variant="outline" size="sm">2</Button>
-          <Button variant="outline" size="sm">3</Button>
-          <Button variant="outline" size="sm">Next</Button>
+          <Button variant="outline" size="sm" disabled>
+            Previous
+          </Button>
+          <Button variant="default" size="sm" className="bg-primary">
+            1
+          </Button>
+          <Button variant="outline" size="sm">
+            2
+          </Button>
+          <Button variant="outline" size="sm">
+            3
+          </Button>
+          <Button variant="outline" size="sm">
+            Next
+          </Button>
         </div>
       </div>
     </div>
