@@ -5,6 +5,7 @@ import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { formatDateTime } from "../../../helpers/format";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import moment from "moment";
 import {
   Select,
   SelectContent,
@@ -63,7 +64,7 @@ interface User {
 
   role: {
     role_id: number;
-    role_name: "ADMIN" | "STAFF" | "CUSTOMER";
+    role_name: "Quản trị viên" | "Nhân viên" | "Khách hàng";
   };
 
   status: boolean;
@@ -94,6 +95,12 @@ export default function UserManagement() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const currentMonth = moment().format("MM");
+  const currentYear = moment().format("YYYY");
+
   const token = localStorage.getItem("AccessTokenAdmin");
   const getUsers = async (page: number) => {
     try {
@@ -143,7 +150,12 @@ export default function UserManagement() {
 
   // Mock data for user detail view
   const orderHistory: OrderHistoryItem[] = [
-    { id: "ORD-001", date: "2026-06-04", total: 2420000, status: "Delivered" },
+    {
+      id: "ORD-001",
+      date: "2026-06-04",
+      total: 2420000,
+      status: "Delivered",
+    },
     { id: "ORD-002", date: "2026-06-02", total: 1890000, status: "Shipping" },
     { id: "ORD-003", date: "2026-05-28", total: 980000, status: "Delivered" },
   ];
@@ -213,10 +225,8 @@ export default function UserManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-muted-foreground">
-          Manage users, roles, and permissions
-        </p>
+        <h1 className="text-3xl font-bold mb-2">Quản lí người dùng</h1>
+        <p className="text-muted-foreground">Quản lí người dùng, phân quyền</p>
       </div>
 
       {/* KPI Cards */}
@@ -224,14 +234,14 @@ export default function UserManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Users
+              Số lượng người dùng
             </CardTitle>
             <Users className="size-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              All registered users
+              Tất cả người dùng đã đăng kí
             </p>
           </CardContent>
         </Card>
@@ -239,7 +249,7 @@ export default function UserManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Users
+              Số lượng người dùng đang hoạt động
             </CardTitle>
             <UserCheck className="size-5 text-success" />
           </CardHeader>
@@ -248,7 +258,7 @@ export default function UserManagement() {
               {stats.active}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Currently active
+              Hiện đang hoạt động
             </p>
           </CardContent>
         </Card>
@@ -256,7 +266,7 @@ export default function UserManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              New This Month
+              Người dùng mới trong tháng này
             </CardTitle>
             <UserPlus className="size-5 text-accent" />
           </CardHeader>
@@ -264,29 +274,31 @@ export default function UserManagement() {
             <div className="text-3xl font-bold text-accent">
               {stats.newThisMonth}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">June 2026</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tháng {currentMonth} năm {currentYear}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              By Role
+              Loại người dùng
             </CardTitle>
             <Shield className="size-5 text-info" />
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Admin:</span>
+                <span className="text-muted-foreground">Quản trị viên:</span>
                 <span className="font-medium">{stats.byRole.admin}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Staff:</span>
+                <span className="text-muted-foreground">Nhân viên:</span>
                 <span className="font-medium">{stats.byRole.staff}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Customer:</span>
+                <span className="text-muted-foreground">Khách hàng:</span>
                 <span className="font-medium">{stats.byRole.customer}</span>
               </div>
             </div>
@@ -303,7 +315,7 @@ export default function UserManagement() {
               <div className="md:col-span-2 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by Name, Email, or ID..."
+                  placeholder="Tìm kiếm theo tên, email, hoặc mã người dùng..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -316,10 +328,10 @@ export default function UserManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="1">Admin</SelectItem>
-                  <SelectItem value="2">Staff</SelectItem>
-                  <SelectItem value="3">Customer</SelectItem>
+                  <SelectItem value="all">Tất cả người dùng</SelectItem>
+                  <SelectItem value="1">Quản trị viên</SelectItem>
+                  <SelectItem value="2">Nhân viên</SelectItem>
+                  <SelectItem value="3">Khách hàng</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -328,9 +340,9 @@ export default function UserManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="true">Đang hoạt động</SelectItem>
+                  <SelectItem value="false">Ngưng hoạt động</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -338,18 +350,6 @@ export default function UserManagement() {
             {/* Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="joined-desc">Newest First</SelectItem>
-                    <SelectItem value="joined-asc">Oldest First</SelectItem>
-                    <SelectItem value="name">Name A-Z</SelectItem>
-                    <SelectItem value="spent-desc">Highest Spending</SelectItem>
-                  </SelectContent>
-                </Select>
-
                 <span className="text-sm text-muted-foreground">
                   {filteredUsers.length} users
                 </span>
@@ -358,7 +358,7 @@ export default function UserManagement() {
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleExport}>
                   <Download className="size-4 mr-2" />
-                  Export
+                  Xuất file danh sách người dùng hiện tại
                 </Button>
               </div>
             </div>
@@ -382,14 +382,14 @@ export default function UserManagement() {
                     )}
                   </button>
                 </TableHead>
-                <TableHead>User id</TableHead>
-                <TableHead>Full name</TableHead>
+                <TableHead>Mã người dùng</TableHead>
+                <TableHead>Họ và tên</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created at</TableHead>
-                <TableHead>View Detail</TableHead>
+                <TableHead>Số điện thoại</TableHead>
+                <TableHead>Loại tài khoản</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Thời gian tạo</TableHead>
+                <TableHead>Chi tiết</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -401,10 +401,10 @@ export default function UserManagement() {
                         <Users className="size-8 text-muted-foreground" />
                       </div>
                       <h3 className="text-lg font-semibold mb-2">
-                        No users found
+                        Không có người dùng nào để hiển thị
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        Try adjusting your search or filters
+                        Vui lòng chỉnh sửa bộ lọc hoặc giá trị tìm kiếm của bạn
                       </p>
                     </div>
                   </TableCell>
@@ -474,7 +474,7 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColors[String(user.status)]}>
-                        {user.status ? "Active" : "Inactive"}
+                        {user.status ? "Đang hoạt động" : "Ngừng hoạt động"}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDateTime(user.created_at)}</TableCell>
@@ -495,13 +495,46 @@ export default function UserManagement() {
             </TableBody>
           </Table>
         </div>
+        <div className="flex items-center justify-center gap-2 mt-4 mb-4">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => getUsers(currentPage - 1)}
+            className="px-2 py-1 border rounded disabled:opacity-50"
+          >
+            Trước đó
+          </button>
+
+          {[...Array(totalPages)].map((_, index) => {
+            const page = index + 1;
+
+            return (
+              <button
+                key={page}
+                onClick={() => getUsers(page)}
+                className={`px-2 py-1 border rounded ${
+                  currentPage === page ? "bg-pink-500 text-white" : "bg-white"
+                }`}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => getUsers(currentPage + 1)}
+            className="px-2 py-1 border rounded disabled:opacity-50"
+          >
+            Kế tiếp
+          </button>
+        </div>
       </Card>
 
       {/* User Detail Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
+            <DialogTitle>Chi tiết người dùng</DialogTitle>
             <DialogDescription>
               View and manage user information
             </DialogDescription>
@@ -518,7 +551,7 @@ export default function UserManagement() {
                         {viewingUser.full_name}
                       </h2>
                       <p className="text-sm text-muted-foreground mb-2">
-                        User ID: {viewingUser.user_id}
+                        Mã người dùng: {viewingUser.user_id}
                       </p>
                       <div className="flex gap-2">
                         <Badge
@@ -529,14 +562,16 @@ export default function UserManagement() {
                         <Badge
                           className={statusColors[String(viewingUser.status)]}
                         >
-                          {viewingUser.status ? "Active" : "Inactive"}
+                          {viewingUser.status
+                            ? "Đang hoạt động"
+                            : "Ngừng hoạt động"}
                         </Badge>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
                         <Edit2 className="size-3 mr-1" />
-                        Edit
+                        Chỉnh sửa
                       </Button>
                       {viewingUser.status === true && (
                         <Button
