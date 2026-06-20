@@ -533,7 +533,7 @@ export default function BrandManagement() {
           <div className="space-y-4 py-4">
             {/* Logo upload */}
             <div>
-              <Label>Logo thương hiệu</Label>
+              <Label className="mb-2">Logo thương hiệu</Label>
               <div className="mt-2 space-y-3">
                 {(logoPreview || currentLogoUrl) && (
                   <div className="relative inline-block">
@@ -568,7 +568,7 @@ export default function BrandManagement() {
 
             {/* Brand name */}
             <div>
-              <Label htmlFor="brand_name">
+              <Label className="mb-2" htmlFor="brand_name">
                 Tên thương hiệu <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -581,7 +581,7 @@ export default function BrandManagement() {
 
             {/* Country */}
             <div>
-              <Label htmlFor="country">Quốc gia</Label>
+              <Label className="mb-2" htmlFor="country">Quốc gia</Label>
               <Input
                 id="country"
                 value={formData.country}
@@ -592,7 +592,7 @@ export default function BrandManagement() {
 
             {/* Status — values are "1" and "0" to match backend expectation */}
             <div>
-              <Label htmlFor="status">Trạng thái</Label>
+              <Label className="mb-2" htmlFor="status">Trạng thái</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => handleChange("status", value)}
@@ -609,7 +609,9 @@ export default function BrandManagement() {
 
             {/* Description */}
             <div>
-              <Label htmlFor="description">Mô tả</Label>
+              <Label className="mb-2" htmlFor="description">
+                Mô tả
+              </Label>
               <Textarea
                 id="description"
                 value={formData.description}
