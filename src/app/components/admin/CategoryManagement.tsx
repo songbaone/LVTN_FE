@@ -59,29 +59,22 @@ interface Category {
   children?: Category[];
 }
 
-
-
 const mapCategory = (item: any): Category => ({
   id: String(item.category_id),
   name: item.category_name,
-  parentId: item.parent_id
-    ? String(item.parent_id)
-    : null,
+  parentId: item.parent_id ? String(item.parent_id) : null,
 
   description: item.description || "",
 
   productCount: item.product_count || 0,
 
-  status: item.status
-    ? "active"
-    : "inactive",
+  status: item.status ? "active" : "inactive",
 
   createdAt: new Date().toISOString(),
 
   imageUrl: item.image_url || "",
 
-  children:
-    item.children?.map(mapCategory) || [],
+  children: item.children?.map(mapCategory) || [],
 });
 
 import { useEffect } from "react";
@@ -90,12 +83,18 @@ import { categoryService } from "./../../../services/category.service";
 export default function CategoryManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["1", "2", "4"]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    "1",
+    "2",
+    "4",
+  ]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -146,10 +145,7 @@ export default function CategoryManagement() {
 
       const response = await categoryService.getTree();
 
-      setCategories(
-        response.data.data.tree.map(mapCategory)
-      );
-
+      setCategories(response.data.data.tree.map(mapCategory));
     } catch (error) {
       toast.error("Tải danh mục thất bại");
     } finally {
@@ -158,16 +154,16 @@ export default function CategoryManagement() {
   };
 
   const toggleExpand = (categoryId: string) => {
-    setExpandedCategories(prev =>
+    setExpandedCategories((prev) =>
       prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
     );
   };
 
   const getAllCategories = (): Category[] => {
     const all: Category[] = [];
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       all.push(cat);
       if (cat.children) {
         all.push(...cat.children);
@@ -176,14 +172,17 @@ export default function CategoryManagement() {
     return all;
   };
 
-  const filteredCategories = categories.filter(category => {
-    const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || category.status === statusFilter;
+  const filteredCategories = categories.filter((category) => {
+    const matchesSearch = category.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || category.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,7 +281,11 @@ export default function CategoryManagement() {
       setIsEditDialogOpen(false);
       await Promise.all([loadCategories(), loadStatistics()]);
     } catch (error: any) {
-      const message = error?.response?.data?.message || (isEditDialogOpen ? "Không thể cập nhật danh mục" : "Không thể tạo danh mục");
+      const message =
+        error?.response?.data?.message ||
+        (isEditDialogOpen
+          ? "Không thể cập nhật danh mục"
+          : "Không thể tạo danh mục");
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -300,7 +303,8 @@ export default function CategoryManagement() {
       setIsDeleteDialogOpen(false);
       await Promise.all([loadCategories(), loadStatistics()]);
     } catch (error: any) {
-      const message = error?.response?.data?.message || "Không thể xóa danh mục";
+      const message =
+        error?.response?.data?.message || "Không thể xóa danh mục";
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -319,9 +323,15 @@ export default function CategoryManagement() {
       <>
         <TableRow key={category.id} className="hover:bg-secondary/50">
           <TableCell>
-            <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 24}px` }}>
+            <div
+              className="flex items-center gap-2"
+              style={{ paddingLeft: `${level * 24}px` }}
+            >
               {hasChildren ? (
-                <button onClick={() => toggleExpand(category.id)} className="hover:bg-secondary p-1 rounded">
+                <button
+                  onClick={() => toggleExpand(category.id)}
+                  className="hover:bg-secondary p-1 rounded"
+                >
                   {isExpanded ? (
                     <ChevronDown className="size-4" />
                   ) : (
@@ -334,7 +344,11 @@ export default function CategoryManagement() {
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-lg bg-secondary flex items-center justify-center text-2xl">
                   {category.imageUrl ? (
-                    <img src={"http://localhost:3000" + category.imageUrl} alt={category.name} className="size-10 rounded-lg object-cover" />
+                    <img
+                      src={"http://localhost:3000" + category.imageUrl}
+                      alt={category.name}
+                      className="size-10 rounded-lg object-cover"
+                    />
                   ) : (
                     <Folder className="size-5 text-muted-foreground" />
                   )}
@@ -349,15 +363,22 @@ export default function CategoryManagement() {
           <TableCell>
             {category.parentId ? (
               <Badge variant="outline">
-                {categories.find(c => c.id === category.parentId)?.name || "N/A"}
+                {categories.find((c) => c.id === category.parentId)?.name ||
+                  "N/A"}
               </Badge>
             ) : (
               <span className="text-muted-foreground text-sm">Gốc</span>
             )}
           </TableCell>
-          <TableCell className="text-center font-medium">{category.productCount}</TableCell>
+          <TableCell className="text-center font-medium">
+            {category.productCount}
+          </TableCell>
           <TableCell>
-            <Badge className={category.status === "active" ? "bg-success" : "bg-warning"}>
+            <Badge
+              className={
+                category.status === "active" ? "bg-success" : "bg-warning"
+              }
+            >
               {getStatusText(category.status)}
             </Badge>
           </TableCell>
@@ -393,7 +414,11 @@ export default function CategoryManagement() {
           </TableCell>
         </TableRow>
 
-        {hasChildren && isExpanded && category.children!.map(child => renderCategoryRow(child, level + 1))}
+        {hasChildren &&
+          isExpanded &&
+          category.children!.map((child) =>
+            renderCategoryRow(child, level + 1),
+          )}
       </>
     );
   };
@@ -404,9 +429,14 @@ export default function CategoryManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">Quản Lý Danh Mục</h1>
-          <p className="text-muted-foreground">Quản lý và tổ chức danh mục sản phẩm</p>
+          <p className="text-muted-foreground">
+            Quản lý và tổ chức danh mục sản phẩm
+          </p>
         </div>
-        <Button onClick={handleOpenCreate} className="bg-accent hover:bg-accent/90">
+        <Button
+          onClick={handleOpenCreate}
+          className="bg-accent hover:bg-accent/90"
+        >
           <Plus className="size-4 mr-2" />
           Thêm Danh Mục
         </Button>
@@ -422,9 +452,13 @@ export default function CategoryManagement() {
             <Folder className="size-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{statsLoading ? "--" : statistics.total_categories}</div>
+            <div className="text-3xl font-bold">
+              {statsLoading ? "--" : statistics.total_categories}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {statsLoading ? "--" : `${statistics.parent_categories} danh mục cha`}
+              {statsLoading
+                ? "--"
+                : `${statistics.parent_categories} danh mục cha`}
             </p>
           </CardContent>
         </Card>
@@ -437,7 +471,9 @@ export default function CategoryManagement() {
             <FolderOpen className="size-5 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-success">{statsLoading ? "--" : statistics.active_categories}</div>
+            <div className="text-3xl font-bold text-success">
+              {statsLoading ? "--" : statistics.active_categories}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Đang hoạt động</p>
           </CardContent>
         </Card>
@@ -450,8 +486,12 @@ export default function CategoryManagement() {
             <Package className="size-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-accent">{statsLoading ? "--" : statistics.total_products}</div>
-            <p className="text-xs text-muted-foreground mt-1">Trên toàn bộ danh mục</p>
+            <div className="text-3xl font-bold text-accent">
+              {statsLoading ? "--" : statistics.total_products}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Trên toàn bộ danh mục
+            </p>
           </CardContent>
         </Card>
 
@@ -520,11 +560,16 @@ export default function CategoryManagement() {
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                         <Folder className="size-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">Không tìm thấy danh mục nào</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        Không tìm thấy danh mục nào
+                      </h3>
                       <p className="text-muted-foreground text-sm mb-4">
                         Hãy bắt đầu bằng cách tạo danh mục đầu tiên
                       </p>
-                      <Button onClick={handleOpenCreate} className="bg-accent hover:bg-accent/90">
+                      <Button
+                        onClick={handleOpenCreate}
+                        className="bg-accent hover:bg-accent/90"
+                      >
                         <Plus className="size-4 mr-2" />
                         Thêm Danh Mục
                       </Button>
@@ -532,7 +577,9 @@ export default function CategoryManagement() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCategories.map(category => renderCategoryRow(category))
+                filteredCategories.map((category) =>
+                  renderCategoryRow(category),
+                )
               )}
             </TableBody>
           </Table>
@@ -540,19 +587,24 @@ export default function CategoryManagement() {
       </Card>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsCreateDialogOpen(false);
-          setIsEditDialogOpen(false);
-        }
-      }}>
+      <Dialog
+        open={isCreateDialogOpen || isEditDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsCreateDialogOpen(false);
+            setIsEditDialogOpen(false);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isEditDialogOpen ? "Cập nhật danh mục" : "Thêm danh mục"}
             </DialogTitle>
             <DialogDescription>
-              {isEditDialogOpen ? "Cập nhật thông tin danh mục" : "Thêm danh mục sản phẩm mới"}
+              {isEditDialogOpen
+                ? "Cập nhật thông tin danh mục"
+                : "Thêm danh mục sản phẩm mới"}
             </DialogDescription>
           </DialogHeader>
 
@@ -572,15 +624,24 @@ export default function CategoryManagement() {
               </div>
 
               <div>
-                <Label htmlFor="parentId" className="mb-2">Danh mục cha</Label>
-                <Select value={formData.parentId} onValueChange={(value) => handleChange("parentId", value)}>
+                <Label htmlFor="parentId" className="mb-2">
+                  Danh mục cha
+                </Label>
+                <Select
+                  value={formData.parentId}
+                  onValueChange={(value) => handleChange("parentId", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn danh mục cha (không bắt buộc)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="root">Không có (danh mục gốc)</SelectItem>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    <SelectItem value="root">
+                      Không có (danh mục gốc)
+                    </SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -589,8 +650,13 @@ export default function CategoryManagement() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="status" className="mb-2">Trạng thái</Label>
-                <Select value={formData.status} onValueChange={(value: any) => handleChange("status", value)}>
+                <Label htmlFor="status" className="mb-2">
+                  Trạng thái
+                </Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: any) => handleChange("status", value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -607,7 +673,10 @@ export default function CategoryManagement() {
                   {(imagePreview || currentImageUrl) && (
                     <div className="relative inline-block">
                       <img
-                        src={imagePreview || "http://localhost:3000" + currentImageUrl}
+                        src={
+                          imagePreview ||
+                          "http://localhost:3000" + currentImageUrl
+                        }
                         alt="Preview"
                         className="size-24 rounded-lg object-cover border border-border"
                       />
@@ -666,7 +735,11 @@ export default function CategoryManagement() {
               className="bg-accent hover:bg-accent/90"
             >
               {isSaving && <Loader2 className="size-4 mr-2 animate-spin" />}
-              {isSaving ? "Đang lưu..." : isEditDialogOpen ? "Cập nhật danh mục" : "Lưu"}
+              {isSaving
+                ? "Đang lưu..."
+                : isEditDialogOpen
+                  ? "Cập nhật danh mục"
+                  : "Lưu"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -679,19 +752,29 @@ export default function CategoryManagement() {
             <DialogTitle>Xóa Danh Mục</DialogTitle>
             <DialogDescription>
               Bạn có chắc chắn muốn xóa "{selectedCategory?.name}"?
-              {selectedCategory?.children && selectedCategory.children.length > 0 && (
-                <span className="block mt-2 text-destructive">
-                  <AlertCircle className="size-4 inline mr-1" />
-                  Danh mục này có {selectedCategory.children.length} danh mục con cũng sẽ bị xóa.
-                </span>
-              )}
+              {selectedCategory?.children &&
+                selectedCategory.children.length > 0 && (
+                  <span className="block mt-2 text-destructive">
+                    <AlertCircle className="size-4 inline mr-1" />
+                    Danh mục này có {selectedCategory.children.length} danh mục
+                    con cũng sẽ bị xóa.
+                  </span>
+                )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
               Hủy
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
               {isDeleting && <Loader2 className="size-4 mr-2 animate-spin" />}
               {isDeleting ? "Đang xóa..." : "Xóa"}
             </Button>
@@ -711,14 +794,26 @@ export default function CategoryManagement() {
               <div className="flex items-start gap-4">
                 <div className="size-20 rounded-lg bg-secondary flex items-center justify-center text-4xl">
                   {selectedCategory.imageUrl ? (
-                    <img src={"http://localhost:3000" + selectedCategory.imageUrl} alt={selectedCategory.name} className="size-20 rounded-lg object-cover" />
+                    <img
+                      src={"http://localhost:3000" + selectedCategory.imageUrl}
+                      alt={selectedCategory.name}
+                      className="size-20 rounded-lg object-cover"
+                    />
                   ) : (
                     <Folder className="size-8 text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-1">{selectedCategory.name}</h2>
-                  <Badge className={selectedCategory.status === "active" ? "bg-success" : "bg-warning"}>
+                  <h2 className="text-2xl font-bold mb-1">
+                    {selectedCategory.name}
+                  </h2>
+                  <Badge
+                    className={
+                      selectedCategory.status === "active"
+                        ? "bg-success"
+                        : "bg-warning"
+                    }
+                  >
                     {getStatusText(selectedCategory.status)}
                   </Badge>
                 </div>
@@ -732,7 +827,9 @@ export default function CategoryManagement() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{selectedCategory.productCount}</div>
+                    <div className="text-2xl font-bold">
+                      {selectedCategory.productCount}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -743,7 +840,9 @@ export default function CategoryManagement() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{selectedCategory.children?.length || 0}</div>
+                    <div className="text-2xl font-bold">
+                      {selectedCategory.children?.length || 0}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -755,7 +854,9 @@ export default function CategoryManagement() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm font-medium">
-                      {new Date(selectedCategory?.createdAt).toLocaleDateString("vi-VN")}
+                      {new Date(selectedCategory?.createdAt).toLocaleDateString(
+                        "vi-VN",
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -764,37 +865,56 @@ export default function CategoryManagement() {
               {selectedCategory.description && (
                 <div>
                   <h3 className="font-semibold mb-2">Mô Tả</h3>
-                  <p className="text-sm text-muted-foreground">{selectedCategory.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCategory.description}
+                  </p>
                 </div>
               )}
 
-              {selectedCategory.children && selectedCategory.children.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-2">Danh Mục Con ({selectedCategory.children.length})</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {selectedCategory.children.map(child => (
-                      <div key={child.id} className="flex items-center gap-2 p-2 rounded-lg border border-border">
-                        <div className="size-8 rounded bg-secondary flex items-center justify-center text-lg">
-                          {child.imageUrl ? (
-                            <img src={"http://localhost:3000" + child.imageUrl} alt={child.name} className="size-8 rounded object-cover" />
-                          ) : (
-                            <Folder className="size-4 text-muted-foreground" />
-                          )}
+              {selectedCategory.children &&
+                selectedCategory.children.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">
+                      Danh Mục Con ({selectedCategory.children.length})
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {selectedCategory.children.map((child) => (
+                        <div
+                          key={child.id}
+                          className="flex items-center gap-2 p-2 rounded-lg border border-border"
+                        >
+                          <div className="size-8 rounded bg-secondary flex items-center justify-center text-lg">
+                            {child.imageUrl ? (
+                              <img
+                                src={"http://localhost:3000" + child.imageUrl}
+                                alt={child.name}
+                                className="size-8 rounded object-cover"
+                              />
+                            ) : (
+                              <Folder className="size-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {child.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {child.productCount} sản phẩm
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{child.name}</p>
-                          <p className="text-xs text-muted-foreground">{child.productCount} sản phẩm</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDetailDialogOpen(false)}
+            >
               Đóng
             </Button>
           </DialogFooter>
