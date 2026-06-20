@@ -453,12 +453,12 @@ export default function CategoryManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {statsLoading ? "--" : statistics.total_categories}
+              {statsLoading ? "--" : statistics?.total_categories}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {statsLoading
                 ? "--"
-                : `${statistics.parent_categories} danh mục cha`}
+                : `${statistics?.parent_categories} danh mục cha`}
             </p>
           </CardContent>
         </Card>
@@ -472,7 +472,7 @@ export default function CategoryManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-success">
-              {statsLoading ? "--" : statistics.active_categories}
+              {statsLoading ? "--" : statistics?.active_categories}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Đang hoạt động</p>
           </CardContent>
@@ -487,7 +487,7 @@ export default function CategoryManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-accent">
-              {statsLoading ? "--" : statistics.total_products}
+              {statsLoading ? "--" : statistics?.total_products}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Trên toàn bộ danh mục
@@ -504,7 +504,7 @@ export default function CategoryManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-info">
-              {statsLoading ? "--" : statistics.average_products_per_category}
+              {statsLoading ? "--" : statistics?.average_products_per_category}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Mỗi danh mục</p>
           </CardContent>
