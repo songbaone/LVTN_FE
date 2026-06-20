@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -28,215 +28,165 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   Award,
   Plus,
   Edit2,
   Trash2,
   Search,
-  Upload,
-  Eye,
-  TrendingUp,
-  Package,
-  DollarSign,
-  Star,
   Loader2,
   Image as ImageIcon,
-  BarChart3
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { brandService } from "../../../services/brand.service";
 
 interface Brand {
-  id: string;
-  name: string;
-  slug: string;
-  logo: string;
+  brand_id: number;
+  brand_name: string;
+  country: string;
   description: string;
-  productCount: number;
-  totalRevenue: number;
-  status: "active" | "inactive";
-  createdAt: string;
-  website: string;
-  topProducts: Array<{
-    id: string;
-    name: string;
-    sales: number;
-    revenue: number;
-  }>;
+  status: boolean; // true: active, false: inactive (from GET response)
+  logo_url: string;
+  created_at: string;
 }
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+const isValidPage = (p: any): p is number =>
+  Number.isFinite(p) && p > 0;
+
+/**
+ * Convert a status value to backend-compatible string.
+ * Backend expects: "1" (Active) or "0" (Inactive)
+ */
+const toStatusString = (status: any): "1" | "0" => {
+  if (status === "1" || status === 1 || status === true) return "1";
+  return "0";
+};
+
+/**
+ * Convert boolean status (from GET response) to display-friendly string.
+ */
+const fromStatusBoolean = (status: boolean): "1" | "0" => {
+  return status ? "1" : "0";
+};
 
 export default function BrandManagement() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // formData.status is always "1" or "0" (string) — matches backend expectation
   const [formData, setFormData] = useState({
-    name: "",
-    slug: "",
+    brand_name: "",
+    country: "",
     description: "",
-    website: "",
-    status: "active" as "active" | "inactive"
+    status: "1" as "1" | "0",
   });
 
-  const [brands, setBrands] = useState<Brand[]>([
-    {
-      id: "1",
-      name: "BabyCare",
-      slug: "babycare",
-      logo: "🍼",
-      description: "Premium baby care products for modern parents",
-      productCount: 45,
-      totalRevenue: 125000000,
-      status: "active",
-      createdAt: "2023-06-15",
-      website: "https://babycare.com",
-      topProducts: [
-        { id: "P1", name: "Organic Cotton Onesie Set", sales: 234, revenue: 105300000 },
-        { id: "P2", name: "Baby Monitor Premium", sales: 89, revenue: 111250000 },
-        { id: "P3", name: "Silicone Feeding Set", sales: 156, revenue: 49920000 }
-      ]
-    },
-    {
-      id: "2",
-      name: "SmartBaby",
-      slug: "smartbaby",
-      logo: "🤖",
-      description: "Smart monitoring and safety solutions",
-      productCount: 18,
-      totalRevenue: 78500000,
-      status: "active",
-      createdAt: "2023-08-20",
-      website: "https://smartbaby.com",
-      topProducts: [
-        { id: "P4", name: "Video Monitor HD", sales: 67, revenue: 83750000 },
-        { id: "P5", name: "Smart Thermometer", sales: 45, revenue: 22500000 }
-      ]
-    },
-    {
-      id: "3",
-      name: "TinyTots",
-      slug: "tinytots",
-      logo: "👶",
-      description: "Comfortable and stylish baby clothing",
-      productCount: 67,
-      totalRevenue: 156000000,
-      status: "active",
-      createdAt: "2023-03-10",
-      website: "https://tinytots.com",
-      topProducts: [
-        { id: "P6", name: "Onesie Collection", sales: 312, revenue: 140400000 },
-        { id: "P7", name: "Baby Sleepwear Set", sales: 189, revenue: 94500000 }
-      ]
-    },
-    {
-      id: "4",
-      name: "SafeRide",
-      slug: "saferide",
-      logo: "🚗",
-      description: "Trusted car seats and travel gear",
-      productCount: 22,
-      totalRevenue: 98700000,
-      status: "active",
-      createdAt: "2023-01-05",
-      website: "https://saferide.com",
-      topProducts: [
-        { id: "P8", name: "Convertible Car Seat", sales: 78, revenue: 97500000 }
-      ]
-    },
-    {
-      id: "5",
-      name: "PlayLearn",
-      slug: "playlearn",
-      logo: "🧸",
-      description: "Educational toys for early development",
-      productCount: 89,
-      totalRevenue: 134000000,
-      status: "active",
-      createdAt: "2023-05-18",
-      website: "https://playlearn.com",
-      topProducts: [
-        { id: "P9", name: "Wooden Toy Set", sales: 245, revenue: 132300000 },
-        { id: "P10", name: "Musical Instruments", sales: 123, revenue: 61500000 }
-      ]
-    },
-    {
-      id: "6",
-      name: "EcoKids",
-      slug: "ecokids",
-      logo: "🌱",
-      description: "Sustainable and eco-friendly baby products",
-      productCount: 34,
-      totalRevenue: 45000000,
-      status: "inactive",
-      createdAt: "2024-02-12",
-      website: "https://ecokids.com",
-      topProducts: []
-    }
-  ]);
+  const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Statistics
-  const stats = {
-    total: brands.length,
-    active: brands.filter(b => b.status === "active").length,
-    totalProducts: brands.reduce((sum, b) => sum + b.productCount, 0),
-    totalRevenue: brands.reduce((sum, b) => sum + b.totalRevenue, 0)
-  };
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const topBrands = [...brands]
-    .sort((a, b) => b.totalRevenue - a.totalRevenue)
-    .slice(0, 5);
-
-  // Filtering and Sorting
-  const filteredBrands = brands.filter(brand => {
-    const matchesSearch = brand.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || brand.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "products-desc":
-        return b.productCount - a.productCount;
-      case "revenue-desc":
-        return b.totalRevenue - a.totalRevenue;
-      case "date-desc":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      default:
-        return 0;
-    }
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
   });
+
+  // Safe page: always a valid positive integer
+  const safePage = isValidPage(page) ? page : 1;
+
+  useEffect(() => {
+    loadBrands();
+  }, [safePage]);
+
+  const loadBrands = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await brandService.getAll({ page: safePage, limit });
+      const data = response.data?.data;
+      setBrands(data?.brands || []);
+      if (data?.pagination && isValidPage(data.pagination.page)) {
+        setPagination(data.pagination);
+      } else {
+        setPagination({ page: 1, limit: 10, total: 0, totalPages: 1 });
+      }
+    } catch {
+      toast.error("Tải danh sách thương hiệu thất bại");
+    } finally {
+      setLoading(false);
+    }
+  }, [safePage, limit]);
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedLogo(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setSelectedLogo(null);
+    setLogoPreview(null);
+    setCurrentLogoUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleOpenCreate = () => {
     setFormData({
-      name: "",
-      slug: "",
+      brand_name: "",
+      country: "",
       description: "",
-      website: "",
-      status: "active"
+      status: "1",
     });
+    setSelectedLogo(null);
+    setLogoPreview(null);
+    setCurrentLogoUrl("");
     setIsCreateDialogOpen(true);
   };
 
   const handleOpenEdit = (brand: Brand) => {
     setSelectedBrand(brand);
     setFormData({
-      name: brand.name,
-      slug: brand.slug,
-      description: brand.description,
-      website: brand.website,
-      status: brand.status
+      brand_name: brand.brand_name,
+      country: brand.country || "",
+      description: brand.description || "",
+      // Convert GET response boolean → "1" / "0" string
+      status: fromStatusBoolean(brand.status),
     });
+    setSelectedLogo(null);
+    setLogoPreview(null);
+    setCurrentLogoUrl(brand.logo_url || "");
     setIsEditDialogOpen(true);
   };
 
@@ -245,152 +195,138 @@ export default function BrandManagement() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleOpenDetail = (brand: Brand) => {
-    setSelectedBrand(brand);
-    setIsDetailDialogOpen(true);
-  };
-
   const handleSaveBrand = async () => {
-    if (!formData.name.trim()) {
-      toast.error("Brand name is required");
+    if (!formData.brand_name.trim()) {
+      toast.error("Vui lòng nhập tên thương hiệu");
       return;
     }
 
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (isEditDialogOpen) {
-      toast.success("Brand updated successfully");
-    } else {
-      toast.success("Brand created successfully");
+    try {
+      const formPayload = new FormData();
+      formPayload.append("brand_name", formData.brand_name.trim());
+
+      if (formData.country) {
+        formPayload.append("country", formData.country.trim());
+      }
+
+      if (formData.description) {
+        formPayload.append("description", formData.description.trim());
+      }
+
+      // Always send status as "1" or "0" — backend validates isIn([0, 1, '0', '1'])
+      const statusValue = toStatusString(formData.status);
+      formPayload.append("status", statusValue);
+
+      if (selectedLogo) {
+        formPayload.append("logo", selectedLogo);
+      }
+
+      // Debug payload
+      console.log(
+        isEditDialogOpen ? "UPDATE BRAND PAYLOAD" : "CREATE BRAND PAYLOAD",
+        Object.fromEntries(formPayload.entries())
+      );
+
+      if (isEditDialogOpen && selectedBrand) {
+        await brandService.update(selectedBrand.brand_id, formPayload);
+        toast.success("Cập nhật thương hiệu thành công");
+      } else {
+        await brandService.create(formPayload);
+        toast.success("Thêm thương hiệu thành công");
+      }
+
+      setIsCreateDialogOpen(false);
+      setIsEditDialogOpen(false);
+      await loadBrands();
+    } catch {
+      const message = isEditDialogOpen
+        ? "Cập nhật thương hiệu thất bại"
+        : "Thêm thương hiệu thất bại";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsSaving(false);
-    setIsCreateDialogOpen(false);
-    setIsEditDialogOpen(false);
   };
 
   const handleDelete = async () => {
+    if (!selectedBrand) return;
+
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    toast.success("Brand deleted successfully");
-    setIsSaving(false);
-    setIsDeleteDialogOpen(false);
+
+    try {
+      await brandService.delete(selectedBrand.brand_id);
+      toast.success("Xóa thương hiệu thành công");
+      setIsDeleteDialogOpen(false);
+      await loadBrands();
+    } catch {
+      toast.error("Xóa thương hiệu thất bại");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleLogoUpload = () => {
-    toast.success("Logo uploaded successfully");
+  // Safe page setter — guarantees page is always a valid positive integer
+  const goToPage = useCallback((p: number) => {
+    if (isValidPage(p)) {
+      setPage(p);
+    } else {
+      setPage(1);
+    }
+  }, []);
+
+  const goPreviousPage = useCallback(() => {
+    setPage((prev) => {
+      const next = prev - 1;
+      return isValidPage(next) ? next : 1;
+    });
+  }, []);
+
+  const goNextPage = useCallback(() => {
+    setPage((prev) => {
+      const next = prev + 1;
+      return next <= pagination.totalPages ? next : prev;
+    });
+  }, [pagination.totalPages]);
+
+  const getStatusBadge = (status: boolean) => {
+    if (status) {
+      return <Badge className="bg-success">Hoạt động</Badge>;
+    }
+    return <Badge className="bg-warning">Ngừng hoạt động</Badge>;
   };
+
+  const getLogoUrl = (logo_url: string) => {
+    if (!logo_url) return "";
+    if (logo_url.startsWith("http")) return logo_url;
+    return `http://localhost:3000${logo_url}`;
+  };
+
+  // Pagination helpers
+  const startPage = Math.max(1, pagination.page - 2);
+  const endPage = Math.min(pagination.totalPages, pagination.page + 2);
+  const pageNumbers: number[] = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Brand Management</h1>
-          <p className="text-muted-foreground">Manage product brands and manufacturers</p>
+          <h1 className="text-3xl font-bold mb-2">Quản Lý Thương Hiệu</h1>
+          <p className="text-muted-foreground">Quản lý thương hiệu sản phẩm</p>
         </div>
-        <Button onClick={handleOpenCreate} className="bg-accent hover:bg-accent/90">
+        <Button
+          onClick={handleOpenCreate}
+          className="bg-accent hover:bg-accent/90"
+        >
           <Plus className="size-4 mr-2" />
-          Add Brand
+          Thêm Thương Hiệu
         </Button>
       </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Brands
-            </CardTitle>
-            <Award className="size-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">Registered brands</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Brands
-            </CardTitle>
-            <TrendingUp className="size-5 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-success">{stats.active}</div>
-            <p className="text-xs text-muted-foreground mt-1">Currently active</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Products
-            </CardTitle>
-            <Package className="size-5 text-accent" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-accent">{stats.totalProducts}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all brands</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Revenue
-            </CardTitle>
-            <DollarSign className="size-5 text-info" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-info">
-              {(stats.totalRevenue / 1000000).toFixed(0)}M ₫
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">From brand products</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top Brands */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="size-5 text-warning" />
-            Top Performing Brands
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {topBrands.map((brand, index) => (
-              <div
-                key={brand.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="size-8 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-sm">
-                    #{index + 1}
-                  </div>
-                  <div className="size-12 rounded-lg bg-secondary flex items-center justify-center text-2xl">
-                    {brand.logo}
-                  </div>
-                  <div>
-                    <p className="font-semibold">{brand.name}</p>
-                    <p className="text-sm text-muted-foreground">{brand.productCount} products</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-accent">
-                    {(brand.totalRevenue / 1000000).toFixed(1)}M ₫
-                  </p>
-                  <p className="text-xs text-muted-foreground">Revenue</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Filters */}
       <Card>
@@ -399,33 +335,12 @@ export default function BrandManagement() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search brands..."
+                placeholder="Tìm kiếm thương hiệu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Name A-Z</SelectItem>
-                <SelectItem value="products-desc">Most Products</SelectItem>
-                <SelectItem value="revenue-desc">Highest Revenue</SelectItem>
-                <SelectItem value="date-desc">Newest First</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -437,69 +352,77 @@ export default function BrandManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>Logo</TableHead>
-                <TableHead>Brand Name</TableHead>
-                <TableHead className="text-center">Products</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Tên Thương Hiệu</TableHead>
+                <TableHead>Quốc Gia</TableHead>
+                <TableHead>Trạng Thái</TableHead>
+                <TableHead>Ngày Tạo</TableHead>
+                <TableHead className="text-right">Thao Tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBrands.length === 0 ? (
+              {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16">
+                  <TableCell colSpan={6} className="text-center py-16">
+                    <div className="flex justify-center">
+                      <Loader2 className="size-8 animate-spin text-muted-foreground" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : brands.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-16">
                     <div className="flex flex-col items-center">
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                         <Award className="size-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">No brands found</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        Không có thương hiệu nào
+                      </h3>
                       <p className="text-muted-foreground text-sm mb-4">
-                        Get started by adding your first brand
+                        Hãy thêm thương hiệu đầu tiên
                       </p>
-                      <Button onClick={handleOpenCreate} className="bg-accent hover:bg-accent/90">
+                      <Button
+                        onClick={handleOpenCreate}
+                        className="bg-accent hover:bg-accent/90"
+                      >
                         <Plus className="size-4 mr-2" />
-                        Add Brand
+                        Thêm Thương Hiệu
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredBrands.map((brand) => (
-                  <TableRow key={brand.id} className="hover:bg-secondary/50">
+                brands.map((brand) => (
+                  <TableRow key={brand.brand_id} className="hover:bg-secondary/50">
                     <TableCell>
-                      <div className="size-14 rounded-lg bg-secondary flex items-center justify-center text-3xl">
-                        {brand.logo}
+                      <div className="size-14 rounded-lg bg-secondary flex items-center justify-center overflow-hidden">
+                        {brand.logo_url ? (
+                          <img
+                            src={getLogoUrl(brand.logo_url)}
+                            alt={brand.brand_name}
+                            className="size-14 object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="size-6 text-muted-foreground" />
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <p className="font-semibold">{brand.name}</p>
-                        <p className="text-xs text-muted-foreground">{brand.website}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center font-medium">{brand.productCount}</TableCell>
-                    <TableCell className="text-right font-bold text-accent">
-                      {(brand.totalRevenue / 1000000).toFixed(1)}M ₫
+                      <p className="font-semibold">{brand.brand_name}</p>
                     </TableCell>
                     <TableCell>
-                      <Badge className={brand.status === "active" ? "bg-success" : "bg-warning"}>
-                        {brand.status.charAt(0).toUpperCase() + brand.status.slice(1)}
-                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {brand.country || "---"}
+                      </span>
                     </TableCell>
+                    <TableCell>{getStatusBadge(brand.status)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(brand.createdAt).toLocaleDateString()}
+                      {brand.created_at
+                        ? new Date(brand.created_at).toLocaleDateString("vi-VN")
+                        : "---"}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-1 justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenDetail(brand)}
-                        >
-                          <Eye className="size-3 mr-1" />
-                          View
-                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -523,98 +446,175 @@ export default function BrandManagement() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Page Info & Pagination */}
+        {!loading && brands.length > 0 && (
+          <div className="px-4 py-3 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Page info */}
+            <div className="text-sm text-muted-foreground">
+              <span>Hiển thị {brands.length} thương hiệu</span>
+              <span className="mx-2">•</span>
+              <span>
+                Trang {pagination.page} / {pagination.totalPages}
+              </span>
+              <span className="mx-2">•</span>
+              <span>Tổng số: {pagination.total} thương hiệu</span>
+            </div>
+
+            {/* Pagination buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goPreviousPage}
+                disabled={!isValidPage(page) || page <= 1 || loading}
+              >
+                <ChevronLeft className="size-4 mr-1" />
+                Trước
+              </Button>
+
+              {pageNumbers.map((p) => (
+                <Button
+                  key={p}
+                  variant={p === pagination.page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => goToPage(p)}
+                  disabled={loading}
+                  className={
+                    p === pagination.page
+                      ? "bg-accent text-accent-foreground"
+                      : ""
+                  }
+                >
+                  {p}
+                </Button>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goNextPage}
+                disabled={
+                  !isValidPage(page) ||
+                  page >= pagination.totalPages ||
+                  loading
+                }
+              >
+                Sau
+                <ChevronRight className="size-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsCreateDialogOpen(false);
-          setIsEditDialogOpen(false);
-        }
-      }}>
-        <DialogContent className="max-w-2xl">
+      <Dialog
+        open={isCreateDialogOpen || isEditDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsCreateDialogOpen(false);
+            setIsEditDialogOpen(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {isEditDialogOpen ? "Edit Brand" : "Create New Brand"}
+              {isEditDialogOpen ? "Cập nhật thương hiệu" : "Thêm thương hiệu"}
             </DialogTitle>
             <DialogDescription>
-              {isEditDialogOpen ? "Update brand information" : "Add a new product brand"}
+              {isEditDialogOpen
+                ? "Cập nhật thông tin thương hiệu"
+                : "Thêm thương hiệu sản phẩm mới"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Logo upload */}
             <div>
-              <Label>Brand Logo</Label>
-              <div className="flex items-center gap-4 mt-2">
-                <div className="size-20 rounded-lg bg-secondary flex items-center justify-center text-4xl border-2 border-dashed border-border">
-                  <ImageIcon className="size-8 text-muted-foreground" />
+              <Label>Logo thương hiệu</Label>
+              <div className="mt-2 space-y-3">
+                {(logoPreview || currentLogoUrl) && (
+                  <div className="relative inline-block">
+                    <img
+                      src={logoPreview || getLogoUrl(currentLogoUrl)}
+                      alt="Logo preview"
+                      className="size-24 rounded-lg object-cover border border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="absolute -top-2 -right-2 size-5 rounded-full bg-destructive text-white flex items-center justify-center hover:bg-destructive/90"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                )}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleLogoSelect}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-white hover:file:bg-accent/90 cursor-pointer"
+                  />
                 </div>
-                <Button variant="outline" size="sm" onClick={handleLogoUpload}>
-                  <Upload className="size-4 mr-2" />
-                  Upload Logo
-                </Button>
                 <p className="text-xs text-muted-foreground">
-                  PNG or JPG. Max 2MB. Recommended: 400x400px
+                  Chấp nhận: JPEG, PNG, WebP
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">
-                  Brand Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  placeholder="e.g., BabyCare"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="slug">URL Slug</Label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => handleChange("slug", e.target.value)}
-                  placeholder="babycare"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  value={formData.website}
-                  onChange={(e) => handleChange("website", e.target.value)}
-                  placeholder="https://example.com"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value: any) => handleChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
+            {/* Brand name */}
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="brand_name">
+                Tên thương hiệu <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="brand_name"
+                value={formData.brand_name}
+                onChange={(e) => handleChange("brand_name", e.target.value)}
+                placeholder="VD: BabyCare"
+              />
+            </div>
+
+            {/* Country */}
+            <div>
+              <Label htmlFor="country">Quốc gia</Label>
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => handleChange("country", e.target.value)}
+                placeholder="VD: Việt Nam"
+              />
+            </div>
+
+            {/* Status — values are "1" and "0" to match backend expectation */}
+            <div>
+              <Label htmlFor="status">Trạng thái</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleChange("status", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Hoạt động</SelectItem>
+                  <SelectItem value="0">Ngừng hoạt động</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label htmlFor="description">Mô tả</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="Brief description of the brand"
+                placeholder="Mô tả ngắn về thương hiệu"
                 rows={4}
               />
             </div>
@@ -629,7 +629,7 @@ export default function BrandManagement() {
               }}
               disabled={isSaving}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               onClick={handleSaveBrand}
@@ -637,7 +637,11 @@ export default function BrandManagement() {
               className="bg-accent hover:bg-accent/90"
             >
               {isSaving && <Loader2 className="size-4 mr-2 animate-spin" />}
-              {isSaving ? "Saving..." : isEditDialogOpen ? "Update Brand" : "Create Brand"}
+              {isSaving
+                ? "Đang lưu..."
+                : isEditDialogOpen
+                  ? "Cập nhật thương hiệu"
+                  : "Lưu"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -647,126 +651,27 @@ export default function BrandManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Brand</DialogTitle>
+            <DialogTitle>Xóa Thương Hiệu</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedBrand?.name}"? This action cannot be undone.
+              Bạn có chắc chắn muốn xóa "{selectedBrand?.brand_name}"? Hành
+              động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isSaving}>
-              Cancel
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isSaving}
+            >
+              Hủy
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isSaving}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSaving}
+            >
               {isSaving && <Loader2 className="size-4 mr-2 animate-spin" />}
-              {isSaving ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Brand Details</DialogTitle>
-          </DialogHeader>
-
-          {selectedBrand && (
-            <div className="space-y-6">
-              <div className="flex items-start gap-6">
-                <div className="size-24 rounded-lg bg-secondary flex items-center justify-center text-5xl border-2 border-border">
-                  {selectedBrand.logo}
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-1">{selectedBrand.name}</h2>
-                  <p className="text-sm text-muted-foreground mb-2">{selectedBrand.website}</p>
-                  <Badge className={selectedBrand.status === "active" ? "bg-success" : "bg-warning"}>
-                    {selectedBrand.status.charAt(0).toUpperCase() + selectedBrand.status.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Package className="size-4" />
-                      Products
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{selectedBrand.productCount}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <DollarSign className="size-4" />
-                      Revenue
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-accent">
-                      {(selectedBrand.totalRevenue / 1000000).toFixed(1)}M ₫
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <BarChart3 className="size-4" />
-                      Avg per Product
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg font-bold">
-                      {((selectedBrand.totalRevenue / selectedBrand.productCount) / 1000).toFixed(0)}K ₫
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {selectedBrand.description && (
-                <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-sm text-muted-foreground">{selectedBrand.description}</p>
-                </div>
-              )}
-
-              {selectedBrand.topProducts.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3">Top Products</h3>
-                  <div className="space-y-2">
-                    {selectedBrand.topProducts.map((product, index) => (
-                      <div
-                        key={product.id}
-                        className="flex items-center justify-between p-3 rounded-lg border border-border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-sm">
-                            #{index + 1}
-                          </div>
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-muted-foreground">{product.sales} sales</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-accent">{(product.revenue / 1000000).toFixed(1)}M ₫</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
-              Close
+              {isSaving ? "Đang xóa..." : "Xóa"}
             </Button>
           </DialogFooter>
         </DialogContent>
