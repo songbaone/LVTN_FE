@@ -362,7 +362,7 @@ export default function CategoryManagement() {
             </Badge>
           </TableCell>
           <TableCell className="text-sm text-muted-foreground">
-            {new Date(selectedCategory.createdAt).toLocaleDateString("vi-VN")}
+            {new Date(selectedCategory?.createdAt).toLocaleDateString("vi-VN")}
           </TableCell>
           <TableCell className="text-right">
             <div className="flex gap-1 justify-end">
@@ -755,7 +755,7 @@ export default function CategoryManagement() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm font-medium">
-                      {new Date(selectedCategory.createdAt).toLocaleDateString("vi-VN")}
+                      {new Date(selectedCategory?.createdAt).toLocaleDateString("vi-VN")}
                     </div>
                   </CardContent>
                 </Card>
