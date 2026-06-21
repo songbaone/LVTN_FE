@@ -72,7 +72,7 @@ interface StockVariant {
 
 interface StockItem {
   variant_id: string;
-  productId: string;
+  product_id: string;
   product_name: string;
   sku: string;
   category: string;
@@ -80,7 +80,7 @@ interface StockItem {
   color: string;
   material: string;
   stock_quantity: number;
-  additionalPrice: number;
+  additional_price: number;
   status: "in_stock" | "low_stock" | "out_of_stock";
   image: string;
   variants: StockVariant[];
@@ -214,6 +214,7 @@ export default function InventoryManagement() {
   const [adjustProductId, setAdjustProductId] = useState("");
   const [adjustProductName, setAdjustProductName] = useState("");
   const [adjustVariantId, setAdjustVariantId] = useState("");
+  const [adjustSku, setAdjustSku] = useState("");
   const [adjustCurrentStock, setAdjustCurrentStock] = useState(0);
   const [adjustNewStock, setAdjustNewStock] = useState("");
   const [adjustNote, setAdjustNote] = useState("");
@@ -367,7 +368,7 @@ export default function InventoryManagement() {
 
   const handleOpenImport = (item: StockRow | StockItem) => {
     const isStockRow = "product_id" in item;
-    const productId = isStockRow ? String(item.product_id) : item.productId;
+    const productId = isStockRow ? String(item.product_id) : item.product_id;
     const productName = item.product_name;
     const variantId = isStockRow ? String(item.variant_id) : "all";
     setImportProductId(productId);
@@ -380,13 +381,15 @@ export default function InventoryManagement() {
 
   const handleOpenAdjust = (item: StockRow | StockItem) => {
     const isStockRow = "product_id" in item;
-    const productId = isStockRow ? String(item.product_id) : item.productId;
+    const productId = isStockRow ? String(item.product_id) : item.product_id;
     const productName = item.product_name;
     const stockQty = item.stock_quantity;
     const variantId = isStockRow ? String(item.variant_id) : "";
+    const sku = item.sku;
     setAdjustProductId(productId);
     setAdjustProductName(productName);
     setAdjustVariantId(variantId);
+    setAdjustSku(sku);
     setAdjustCurrentStock(stockQty);
     setAdjustNewStock("");
     setAdjustNote("");
@@ -550,9 +553,6 @@ export default function InventoryManagement() {
   const handleSearchBlur = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
-
-  // ── Render helpers for dialog variant options ──
-  const importVariants: StockVariant[] = [];
 
   return (
     <div className="space-y-6">
@@ -1293,21 +1293,15 @@ export default function InventoryManagement() {
               <Label>Sản phẩm</Label>
               <Input value={adjustProductName} disabled className="mt-1" />
             </div>
-            <div>
-              <Label htmlFor="adjustVariant">Biến thể</Label>
-              <Select value={adjustVariantId} onValueChange={setAdjustVariantId}>
-                <SelectTrigger className="mt-1" id="adjustVariant">
-                  <SelectValue placeholder="Chọn biến thể" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Tất cả biến thể (cấp sản phẩm)</SelectItem>
-                  {importVariants.map((v) => (
-                    <SelectItem key={v.variant_id} value={v.variant_id}>
-                      {v.sku} — {v.color} / {v.material}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>SKU</Label>
+                <Input value={adjustSku} disabled className="mt-1" />
+              </div>
+              <div>
+                <Label>Mã biến thể</Label>
+                <Input value={adjustVariantId} disabled className="mt-1" />
+              </div>
             </div>
             <div>
               <Label>Tồn kho hiện tại</Label>
