@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -39,237 +39,76 @@ import {
   Package,
 } from "lucide-react";
 import { toast } from "sonner";
+import { stockService } from "../../../services/stock.service";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StockLog {
-  id: string;
-  productId: string;
-  productName: string;
-  variantSku: string;
-  variantColor: string;
-  variantMaterial: string;
-  actionType: "MANUAL_IMPORT" | "EXCEL_IMPORT" | "ADJUST" | "ROLLBACK";
-  oldQuantity: number;
-  changeQuantity: number;
-  newQuantity: number;
-  referenceCode: string;
-  performedBy: string;
-  createdAt: string;
+  log_id: number;
+  product_name: string;
+  variant_sku: string;
+  action_type: "MANUAL_IMPORT" | "EXCEL_IMPORT" | "ADJUST" | "ROLLBACK";
+  old_quantity: number;
+  change_quantity: number;
+  new_quantity: number;
+  reference_code: string;
+  created_by: number | null;
+  created_at: string;
+}
+
+interface ApiStockLog {
+  log_id: number;
+  product_name: string;
+  variant_sku: string;
+  action_type: "MANUAL_IMPORT" | "EXCEL_IMPORT" | "ADJUST" | "ROLLBACK";
+  old_quantity: number;
+  change_quantity: number;
+  new_quantity: number;
+  reference_code: string;
+  created_by: number | null;
+  created_at: string;
 }
 
 interface RollbackPreviewItem {
-  logId: string;
-  productName: string;
-  variantSku: string;
-  currentStock: number;
-  willRevertTo: number;
+  variant_id: string;
+  product_name: string;
+  sku: string;
+  current_stock: number;
+  target_rollback_stock: number;
 }
 
 interface PaginationState {
   currentPage: number;
   pageSize: number;
   totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 }
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_STOCK_LOGS: StockLog[] = [
-  {
-    id: "LOG-001",
-    productId: "P1",
-    productName: "Organic Cotton Onesie Set",
-    variantSku: "BC-OCS-001-W-S",
-    variantColor: "White",
-    variantMaterial: "Cotton",
-    actionType: "MANUAL_IMPORT",
-    oldQuantity: 0,
-    changeQuantity: 50,
-    newQuantity: 50,
-    referenceCode: "REF-IMP-20260601-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-01 10:30:00",
-  },
-  {
-    id: "LOG-002",
-    productId: "P1",
-    productName: "Organic Cotton Onesie Set",
-    variantSku: "BC-OCS-001-W-M",
-    variantColor: "White",
-    variantMaterial: "Cotton",
-    actionType: "MANUAL_IMPORT",
-    oldQuantity: 0,
-    changeQuantity: 50,
-    newQuantity: 50,
-    referenceCode: "REF-IMP-20260601-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-01 10:30:00",
-  },
-  {
-    id: "LOG-003",
-    productId: "P2",
-    productName: "Baby Monitor Premium",
-    variantSku: "SM-BMP-002-BK",
-    variantColor: "Black",
-    variantMaterial: "Plastic",
-    actionType: "EXCEL_IMPORT",
-    oldQuantity: 0,
-    changeQuantity: 30,
-    newQuantity: 30,
-    referenceCode: "REF-EXL-20260602-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-02 14:20:00",
-  },
-  {
-    id: "LOG-004",
-    productId: "P2",
-    productName: "Baby Monitor Premium",
-    variantSku: "SM-BMP-002-WH",
-    variantColor: "White",
-    variantMaterial: "Plastic",
-    actionType: "EXCEL_IMPORT",
-    oldQuantity: 0,
-    changeQuantity: 20,
-    newQuantity: 20,
-    referenceCode: "REF-EXL-20260602-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-02 14:20:00",
-  },
-  {
-    id: "LOG-005",
-    productId: "P3",
-    productName: "Silicone Feeding Set",
-    variantSku: "SF-SFS-003-PK",
-    variantColor: "Pink",
-    variantMaterial: "Silicone",
-    actionType: "ADJUST",
-    oldQuantity: 100,
-    changeQuantity: -5,
-    newQuantity: 95,
-    referenceCode: "REF-ADJ-20260603-001",
-    performedBy: "Staff User",
-    createdAt: "2026-06-03 09:15:00",
-  },
-  {
-    id: "LOG-006",
-    productId: "P4",
-    productName: "Baby Stroller Lightweight",
-    variantSku: "TR-SLW-004-GY",
-    variantColor: "Gray",
-    variantMaterial: "Aluminum",
-    actionType: "ROLLBACK",
-    oldQuantity: 8,
-    changeQuantity: 42,
-    newQuantity: 50,
-    referenceCode: "REF-RBK-20260604-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-04 11:00:00",
-  },
-  {
-    id: "LOG-007",
-    productId: "P5",
-    productName: "Diaper Bag Backpack",
-    variantSku: "AC-DBB-005-NV",
-    variantColor: "Navy",
-    variantMaterial: "Polyester",
-    actionType: "MANUAL_IMPORT",
-    oldQuantity: 12,
-    changeQuantity: 30,
-    newQuantity: 42,
-    referenceCode: "REF-IMP-20260605-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-05 08:45:00",
-  },
-  {
-    id: "LOG-008",
-    productId: "P6",
-    productName: "Wooden Educational Toy Set",
-    variantSku: "TY-WES-006-NT",
-    variantColor: "Natural",
-    variantMaterial: "Wood",
-    actionType: "ADJUST",
-    oldQuantity: 40,
-    changeQuantity: -6,
-    newQuantity: 34,
-    referenceCode: "REF-ADJ-20260605-002",
-    performedBy: "Staff User",
-    createdAt: "2026-06-05 13:20:00",
-  },
-  {
-    id: "LOG-009",
-    productId: "P10",
-    productName: "Baby Safety Gate",
-    variantSku: "SF-BSG-010-WH",
-    variantColor: "White",
-    variantMaterial: "Metal",
-    actionType: "EXCEL_IMPORT",
-    oldQuantity: 0,
-    changeQuantity: 50,
-    newQuantity: 50,
-    referenceCode: "REF-EXL-20260606-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-06 10:00:00",
-  },
-  {
-    id: "LOG-010",
-    productId: "P10",
-    productName: "Baby Safety Gate",
-    variantSku: "SF-BSG-010-BK",
-    variantColor: "Black",
-    variantMaterial: "Metal",
-    actionType: "EXCEL_IMPORT",
-    oldQuantity: 0,
-    changeQuantity: 20,
-    newQuantity: 20,
-    referenceCode: "REF-EXL-20260606-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-06 10:00:00",
-  },
-  {
-    id: "LOG-011",
-    productId: "P1",
-    productName: "Organic Cotton Onesie Set",
-    variantSku: "BC-OCS-001-W-L",
-    variantColor: "White",
-    variantMaterial: "Cotton",
-    actionType: "ADJUST",
-    oldQuantity: 15,
-    changeQuantity: -3,
-    newQuantity: 12,
-    referenceCode: "REF-ADJ-20260607-001",
-    performedBy: "Staff User",
-    createdAt: "2026-06-07 15:30:00",
-  },
-  {
-    id: "LOG-012",
-    productId: "P7",
-    productName: "Organic Cotton Sleepsuit",
-    variantSku: "BC-OCS-007-Y-S",
-    variantColor: "Yellow",
-    variantMaterial: "Cotton",
-    actionType: "MANUAL_IMPORT",
-    oldQuantity: 10,
-    changeQuantity: 20,
-    newQuantity: 30,
-    referenceCode: "REF-IMP-20260608-001",
-    performedBy: "Admin User",
-    createdAt: "2026-06-08 09:00:00",
-  },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const getActionTypeBadge = (type: StockLog["actionType"]) => {
+const getActionTypeBadge = (type: StockLog["action_type"]) => {
   switch (type) {
     case "MANUAL_IMPORT":
-      return <Badge className="bg-success">Manual Import</Badge>;
+      return <Badge className="bg-success">Nhập kho thủ công</Badge>;
     case "EXCEL_IMPORT":
-      return <Badge className="bg-blue-500">Excel Import</Badge>;
+      return <Badge className="bg-blue-500">Nhập Excel</Badge>;
     case "ADJUST":
-      return <Badge className="bg-yellow-500 text-white">Adjust</Badge>;
+      return <Badge className="bg-yellow-500 text-white">Điều chỉnh</Badge>;
     case "ROLLBACK":
-      return <Badge className="bg-destructive">Rollback</Badge>;
+      return <Badge className="bg-destructive">Hoàn tác</Badge>;
   }
+};
+
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(
+    d.getUTCMonth() + 1
+  ).padStart(2, "0")}/${d.getUTCFullYear()} ${String(
+    d.getUTCHours()
+  ).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 };
 
 const ACTION_TYPES = [
@@ -283,6 +122,10 @@ const ACTION_TYPES = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function StockHistoryManagement() {
+  // ── Data ──
+  const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   // ── Filters ──
   const [searchQuery, setSearchQuery] = useState("");
   const [actionTypeFilter, setActionTypeFilter] = useState("ALL");
@@ -293,8 +136,11 @@ export default function StockHistoryManagement() {
   // ── Pagination ──
   const [pagination, setPagination] = useState<PaginationState>({
     currentPage: 1,
-    pageSize: 8,
-    totalItems: MOCK_STOCK_LOGS.length,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
   });
 
   // ── Rollback Dialog ──
@@ -312,64 +158,100 @@ export default function StockHistoryManagement() {
   const [referenceDetailLogs, setReferenceDetailLogs] = useState<StockLog[]>([]);
   const [referenceDetailCode, setReferenceDetailCode] = useState("");
 
-  // ── Filtered Data ──
-  const filteredLogs = MOCK_STOCK_LOGS.filter((log) => {
-    const matchesSearch =
-      log.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.variantSku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.id.toLowerCase().includes(searchQuery.toLowerCase());
+  // ── Load Data ──
+  const loadStockLogs = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      console.log("[DIAG] Stock Log Filters:", {
+        search: searchQuery,
+        actionType: actionTypeFilter,
+        referenceCode: referenceCodeFilter,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        page: pagination.currentPage,
+        limit: pagination.pageSize,
+      });
+      const params: Record<string, unknown> = {
+        page: pagination.currentPage,
+        limit: pagination.pageSize,
+      };
+      if (searchQuery) params.search = searchQuery;
+      if (actionTypeFilter !== "ALL") params.action_type = actionTypeFilter;
+      if (referenceCodeFilter) params.reference_code = referenceCodeFilter;
+      if (dateFrom && dateTo && dateFrom > dateTo) {
+        toast.error("Ngày bắt đầu không được lớn hơn ngày kết thúc");
+        setIsLoading(false);
+        return;
+      }
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
 
-    const matchesActionType =
-      actionTypeFilter === "ALL" || log.actionType === actionTypeFilter;
+      console.log("[DIAG] Stock Log Request Params:", params);
+      const res = await stockService.getStockLogs(params);
+      console.log("[DIAG] Stock Logs API Response:", res);
+      console.log("[DIAG] Stock Logs Response Data:", res.data);
+      const data = res.data.data;
+      const pg = data.pagination;
 
-    const matchesReferenceCode =
-      !referenceCodeFilter ||
-      log.referenceCode.toLowerCase().includes(referenceCodeFilter.toLowerCase());
+      setStockLogs(data.logs);
+      setPagination({
+        currentPage: pg.page,
+        pageSize: pg.limit,
+        totalItems: pg.total,
+        totalPages: pg.totalPages,
+        hasNextPage: pg.hasNextPage,
+        hasPrevPage: pg.hasPrevPage,
+      });
+    } catch (error) {
+      toast.error("Tải lịch sử tồn kho thất bại");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, actionTypeFilter, referenceCodeFilter, dateFrom, dateTo, pagination.currentPage, pagination.pageSize]);
 
-    const matchesDateFrom =
-      !dateFrom || log.createdAt >= dateFrom;
+  useEffect(() => {
+    loadStockLogs();
+  }, [loadStockLogs]);
 
-    const matchesDateTo =
-      !dateTo || log.createdAt <= dateTo + " 23:59:59";
-
-    return matchesSearch && matchesActionType && matchesReferenceCode && matchesDateFrom && matchesDateTo;
-  });
-
-  const totalPages = Math.ceil(filteredLogs.length / pagination.pageSize);
-  const paginatedLogs = filteredLogs.slice(
-    (pagination.currentPage - 1) * pagination.pageSize,
-    pagination.currentPage * pagination.pageSize
+  // ── Reference codes extracted from data ──
+  const uniqueReferenceCodes = Array.from(
+    new Set(stockLogs.map((l) => l.reference_code))
   );
 
   // ── Handlers ──
 
   const handleViewReferenceDetail = (referenceCode: string) => {
-    const logs = MOCK_STOCK_LOGS.filter((l) => l.referenceCode === referenceCode);
+    const logs = stockLogs.filter((l) => l.reference_code === referenceCode);
     setReferenceDetailLogs(logs);
     setReferenceDetailCode(referenceCode);
     setIsReferenceDetailOpen(true);
   };
 
-  const handleOpenRollbackPreview = (referenceCode: string) => {
+  const handleOpenRollbackPreview = async (referenceCode: string) => {
     setSelectedReferenceCode(referenceCode);
     setIsPreviewLoading(true);
     setIsRollbackPreviewOpen(true);
 
-    // Simulate preview loading
-    setTimeout(() => {
-      const relatedLogs = MOCK_STOCK_LOGS.filter(
-        (l) => l.referenceCode === referenceCode
+    try {
+      const res = await stockService.previewRollback(referenceCode);
+      console.log("Rollback preview response:", res.data);
+      const items: RollbackPreviewItem[] = (res.data.data.affected_variants ?? []).map(
+        (item: { variant_id: number; product_name: string; sku: string; current_stock: number; target_rollback_stock: number }) => ({
+          variant_id: String(item.variant_id),
+          product_name: item.product_name,
+          sku: item.sku,
+          current_stock: item.current_stock,
+          target_rollback_stock: item.target_rollback_stock,
+        })
       );
-      const previewItems: RollbackPreviewItem[] = relatedLogs.map((log) => ({
-        logId: log.id,
-        productName: log.productName,
-        variantSku: log.variantSku,
-        currentStock: log.newQuantity,
-        willRevertTo: log.oldQuantity,
-      }));
-      setRollbackPreviewItems(previewItems);
+      setRollbackPreviewItems(items);
+    } catch (error) {
+      toast.error("Không thể tải dữ liệu hoàn tác");
+      setIsRollbackPreviewOpen(false);
+      setSelectedReferenceCode("");
+    } finally {
       setIsPreviewLoading(false);
-    }, 1000);
+    }
   };
 
   const handleProceedToRollback = () => {
@@ -377,17 +259,22 @@ export default function StockHistoryManagement() {
     setIsConfirmRollbackOpen(true);
   };
 
-  const handleExecuteRollback = () => {
+  const handleExecuteRollback = async () => {
     setIsRollbackExecuting(true);
 
-    // Simulate rollback execution
-    setTimeout(() => {
-      setIsRollbackExecuting(false);
+    try {
+      await stockService.rollback(selectedReferenceCode);
+      toast.success("Hoàn tác thành công");
       setIsConfirmRollbackOpen(false);
-      toast.success(`Rollback completed for reference: ${selectedReferenceCode} (mock)`);
       setSelectedReferenceCode("");
       setRollbackPreviewItems([]);
-    }, 1500);
+      // Refresh stock history data
+      loadStockLogs();
+    } catch (error) {
+      toast.error("Hoàn tác thất bại");
+    } finally {
+      setIsRollbackExecuting(false);
+    }
   };
 
   const handleCloseRollbackPreview = () => {
@@ -400,18 +287,17 @@ export default function StockHistoryManagement() {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
 
-  // ── Get unique reference codes for display ──
-  const uniqueReferenceCodes = Array.from(
-    new Set(MOCK_STOCK_LOGS.map((l) => l.referenceCode))
-  );
+  const handleFilterChange = () => {
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  };
 
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Stock History</h1>
+        <h1 className="text-3xl font-bold mb-2">Lịch sử tồn kho</h1>
         <p className="text-muted-foreground">
-          Track all stock changes, view batch history, and perform rollbacks
+          Theo dõi tất cả thay đổi tồn kho, xem lịch sử theo lô và thực hiện hoàn tác
         </p>
       </div>
 
@@ -422,11 +308,11 @@ export default function StockHistoryManagement() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search logs..."
+                placeholder="Tìm kiếm nhật ký..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setPagination((prev) => ({ ...prev, currentPage: 1 }));
+                  handleFilterChange();
                 }}
                 className="pl-10"
               />
@@ -436,39 +322,30 @@ export default function StockHistoryManagement() {
               value={actionTypeFilter}
               onValueChange={(v) => {
                 setActionTypeFilter(v);
-                setPagination((prev) => ({ ...prev, currentPage: 1 }));
+                handleFilterChange();
               }}
             >
               <SelectTrigger>
                 <Filter className="size-4 mr-2" />
-                <SelectValue placeholder="Action Type" />
+                <SelectValue placeholder="Loại thao tác" />
               </SelectTrigger>
               <SelectContent>
                 {ACTION_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {type === "ALL" ? "All Actions" : type.replace("_", " ")}
+                    {type === "ALL" ? "Tất cả thao tác" : type === "MANUAL_IMPORT" ? "Nhập kho thủ công" : type === "EXCEL_IMPORT" ? "Nhập Excel" : type === "ADJUST" ? "Điều chỉnh" : "Hoàn tác"}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Input
-              placeholder="Reference Code..."
-              value={referenceCodeFilter}
-              onChange={(e) => {
-                setReferenceCodeFilter(e.target.value);
-                setPagination((prev) => ({ ...prev, currentPage: 1 }));
-              }}
-            />
-
-            <Input
               type="date"
               value={dateFrom}
               onChange={(e) => {
                 setDateFrom(e.target.value);
-                setPagination((prev) => ({ ...prev, currentPage: 1 }));
+                handleFilterChange();
               }}
-              placeholder="From date"
+              placeholder="Từ ngày"
             />
 
             <Input
@@ -476,9 +353,9 @@ export default function StockHistoryManagement() {
               value={dateTo}
               onChange={(e) => {
                 setDateTo(e.target.value);
-                setPagination((prev) => ({ ...prev, currentPage: 1 }));
+                handleFilterChange();
               }}
-              placeholder="To date"
+              placeholder="Đến ngày"
             />
 
             <Button
@@ -492,7 +369,7 @@ export default function StockHistoryManagement() {
                 setPagination((prev) => ({ ...prev, currentPage: 1 }));
               }}
             >
-              Clear Filters
+              Xóa bộ lọc
             </Button>
           </div>
         </CardContent>
@@ -503,7 +380,7 @@ export default function StockHistoryManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="size-5" />
-            Stock Change Logs
+            Nhật ký thay đổi tồn kho
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -511,86 +388,90 @@ export default function StockHistoryManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Log ID</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Variant</TableHead>
-                  <TableHead>Action Type</TableHead>
-                  <TableHead className="text-center">Old</TableHead>
-                  <TableHead className="text-center">Change</TableHead>
-                  <TableHead className="text-center">New</TableHead>
-                  <TableHead>Reference Code</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Mã nhật ký</TableHead>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead>Biến thể</TableHead>
+                  <TableHead>Loại thao tác</TableHead>
+                  <TableHead className="text-center">Cũ</TableHead>
+                  <TableHead className="text-center">Thay đổi</TableHead>
+                  <TableHead className="text-center">Mới</TableHead>
+                  <TableHead>Mã tham chiếu</TableHead>
+                  <TableHead>Người dùng</TableHead>
+                  <TableHead>Thời gian</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedLogs.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="text-center py-16">
+                      <Loader2 className="size-8 animate-spin text-accent mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : stockLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={11} className="text-center py-16">
                       <div className="flex flex-col items-center">
                         <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                           <History className="size-8 text-muted-foreground" />
                         </div>
-                        <h3 className="text-lg font-semibold mb-2">No stock logs found</h3>
+                        <h3 className="text-lg font-semibold mb-2">Không có lịch sử tồn kho</h3>
                         <p className="text-muted-foreground text-sm">
-                          Try adjusting your filters
+                          Hãy thử điều chỉnh bộ lọc
                         </p>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedLogs.map((log) => (
-                    <TableRow key={log.id} className="hover:bg-secondary/50">
-                      <TableCell className="font-mono text-xs">{log.id}</TableCell>
+                  stockLogs.map((log) => (
+                    <TableRow key={log.log_id} className="hover:bg-secondary/50">
+                      <TableCell className="font-mono text-xs">{log.log_id}</TableCell>
                       <TableCell>
-                        <span className="font-medium">{log.productName}</span>
+                        <span className="font-medium">{log.product_name}</span>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {log.variantSku}
-                        <span className="text-muted-foreground ml-1">
-                          ({log.variantColor} / {log.variantMaterial})
-                        </span>
+                        <span className="font-mono">{log.variant_sku}</span>
                       </TableCell>
-                      <TableCell>{getActionTypeBadge(log.actionType)}</TableCell>
+                      <TableCell>{getActionTypeBadge(log.action_type)}</TableCell>
                       <TableCell className="text-center text-muted-foreground">
-                        {log.oldQuantity}
+                        {log.old_quantity}
                       </TableCell>
                       <TableCell className="text-center">
                         <span
-                          className={`font-bold ${
-                            log.changeQuantity > 0
-                              ? "text-success"
-                              : log.changeQuantity < 0
+                          className={`font-bold ${log.change_quantity > 0
+                            ? "text-success"
+                            : log.change_quantity < 0
                               ? "text-destructive"
                               : ""
-                          }`}
+                            }`}
                         >
-                          {log.changeQuantity > 0 ? "+" : ""}
-                          {log.changeQuantity}
+                          {log.change_quantity > 0 ? "+" : ""}
+                          {log.change_quantity}
                         </span>
                       </TableCell>
                       <TableCell className="text-center font-medium">
-                        {log.newQuantity}
+                        {log.new_quantity}
                       </TableCell>
                       <TableCell>
                         <button
-                          onClick={() => handleViewReferenceDetail(log.referenceCode)}
+                          onClick={() => handleViewReferenceDetail(log.reference_code)}
                           className="font-mono text-xs text-accent hover:underline cursor-pointer text-left"
                         >
-                          {log.referenceCode}
+                          {log.reference_code}
                         </button>
                       </TableCell>
-                      <TableCell className="text-sm">{log.performedBy}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {log.createdAt}
+                      <TableCell className="text-sm">
+                        User #{log.created_by ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {formatDate(log.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {log.actionType !== "ROLLBACK" && (
+                        {log.action_type !== "ROLLBACK" && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleOpenRollbackPreview(log.referenceCode)}
+                            onClick={() => handleOpenRollbackPreview(log.reference_code)}
                             title="Rollback this batch"
                           >
                             <RotateCcw className="size-4" />
@@ -605,26 +486,26 @@ export default function StockHistoryManagement() {
           </div>
 
           {/* Pagination */}
-          {filteredLogs.length > 0 && (
+          {!isLoading && pagination.totalItems > 0 && (
             <div className="flex items-center justify-between px-6 py-4 border-t">
               <p className="text-sm text-muted-foreground">
-                Showing {(pagination.currentPage - 1) * pagination.pageSize + 1}–
+                Hiển thị {(pagination.currentPage - 1) * pagination.pageSize + 1}–
                 {Math.min(
                   pagination.currentPage * pagination.pageSize,
-                  filteredLogs.length
+                  pagination.totalItems
                 )}{" "}
-                of {filteredLogs.length} logs
+                trên tổng số {pagination.totalItems} nhật ký
               </p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={pagination.currentPage <= 1}
+                  disabled={!pagination.hasPrevPage}
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
                     key={page}
                     variant={pagination.currentPage === page ? "default" : "outline"}
@@ -637,7 +518,7 @@ export default function StockHistoryManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={pagination.currentPage >= totalPages}
+                  disabled={!pagination.hasNextPage}
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
                 >
                   <ChevronRight className="size-4" />
@@ -654,9 +535,9 @@ export default function StockHistoryManagement() {
       <Dialog open={isReferenceDetailOpen} onOpenChange={setIsReferenceDetailOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Batch History</DialogTitle>
+            <DialogTitle>Lịch sử theo lô</DialogTitle>
             <DialogDescription>
-              Reference Code: <span className="font-mono font-bold">{referenceDetailCode}</span>
+              Mã tham chiếu: <span className="font-mono font-bold">{referenceDetailCode}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -664,37 +545,36 @@ export default function StockHistoryManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Log ID</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Variant SKU</TableHead>
-                  <TableHead>Action Type</TableHead>
-                  <TableHead className="text-center">Old</TableHead>
-                  <TableHead className="text-center">Change</TableHead>
-                  <TableHead className="text-center">New</TableHead>
-                  <TableHead>Created At</TableHead>
+                  <TableHead>Mã nhật ký</TableHead>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead>Biến thể</TableHead>
+                  <TableHead>Loại thao tác</TableHead>
+                  <TableHead className="text-center">Cũ</TableHead>
+                  <TableHead className="text-center">Thay đổi</TableHead>
+                  <TableHead className="text-center">Mới</TableHead>
+                  <TableHead>Thời gian</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {referenceDetailLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-mono text-xs">{log.id}</TableCell>
-                    <TableCell>{log.productName}</TableCell>
-                    <TableCell className="text-sm">{log.variantSku}</TableCell>
-                    <TableCell>{getActionTypeBadge(log.actionType)}</TableCell>
-                    <TableCell className="text-center">{log.oldQuantity}</TableCell>
+                  <TableRow key={log.log_id}>
+                    <TableCell className="font-mono text-xs">{log.log_id}</TableCell>
+                    <TableCell>{log.product_name}</TableCell>
+                    <TableCell className="text-sm font-mono">{log.variant_sku}</TableCell>
+                    <TableCell>{getActionTypeBadge(log.action_type)}</TableCell>
+                    <TableCell className="text-center">{log.old_quantity}</TableCell>
                     <TableCell className="text-center">
                       <span
-                        className={`font-bold ${
-                          log.changeQuantity > 0 ? "text-success" : "text-destructive"
-                        }`}
+                        className={`font-bold ${log.change_quantity > 0 ? "text-success" : "text-destructive"
+                          }`}
                       >
-                        {log.changeQuantity > 0 ? "+" : ""}
-                        {log.changeQuantity}
+                        {log.change_quantity > 0 ? "+" : ""}
+                        {log.change_quantity}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">{log.newQuantity}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {log.createdAt}
+                    <TableCell className="text-center">{log.new_quantity}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                      {formatDate(log.created_at)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -707,9 +587,9 @@ export default function StockHistoryManagement() {
               variant="outline"
               onClick={() => setIsReferenceDetailOpen(false)}
             >
-              Close
+              Đóng
             </Button>
-            {referenceDetailLogs.every((l) => l.actionType !== "ROLLBACK") && (
+            {referenceDetailLogs.every((l) => l.action_type !== "ROLLBACK") && (
               <Button
                 onClick={() => {
                   setIsReferenceDetailOpen(false);
@@ -718,7 +598,7 @@ export default function StockHistoryManagement() {
                 className="bg-destructive hover:bg-destructive/90"
               >
                 <RotateCcw className="size-4 mr-2" />
-                Rollback Batch
+                Hoàn tác lô
               </Button>
             )}
           </DialogFooter>
@@ -731,28 +611,28 @@ export default function StockHistoryManagement() {
       <Dialog open={isRollbackPreviewOpen} onOpenChange={(open) => {
         if (!open) handleCloseRollbackPreview();
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-7xl">
           <DialogHeader>
-            <DialogTitle>Rollback Preview</DialogTitle>
+            <DialogTitle>Xem trước hoàn tác</DialogTitle>
             <DialogDescription>
-              Reference Code: <span className="font-mono font-bold">{selectedReferenceCode}</span>
+              Mã tham chiếu: <span className="font-mono font-bold">{selectedReferenceCode}</span>
             </DialogDescription>
           </DialogHeader>
 
           {isPreviewLoading ? (
             <div className="py-12 text-center">
               <Loader2 className="size-8 animate-spin text-accent mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading rollback preview...</p>
+              <p className="text-muted-foreground">Đang tải dữ liệu hoàn tác...</p>
             </div>
           ) : (
             <>
               <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
                 <AlertTriangle className="size-5 text-warning flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-warning">Warning: Rollback Action</p>
+                  <p className="text-sm font-medium text-warning">Cảnh báo: Thao tác hoàn tác</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    This will revert the stock changes made in this batch. This action cannot be undone.
-                    Please review the changes below before proceeding.
+                    Hành động này sẽ khôi phục các thay đổi tồn kho trong lô này. Thao tác này không thể hoàn tác.
+                    Vui lòng xem lại các thay đổi trước khi tiếp tục.
                   </p>
                 </div>
               </div>
@@ -761,20 +641,29 @@ export default function StockHistoryManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Variant</TableHead>
-                      <TableHead className="text-center">Current Stock</TableHead>
-                      <TableHead className="text-center">Will Revert To</TableHead>
+                      <TableHead>Sản phẩm</TableHead>
+                      <TableHead>Biến thể</TableHead>
+                      <TableHead className="text-center">Tồn kho hiện tại</TableHead>
+                      <TableHead className="text-center">Sẽ khôi phục về</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {rollbackPreviewItems.map((item) => (
-                      <TableRow key={item.logId}>
-                        <TableCell className="font-medium">{item.productName}</TableCell>
-                        <TableCell className="font-mono text-sm">{item.variantSku}</TableCell>
-                        <TableCell className="text-center">{item.currentStock}</TableCell>
+                      <TableRow key={item.variant_id}>
+                        <TableCell className="font-medium">
+                          {item.product_name}
+                        </TableCell>
+
+                        <TableCell className="font-mono text-sm">
+                          {item.sku}
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                          {item.current_stock}
+                        </TableCell>
+
                         <TableCell className="text-center font-bold text-warning">
-                          {item.willRevertTo}
+                          {item.target_rollback_stock}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -786,7 +675,7 @@ export default function StockHistoryManagement() {
 
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseRollbackPreview}>
-              Cancel
+              Hủy
             </Button>
             <Button
               onClick={handleProceedToRollback}
@@ -794,7 +683,7 @@ export default function StockHistoryManagement() {
               className="bg-destructive hover:bg-destructive/90"
             >
               <RotateCcw className="size-4 mr-2" />
-              Proceed to Rollback
+              Tiếp tục hoàn tác
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -806,9 +695,9 @@ export default function StockHistoryManagement() {
       <Dialog open={isConfirmRollbackOpen} onOpenChange={setIsConfirmRollbackOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Rollback</DialogTitle>
+            <DialogTitle>Xác nhận hoàn tác</DialogTitle>
             <DialogDescription>
-              Are you sure you want to rollback the batch with reference code{" "}
+              Bạn có chắc chắn muốn hoàn tác lô có mã tham chiếu{" "}
               <span className="font-mono font-bold">{selectedReferenceCode}</span>?
             </DialogDescription>
           </DialogHeader>
@@ -816,10 +705,10 @@ export default function StockHistoryManagement() {
           <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
             <AlertTriangle className="size-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-destructive">Irreversible Action</p>
+              <p className="text-sm font-medium text-destructive">Hành động không thể hoàn tác</p>
               <p className="text-xs text-muted-foreground mt-1">
-                This will revert stock quantities for {rollbackPreviewItems.length} variant(s) to their
-                previous values. This operation cannot be undone.
+                Thao tác này sẽ khôi phục số lượng tồn kho cho {rollbackPreviewItems.length} biến thể về giá trị trước đó.
+                Hành động này không thể được hoàn tác.
               </p>
             </div>
           </div>
@@ -830,7 +719,7 @@ export default function StockHistoryManagement() {
               onClick={() => setIsConfirmRollbackOpen(false)}
               disabled={isRollbackExecuting}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               onClick={handleExecuteRollback}
@@ -840,12 +729,12 @@ export default function StockHistoryManagement() {
               {isRollbackExecuting ? (
                 <>
                   <Loader2 className="size-4 mr-2 animate-spin" />
-                  Executing...
+                  Đang thực hiện...
                 </>
               ) : (
                 <>
                   <RotateCcw className="size-4 mr-2" />
-                  Confirm Rollback
+                  Xác nhận hoàn tác
                 </>
               )}
             </Button>
