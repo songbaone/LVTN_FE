@@ -57,7 +57,6 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
-import { get } from "react-hook-form";
 
 interface User {
   user_id: number;
@@ -113,6 +112,7 @@ interface UserDetail {
 }
 
 export default function UserManagement() {
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -122,6 +122,16 @@ export default function UserManagement() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
+  const [statistics, setStatistics] = useState({
+    total_users: 0,
+    active_users: 0,
+    new_users_this_month: 0,
+    role_distribution: {
+      admin: 0,
+      staff: 0,
+      customer: 0,
+    },
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -134,19 +144,40 @@ export default function UserManagement() {
 
   const currentMonth = moment().format("MM");
   const currentYear = moment().format("YYYY");
+  const token = localStorage.getItem("AccessTokenAdmin");
 
+  // Load statics user
+  const getStaticsUser = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/statistics`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success == true) {
+        console.log("Data user statics:", res);
+
+        setStatistics(data.data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    getStaticsUser();
+  }, []);
+  //============================================> Load users
   const getUsers = async (page: number) => {
     try {
-      const token = localStorage.getItem("AccessTokenAdmin");
-
-      const res = await fetch(
-        `http://localhost:3000/api/v1/users?page=${page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await fetch(`${API_BASE_URL}/users?page=${page}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        method: "GET",
+      });
 
       const data = await res.json();
 
@@ -170,20 +201,6 @@ export default function UserManagement() {
   const statusColors = {
     true: "bg-green-100 text-green-800",
     false: "bg-red-100 text-red-800",
-  };
-
-  // Statistics
-  const stats = {
-    total: users.length,
-    active: users.filter((u) => u.status === true).length,
-    newThisMonth: users.filter((u) => {
-      const now = new Date();
-    }).length,
-    byRole: {
-      admin: users.filter((u) => u.role.role_id === 1).length,
-      staff: users.filter((u) => u.role.role_id === 2).length,
-      customer: users.filter((u) => u.role.role_id === 3).length,
-    },
   };
 
   // Mock data for user detail view
@@ -242,7 +259,7 @@ export default function UserManagement() {
     try {
       const token = localStorage.getItem("AccessTokenAdmin");
 
-      const res = await fetch(`http://localhost:3000/api/v1/users/${userId}`, {
+      const res = await fetch(`${API_BASE_URL}/users/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -272,24 +289,24 @@ export default function UserManagement() {
   const handleExport = () => {
     toast.success("Exporting user data...");
   };
+
+  //=================================================> Handle create staff
   const [isCreateStaffOpen, setIsCreateStaffOpen] = useState(false);
 
   const [staffForm, setStaffForm] = useState({
     full_name: "",
     email: "",
-    password: "",
+    password: "abcd@1234",
     phone: "",
-    gender: "",
+    gender: "Nam",
     birth_date: "",
-    role_id: "",
-    avatar: "",
+    role_id: "2",
   });
-  const [uploading, setUploading] = useState(false);
   const handleCreateStaff = async () => {
     try {
       const token = localStorage.getItem("AccessTokenAdmin");
 
-      const res = await fetch("http://localhost:3000/api/v1/staff", {
+      const res = await fetch(`${API_BASE_URL}/staff`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -297,7 +314,6 @@ export default function UserManagement() {
         },
         body: JSON.stringify({
           ...staffForm,
-          avatar: staffForm.avatar,
         }),
       });
 
@@ -313,12 +329,11 @@ export default function UserManagement() {
         setStaffForm({
           full_name: "",
           email: "",
-          password: "123@",
+          password: "",
           phone: "",
           gender: "",
           birth_date: "",
           role_id: "",
-          avatar: "",
         });
       } else {
         toast.error(data.message);
@@ -327,43 +342,7 @@ export default function UserManagement() {
       toast.error("Có lỗi xảy ra");
     }
   };
-  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
 
-    if (!file) return;
-
-    try {
-      setUploading(true);
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const token = localStorage.getItem("AccessTokenAdmin");
-
-      const res = await fetch("http://localhost:3000/api/v1/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setStaffForm((prev) => ({
-          ...prev,
-          avatar: data.url,
-        }));
-
-        toast.success("Upload ảnh thành công");
-      }
-    } catch (error) {
-      toast.error("Upload ảnh thất bại");
-    } finally {
-      setUploading(false);
-    }
-  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -524,30 +503,6 @@ export default function UserManagement() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="col-span-2">
-              <Label>Ảnh đại diện</Label>
-
-              <div className="flex items-center gap-4 mt-2">
-                {staffForm.avatar ? (
-                  <img
-                    src={staffForm.avatar}
-                    alt="Avatar Preview"
-                    className="w-20 h-20 rounded-full object-cover border"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full border flex items-center justify-center text-xs text-gray-500 p-5">
-                    Chưa có ảnh
-                  </div>
-                )}
-
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUploadAvatar}
-                />
-              </div>
-            </div>
           </div>
 
           <DialogFooter>
@@ -573,7 +528,7 @@ export default function UserManagement() {
             <Users className="size-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-3xl font-bold">{statistics.total_users}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Tất cả người dùng đã đăng kí
             </p>
@@ -589,7 +544,7 @@ export default function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-success">
-              {stats.active}
+              {statistics.active_users}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Hiện đang hoạt động
@@ -606,7 +561,7 @@ export default function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-accent">
-              {stats.newThisMonth}
+              {statistics.new_users_this_month}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Tháng {currentMonth} năm {currentYear}
@@ -625,15 +580,21 @@ export default function UserManagement() {
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Quản trị viên:</span>
-                <span className="font-medium">{stats.byRole.admin}</span>
+                <span className="font-medium">
+                  {statistics.role_distribution.admin}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Nhân viên:</span>
-                <span className="font-medium">{stats.byRole.staff}</span>
+                <span className="font-medium">
+                  {statistics.role_distribution.staff}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Khách hàng:</span>
-                <span className="font-medium">{stats.byRole.customer}</span>
+                <span className="font-medium">
+                  {statistics.role_distribution.customer}
+                </span>
               </div>
             </div>
           </CardContent>
