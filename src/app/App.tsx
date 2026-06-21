@@ -41,6 +41,7 @@ import ProductForm from "./components/admin/ProductForm";
 import OrderManagement from "./components/admin/OrderManagement";
 import AdminOrderDetail from "./components/admin/AdminOrderDetail";
 import InventoryManagement from "./components/admin/InventoryManagement";
+import StockHistoryManagement from "./components/admin/StockHistoryManagement";
 import UserManagement from "./components/admin/UserManagement";
 import StaffFormCreate from "./components/admin/StaffFormCreate";
 import CategoryManagement from "./components/admin/CategoryManagement";
@@ -144,6 +145,7 @@ function AppContent() {
             <Route path="orders" element={<OrderManagement />} />
             <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="inventory" element={<InventoryManagement />} />
+            <Route path="inventory/history" element={<StockHistoryManagement />} />
             <Route
               path="inventory/import"
               element={<ExcelImport type="inventory" />}
