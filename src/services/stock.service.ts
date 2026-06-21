@@ -62,4 +62,21 @@ export const stockService = {
     axiosClient.get("/stocks/export-report", {
       responseType: "blob",
     }),
+
+  getStockLogs: (params?: {
+    search?: string;
+    action_type?: string;
+    reference_code?: string;
+    from_date?: string;
+    to_date?: string;
+    page?: number;
+    limit?: number;
+  }) =>
+    axiosClient.get("/stock-logs", { params }),
+
+  previewRollback: (referenceCode: string) =>
+    axiosClient.get(`/stock-logs/rollback-preview/${referenceCode}`),
+
+  rollback: (referenceCode: string) =>
+    axiosClient.post(`/stock-logs/rollback/${referenceCode}`),
 };
