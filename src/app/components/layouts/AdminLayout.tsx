@@ -18,6 +18,7 @@ import {
   Baby,
   Menu,
   X,
+  History,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -37,6 +38,7 @@ export default function AdminLayout() {
     { name: "Sản phẩm", href: "/admin/products", icon: Package },
     { name: "Đơn hàng", href: "/admin/orders", icon: ShoppingCart },
     { name: "Tồn kho", href: "/admin/inventory", icon: FileSpreadsheet },
+    { name: "Lịch sử tồn kho", href: "/admin/inventory/history", icon: History },
     { name: "Người dùng", href: "/admin/users", icon: Users },
     { name: "Danh mục sản phẩm", href: "/admin/categories", icon: FolderTree },
     { name: "Thương hiệu", href: "/admin/brands", icon: Tag },
