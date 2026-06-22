@@ -57,8 +57,8 @@ export default function CustomerLayout() {
     <div className="flex flex-col min-h-screen">
       {/* Top Banner */}
       <div className="px-4 py-2 text-sm text-center bg-accent text-accent-foreground">
-        🎉 Flash Sale: Up to 50% OFF on Baby Clothing | Free Shipping on Orders
-        Over 500,000 VND
+        🎉 Khuyến mãi: Giảm giá lên đến 50% cho các sản phẩm quần áo trẻ em |
+        Miễn phí vận chuyển cho đơn từ 500.000 VNĐ
       </div>
 
       {/* Header */}
@@ -152,7 +152,7 @@ export default function CustomerLayout() {
                 <SheetContent side="left" className="w-80">
                   <nav className="flex flex-col gap-4">
                     <h2 className="text-lg font-semibold text-primary">
-                      Categories
+                      Danh mục
                     </h2>
                     {categories.map((cat) => (
                       <Link
@@ -211,22 +211,22 @@ export default function CustomerLayout() {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
             <div>
               <h3 className="mb-4 text-lg font-semibold text-primary">
-                About BabyStore
+                Về chung tôi
               </h3>
               <p className="text-sm text-muted-foreground">
-                Your trusted partner for premium baby products. Quality, safety,
-                and care for your little ones.
+                Đối tác đáng tin cậy của bạn cho các sản phẩm dành cho trẻ em
+                cao cấp. Chất lượng, an toàn và chăm sóc cho con bạn.
               </p>
             </div>
             <div>
-              <h3 className="mb-4 text-lg font-semibold">Customer Service</h3>
+              <h3 className="mb-4 text-lg font-semibold">Dịch vụ khách hàng</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
                     to="/help"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Help Center
+                    Trung tâm hỗ trợ
                   </Link>
                 </li>
                 <li>
@@ -234,7 +234,7 @@ export default function CustomerLayout() {
                     to="/shipping"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Shipping Info
+                    Thông tin vận chuyển
                   </Link>
                 </li>
                 <li>
@@ -242,7 +242,7 @@ export default function CustomerLayout() {
                     to="/returns"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Returns
+                    Hoàn trả
                   </Link>
                 </li>
                 <li>
@@ -250,20 +250,20 @@ export default function CustomerLayout() {
                     to="/contact"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Contact Us
+                    Liên hệ
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 text-lg font-semibold">Quick Links</h3>
+              <h3 className="mb-4 text-lg font-semibold">Đường dẫn nhanh</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
                     to="/products"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Shop All
+                    Sản phẩm
                   </Link>
                 </li>
                 <li>
@@ -271,7 +271,7 @@ export default function CustomerLayout() {
                     to="/brands"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Brands
+                    Thương hiệu
                   </Link>
                 </li>
                 <li>
@@ -287,24 +287,24 @@ export default function CustomerLayout() {
                     to="/auth"
                     className="text-muted-foreground hover:text-primary"
                   >
-                    Sign In
+                    Đăng nhập
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 text-lg font-semibold">Newsletter</h3>
+              <h3 className="mb-4 text-lg font-semibold">Bản tin</h3>
               <p className="mb-3 text-sm text-muted-foreground">
-                Get updates on new products and special offers
+                Nhận thông tin cập nhật về sản phẩm mới và ưu đãi đặc biệt
               </p>
               <div className="flex gap-2">
                 <Input
                   type="email"
-                  placeholder="Your email"
+                  placeholder="Nhập email của bạn "
                   className="bg-secondary"
                 />
                 <Button className="bg-accent hover:bg-accent/90">
-                  Subscribe
+                  Đăng kí
                 </Button>
               </div>
             </div>

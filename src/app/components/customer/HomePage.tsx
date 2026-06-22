@@ -1,8 +1,22 @@
 import { Link } from "react-router";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 import { Badge } from "../ui/badge";
-import { Star, Heart, ShoppingCart, ArrowRight, TrendingUp, Sparkles, Gift } from "lucide-react";
+import {
+  Star,
+  Heart,
+  ShoppingCart,
+  ArrowRight,
+  TrendingUp,
+  Sparkles,
+  Gift,
+} from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -17,20 +31,20 @@ export default function HomePage() {
       title: "Summer Sale 2026",
       subtitle: "Up to 50% OFF on Baby Clothing",
       cta: "Shop Now",
-      bg: "bg-gradient-to-r from-primary-200 to-primary-300"
+      bg: "bg-gradient-to-r from-primary-200 to-primary-300",
     },
     {
       title: "New Arrivals",
       subtitle: "Explore Our Latest Collection",
       cta: "Discover",
-      bg: "bg-gradient-to-r from-accent/20 to-accent/30"
+      bg: "bg-gradient-to-r from-accent/20 to-accent/30",
     },
     {
       title: "Free Shipping",
       subtitle: "On Orders Over 500,000 VND",
       cta: "Start Shopping",
-      bg: "bg-gradient-to-r from-primary-100 to-secondary"
-    }
+      bg: "bg-gradient-to-r from-primary-100 to-secondary",
+    },
   ];
 
   const categories = [
@@ -39,7 +53,7 @@ export default function HomePage() {
     { name: "Diapers & Bath", icon: "🛁", count: 156 },
     { name: "Toys & Entertainment", icon: "🧸", count: 312 },
     { name: "Nursery & Gear", icon: "🛏️", count: 98 },
-    { name: "Health & Safety", icon: "💊", count: 127 }
+    { name: "Health & Safety", icon: "💊", count: 127 },
   ];
 
   const featuredProducts = [
@@ -53,7 +67,7 @@ export default function HomePage() {
       reviews: 124,
       image: "🧸",
       discount: 30,
-      badge: "Best Seller"
+      badge: "Best Seller",
     },
     {
       id: 2,
@@ -64,7 +78,7 @@ export default function HomePage() {
       rating: 4.9,
       reviews: 89,
       image: "🍽️",
-      badge: "New"
+      badge: "New",
     },
     {
       id: 3,
@@ -75,7 +89,7 @@ export default function HomePage() {
       rating: 4.7,
       reviews: 56,
       image: "📹",
-      discount: 17
+      discount: 17,
     },
     {
       id: 4,
@@ -86,12 +100,17 @@ export default function HomePage() {
       rating: 5.0,
       reviews: 203,
       image: "🧸",
-      badge: "Top Rated"
-    }
+      badge: "Top Rated",
+    },
   ];
 
   const brands = [
-    "Fisher-Price", "Pampers", "Johnson's Baby", "Chicco", "Graco", "Huggies"
+    "Fisher-Price",
+    "Pampers",
+    "Johnson's Baby",
+    "Chicco",
+    "Graco",
+    "Huggies",
   ];
 
   const reviews = [
@@ -100,22 +119,22 @@ export default function HomePage() {
       rating: 5,
       text: "Excellent quality products! Fast shipping and great customer service.",
       product: "Organic Cotton Onesie Set",
-      date: "2 days ago"
+      date: "2 days ago",
     },
     {
       author: "Trần Minh Anh",
       rating: 5,
       text: "Very happy with my purchase. The products are exactly as described.",
       product: "Baby Monitor",
-      date: "1 week ago"
+      date: "1 week ago",
     },
     {
       author: "Lê Thanh Mai",
       rating: 4,
       text: "Good selection of products. Prices are reasonable.",
       product: "Feeding Set",
-      date: "2 weeks ago"
-    }
+      date: "2 weeks ago",
+    },
   ];
 
   return (
@@ -132,7 +151,10 @@ export default function HomePage() {
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
                       {slide.subtitle}
                     </h1>
-                    <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Button
+                      size="lg"
+                      className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    >
                       {slide.cta} <ArrowRight className="ml-2 size-5" />
                     </Button>
                   </div>
@@ -148,19 +170,26 @@ export default function HomePage() {
       {/* Categories */}
       <section className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold">Shop by Category</h2>
+          <h2 className="text-3xl font-bold">Danh mục sản phẩm</h2>
           <Link to="/products">
-            <Button variant="ghost">View All <ArrowRight className="ml-2 size-4" /></Button>
+            <Button variant="ghost">
+              Xem tất cả <ArrowRight className="ml-2 size-4" />
+            </Button>
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((category) => (
-            <Link key={category.name} to={`/products?category=${category.name}`}>
+            <Link
+              key={category.name}
+              to={`/products?category=${category.name}`}
+            >
               <Card className="hover:shadow-lg transition-shadow cursor-pointer border-primary-200">
                 <CardContent className="pt-6 text-center">
                   <div className="text-5xl mb-3">{category.icon}</div>
                   <h3 className="font-medium text-sm mb-1">{category.name}</h3>
-                  <p className="text-xs text-muted-foreground">{category.count} products</p>
+                  <p className="text-xs text-muted-foreground">
+                    {category.count} sản phẩm
+                  </p>
                 </CardContent>
               </Card>
             </Link>
@@ -174,11 +203,16 @@ export default function HomePage() {
           <div className="flex items-center gap-3 mb-6">
             <Sparkles className="size-8 text-accent" />
             <h2 className="text-3xl font-bold">Flash Sale</h2>
-            <Badge className="bg-destructive">Ends in 2:45:30</Badge>
+            <Badge className="bg-destructive">
+              Kết thúc trong vòng 2:45:30
+            </Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.slice(0, 4).map((product) => (
-              <Card key={product.id} className="group hover:shadow-xl transition-shadow">
+              <Card
+                key={product.id}
+                className="group hover:shadow-xl transition-shadow"
+              >
                 <CardHeader className="relative">
                   {product.badge && (
                     <Badge className="absolute top-4 left-4 z-10 bg-accent">
@@ -202,12 +236,20 @@ export default function HomePage() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
-                  <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {product.brand}
+                  </p>
+                  <h3 className="font-semibold mb-2 line-clamp-2">
+                    {product.name}
+                  </h3>
                   <div className="flex items-center gap-1 mb-2">
                     <Star className="size-4 fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-medium">{product.rating}</span>
-                    <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                    <span className="text-sm font-medium">
+                      {product.rating}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({product.reviews})
+                    </span>
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-lg font-bold text-accent">
@@ -221,7 +263,10 @@ export default function HomePage() {
                   </div>
                 </CardContent>
                 <CardFooter className="gap-2">
-                  <Button className="flex-1 bg-accent hover:bg-accent/90" asChild>
+                  <Button
+                    className="flex-1 bg-accent hover:bg-accent/90"
+                    asChild
+                  >
                     <Link to={`/product/${product.id}`}>
                       <ShoppingCart className="size-4 mr-2" /> Add to Cart
                     </Link>
@@ -241,7 +286,10 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
-            <Card key={product.id} className="group hover:shadow-xl transition-shadow">
+            <Card
+              key={product.id}
+              className="group hover:shadow-xl transition-shadow"
+            >
               <CardHeader className="relative">
                 {product.badge && (
                   <Badge className="absolute top-4 left-4 z-10 bg-accent">
@@ -260,12 +308,18 @@ export default function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
-                <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {product.brand}
+                </p>
+                <h3 className="font-semibold mb-2 line-clamp-2">
+                  {product.name}
+                </h3>
                 <div className="flex items-center gap-1 mb-2">
                   <Star className="size-4 fill-amber-400 text-amber-400" />
                   <span className="text-sm font-medium">{product.rating}</span>
-                  <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({product.reviews})
+                  </span>
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-bold text-accent">
@@ -294,10 +348,15 @@ export default function HomePage() {
       {/* Featured Brands */}
       <section className="bg-secondary/30 py-12">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">Featured Brands</h2>
+          <h2 className="text-3xl font-bold mb-6 text-center">
+            Featured Brands
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {brands.map((brand) => (
-              <Card key={brand} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card
+                key={brand}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 <CardContent className="p-6 text-center">
                   <div className="font-semibold text-primary">{brand}</div>
                 </CardContent>
@@ -309,7 +368,9 @@ export default function HomePage() {
 
       {/* Customer Reviews */}
       <section className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-6 text-center">What Our Customers Say</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center">
+          What Our Customers Say
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {reviews.map((review, index) => (
             <Card key={index}>
@@ -325,7 +386,9 @@ export default function HomePage() {
                 <p className="text-sm mb-4">{review.text}</p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div>
-                    <p className="font-medium text-foreground">{review.author}</p>
+                    <p className="font-medium text-foreground">
+                      {review.author}
+                    </p>
                     <p>{review.product}</p>
                   </div>
                   <span>{review.date}</span>
