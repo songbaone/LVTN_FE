@@ -14,38 +14,38 @@ import {
 export default function HomePage() {
   const heroSlides = [
     {
-      title: "Summer Sale 2026",
-      subtitle: "Up to 50% OFF on Baby Clothing",
-      cta: "Shop Now",
+      title: "Khuyến mãi mùa hè 2026",
+      subtitle: "Giảm giá đến 50% cho quần áo trẻ em",
+      cta: "Mua ngay",
       bg: "bg-gradient-to-r from-primary-200 to-primary-300"
     },
     {
-      title: "New Arrivals",
-      subtitle: "Explore Our Latest Collection",
-      cta: "Discover",
+      title: "Sản phẩm mới",
+      subtitle: "Khám phá bộ sưu tập mới nhất",
+      cta: "Khám phá",
       bg: "bg-gradient-to-r from-accent/20 to-accent/30"
     },
     {
-      title: "Free Shipping",
-      subtitle: "On Orders Over 500,000 VND",
-      cta: "Start Shopping",
+      title: "Miễn phí vận chuyển",
+      subtitle: "Cho đơn hàng trên 500.000₫",
+      cta: "Mua sắm ngay",
       bg: "bg-gradient-to-r from-primary-100 to-secondary"
     }
   ];
 
   const categories = [
-    { name: "Clothing & Apparel", icon: "👕", count: 245 },
-    { name: "Feeding & Nursing", icon: "🍼", count: 189 },
-    { name: "Diapers & Bath", icon: "🛁", count: 156 },
-    { name: "Toys & Entertainment", icon: "🧸", count: 312 },
-    { name: "Nursery & Gear", icon: "🛏️", count: 98 },
-    { name: "Health & Safety", icon: "💊", count: 127 }
+    { name: "Quần áo & Thời trang", icon: "👕", count: 245 },
+    { name: "Bú & Ăn dặm", icon: "🍼", count: 189 },
+    { name: "Tã & Tắm gội", icon: "🛁", count: 156 },
+    { name: "Đồ chơi & Giải trí", icon: "🧸", count: 312 },
+    { name: "Phòng bé & Đồ dùng", icon: "🛏️", count: 98 },
+    { name: "Sức khỏe & An toàn", icon: "💊", count: 127 }
   ];
 
   const featuredProducts = [
     {
       id: 1,
-      name: "Organic Cotton Onesie Set",
+      name: "Bộ bodysuit cotton hữu cơ",
       brand: "BabyComfort",
       price: 450000,
       originalPrice: 650000,
@@ -53,22 +53,22 @@ export default function HomePage() {
       reviews: 124,
       image: "🧸",
       discount: 30,
-      badge: "Best Seller"
+      badge: "Bán chạy nhất"
     },
     {
       id: 2,
-      name: "Silicone Baby Feeding Set",
+      name: "Bộ dụng cụ ăn dặm silicone",
       brand: "SafeFeed",
       price: 320000,
       originalPrice: null,
       rating: 4.9,
       reviews: 89,
       image: "🍽️",
-      badge: "New"
+      badge: "Mới"
     },
     {
       id: 3,
-      name: "Premium Baby Monitor",
+      name: "Máy theo dõi trẻ em cao cấp",
       brand: "SmartBaby",
       price: 1250000,
       originalPrice: 1500000,
@@ -79,14 +79,14 @@ export default function HomePage() {
     },
     {
       id: 4,
-      name: "Soft Plush Toy Collection",
+      name: "Bộ thú nhồi bông mềm",
       brand: "CuddleTime",
       price: 280000,
       originalPrice: null,
       rating: 5.0,
       reviews: 203,
       image: "🧸",
-      badge: "Top Rated"
+      badge: "Đánh giá cao nhất"
     }
   ];
 
@@ -98,23 +98,23 @@ export default function HomePage() {
     {
       author: "Nguyễn Thu Hương",
       rating: 5,
-      text: "Excellent quality products! Fast shipping and great customer service.",
-      product: "Organic Cotton Onesie Set",
-      date: "2 days ago"
+      text: "Sản phẩm chất lượng tuyệt vời! Giao hàng nhanh và dịch vụ khách hàng tốt.",
+      product: "Bộ bodysuit cotton hữu cơ",
+      date: "2 ngày trước"
     },
     {
       author: "Trần Minh Anh",
       rating: 5,
-      text: "Very happy with my purchase. The products are exactly as described.",
-      product: "Baby Monitor",
-      date: "1 week ago"
+      text: "Rất hài lòng với đơn hàng. Sản phẩm đúng như mô tả.",
+      product: "Máy theo dõi trẻ em",
+      date: "1 tuần trước"
     },
     {
       author: "Lê Thanh Mai",
       rating: 4,
-      text: "Good selection of products. Prices are reasonable.",
-      product: "Feeding Set",
-      date: "2 weeks ago"
+      text: "Nhiều sản phẩm để lựa chọn. Giá cả hợp lý.",
+      product: "Bộ dụng cụ ăn dặm",
+      date: "2 tuần trước"
     }
   ];
 
@@ -148,9 +148,9 @@ export default function HomePage() {
       {/* Categories */}
       <section className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold">Shop by Category</h2>
+          <h2 className="text-3xl font-bold">Danh mục sản phẩm</h2>
           <Link to="/products">
-            <Button variant="ghost">View All <ArrowRight className="ml-2 size-4" /></Button>
+            <Button variant="ghost">Xem tất cả <ArrowRight className="ml-2 size-4" /></Button>
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -160,7 +160,7 @@ export default function HomePage() {
                 <CardContent className="pt-6 text-center">
                   <div className="text-5xl mb-3">{category.icon}</div>
                   <h3 className="font-medium text-sm mb-1">{category.name}</h3>
-                  <p className="text-xs text-muted-foreground">{category.count} products</p>
+                  <p className="text-xs text-muted-foreground">{category.count} sản phẩm</p>
                 </CardContent>
               </Card>
             </Link>
@@ -174,7 +174,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3 mb-6">
             <Sparkles className="size-8 text-accent" />
             <h2 className="text-3xl font-bold">Flash Sale</h2>
-            <Badge className="bg-destructive">Ends in 2:45:30</Badge>
+            <Badge className="bg-destructive">Kết thúc sau 2:45:30</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.slice(0, 4).map((product) => (
@@ -223,7 +223,7 @@ export default function HomePage() {
                 <CardFooter className="gap-2">
                   <Button className="flex-1 bg-accent hover:bg-accent/90" asChild>
                     <Link to={`/product/${product.id}`}>
-                      <ShoppingCart className="size-4 mr-2" /> Add to Cart
+                      <ShoppingCart className="size-4 mr-2" /> Thêm vào giỏ hàng
                     </Link>
                   </Button>
                 </CardFooter>
@@ -237,7 +237,7 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-6">
           <TrendingUp className="size-8 text-primary" />
-          <h2 className="text-3xl font-bold">Best Sellers</h2>
+          <h2 className="text-3xl font-bold">Bán chạy nhất</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
@@ -283,7 +283,7 @@ export default function HomePage() {
                   <Heart className="size-4" />
                 </Button>
                 <Button className="flex-1 bg-accent hover:bg-accent/90" asChild>
-                  <Link to={`/product/${product.id}`}>Add to Cart</Link>
+                  <Link to={`/product/${product.id}`}>Thêm vào giỏ hàng</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -294,7 +294,7 @@ export default function HomePage() {
       {/* Featured Brands */}
       <section className="bg-secondary/30 py-12">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">Featured Brands</h2>
+          <h2 className="text-3xl font-bold mb-6 text-center">Thương hiệu nổi bật</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {brands.map((brand) => (
               <Card key={brand} className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -309,7 +309,7 @@ export default function HomePage() {
 
       {/* Customer Reviews */}
       <section className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-6 text-center">What Our Customers Say</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center">Khách hàng nói gì về chúng tôi</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {reviews.map((review, index) => (
             <Card key={index}>
@@ -340,18 +340,18 @@ export default function HomePage() {
       <section className="bg-primary/10 py-16">
         <div className="container mx-auto px-4 text-center max-w-2xl">
           <Gift className="size-12 mx-auto mb-4 text-accent" />
-          <h2 className="text-3xl font-bold mb-4">Join Our Newsletter</h2>
+          <h2 className="text-3xl font-bold mb-4">Đăng ký nhận tin</h2>
           <p className="text-muted-foreground mb-6">
-            Get exclusive offers, parenting tips, and updates on new products
+            Nhận ưu đãi độc quyền, mẹo nuôi dạy con và cập nhật sản phẩm mới
           </p>
           <div className="flex gap-3 max-w-md mx-auto">
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="Nhập email của bạn"
               className="flex-1 px-4 py-3 rounded-lg border border-border bg-card"
             />
             <Button className="bg-accent hover:bg-accent/90" size="lg">
-              Subscribe
+              Đăng ký
             </Button>
           </div>
         </div>
