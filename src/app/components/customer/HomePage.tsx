@@ -24,37 +24,93 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../ui/carousel";
+import axios from "axios";
+import { useEffect, useState } from "react";
 
+interface dataCategories {
+  category_id: number;
+  category_name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  status: boolean;
+  parent_id: number | null;
+}
+
+interface dataBrand {
+  brand_id: number;
+  brand_name: string;
+  logo_url: string;
+  country: string;
+  description: string;
+}
+import { Skeleton } from "../ui/skeleton";
 export default function HomePage() {
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+
   const heroSlides = [
     {
       title: "Khuyến mãi mùa hè 2026",
       subtitle: "Giảm giá đến 50% cho quần áo trẻ em",
       cta: "Mua ngay",
-      bg: "bg-gradient-to-r from-primary-200 to-primary-300"
+      bg: "bg-gradient-to-r from-primary-200 to-primary-300",
     },
     {
       title: "Sản phẩm mới",
       subtitle: "Khám phá bộ sưu tập mới nhất",
       cta: "Khám phá",
-      bg: "bg-gradient-to-r from-accent/20 to-accent/30"
+      bg: "bg-gradient-to-r from-accent/20 to-accent/30",
     },
     {
       title: "Miễn phí vận chuyển",
       subtitle: "Cho đơn hàng trên 500.000₫",
       cta: "Mua sắm ngay",
-      bg: "bg-gradient-to-r from-primary-100 to-secondary"
-    }
+      bg: "bg-gradient-to-r from-primary-100 to-secondary",
+    },
   ];
 
-  const categories = [
-    { name: "Quần áo & Thời trang", icon: "👕", count: 245 },
-    { name: "Bú & Ăn dặm", icon: "🍼", count: 189 },
-    { name: "Tã & Tắm gội", icon: "🛁", count: 156 },
-    { name: "Đồ chơi & Giải trí", icon: "🧸", count: 312 },
-    { name: "Phòng bé & Đồ dùng", icon: "🛏️", count: 98 },
-    { name: "Sức khỏe & An toàn", icon: "💊", count: 127 }
-  ];
+  const [listCategories, setListCategories] = useState<dataCategories[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const getListCategories = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(
+        `${API_BASE_URL}/categories/?page=1&limit=12`,
+      );
+
+      if (res.status === 200) {
+        setListCategories(res.data.data.categories);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const [listBrand, setListBrand] = useState<dataBrand[]>([]);
+
+  const getListBrands = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(`${API_BASE_URL}/brands?limit=6`);
+
+      if (res.status === 200) {
+        setListBrand(res.data.data.brands);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getListCategories();
+    getListBrands();
+  }, []);
 
   const featuredProducts = [
     {
@@ -67,7 +123,7 @@ export default function HomePage() {
       reviews: 124,
       image: "🧸",
       discount: 30,
-      badge: "Bán chạy nhất"
+      badge: "Bán chạy nhất",
     },
     {
       id: 2,
@@ -78,7 +134,7 @@ export default function HomePage() {
       rating: 4.9,
       reviews: 89,
       image: "🍽️",
-      badge: "Mới"
+      badge: "Mới",
     },
     {
       id: 3,
@@ -100,17 +156,8 @@ export default function HomePage() {
       rating: 5.0,
       reviews: 203,
       image: "🧸",
-      badge: "Đánh giá cao nhất"
-    }
-  ];
-
-  const brands = [
-    "Fisher-Price",
-    "Pampers",
-    "Johnson's Baby",
-    "Chicco",
-    "Graco",
-    "Huggies",
+      badge: "Đánh giá cao nhất",
+    },
   ];
 
   const reviews = [
@@ -119,22 +166,22 @@ export default function HomePage() {
       rating: 5,
       text: "Sản phẩm chất lượng tuyệt vời! Giao hàng nhanh và dịch vụ khách hàng tốt.",
       product: "Bộ bodysuit cotton hữu cơ",
-      date: "2 ngày trước"
+      date: "2 ngày trước",
     },
     {
       author: "Trần Minh Anh",
       rating: 5,
       text: "Rất hài lòng với đơn hàng. Sản phẩm đúng như mô tả.",
       product: "Máy theo dõi trẻ em",
-      date: "1 tuần trước"
+      date: "1 tuần trước",
     },
     {
       author: "Lê Thanh Mai",
       rating: 4,
       text: "Nhiều sản phẩm để lựa chọn. Giá cả hợp lý.",
       product: "Bộ dụng cụ ăn dặm",
-      date: "2 tuần trước"
-    }
+      date: "2 tuần trước",
+    },
   ];
 
   return (
@@ -172,24 +219,42 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold">Danh mục sản phẩm</h2>
           <Link to="/products">
-            <Button variant="ghost">Xem tất cả <ArrowRight className="ml-2 size-4" /></Button>
+            <Button variant="ghost">
+              Xem tất cả <ArrowRight className="ml-2 size-4" />
+            </Button>
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((category) => (
-            <Link
-              key={category.name}
-              to={`/products?category=${category.name}`}
-            >
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-primary-200">
-                <CardContent className="pt-6 text-center">
-                  <div className="text-5xl mb-3">{category.icon}</div>
-                  <h3 className="font-medium text-sm mb-1">{category.name}</h3>
-                  <p className="text-xs text-muted-foreground">{category.count} sản phẩm</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <Card key={index}>
+                  <CardContent className="pt-6 text-center">
+                    <Skeleton className="h-16 w-16 mx-auto rounded-full mb-3" />
+                    <Skeleton className="h-4 w-24 mx-auto mb-2" />
+                    <Skeleton className="h-3 w-16 mx-auto" />
+                  </CardContent>
+                </Card>
+              ))
+            : listCategories.map((category) => (
+                <Link
+                  key={category.category_id}
+                  to={`/products?category=${category.category_name}`}
+                >
+                  <Card className="hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-6 text-center">
+                      <div className="text-5xl mb-3">{category.image_url}</div>
+
+                      <h3 className="font-medium text-sm mb-1">
+                        {category.category_name}
+                      </h3>
+
+                      <p className="text-xs text-muted-foreground">
+                        {category.slug}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
         </div>
       </section>
 
@@ -342,15 +407,40 @@ export default function HomePage() {
       {/* Featured Brands */}
       <section className="bg-secondary/30 py-12">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">Thương hiệu nổi bật</h2>
+          <h2 className="text-3xl font-bold mb-6 text-center">
+            Thương hiệu nổi bật
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {brands.map((brand) => (
+            {listBrand.map((brand) => (
               <Card
-                key={brand}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                key={brand.brand_id}
+                className="hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
               >
+                <CardContent className="p-4 flex flex-col items-center">
+                  {brand.logo_url ? (
+                    <img
+                      src={`${API_BASE_URL.replace("/api/v1", "")}${brand.logo_url}`}
+                      alt={brand.brand_name}
+                      className="h-12 object-contain mb-3"
+                    />
+                  ) : (
+                    <div className="h-12 flex items-center justify-center text-lg font-bold mb-3">
+                      {brand.brand_name.charAt(0)}
+                    </div>
+                  )}
+
+                  <div className="font-semibold text-center">
+                    {brand.brand_name}
+                  </div>
+                </CardContent>
                 <CardContent className="p-6 text-center">
-                  <div className="font-semibold text-primary">{brand}</div>
+                  <div className="font-semibold text-primary">
+                    {brand.brand_name}
+                  </div>
+
+                  <div className="text-xs text-muted-foreground mt-2">
+                    {brand.country}
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -360,7 +450,9 @@ export default function HomePage() {
 
       {/* Customer Reviews */}
       <section className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-6 text-center">Khách hàng nói gì về chúng tôi</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center">
+          Khách hàng nói gì về chúng tôi
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {reviews.map((review, index) => (
             <Card key={index}>
