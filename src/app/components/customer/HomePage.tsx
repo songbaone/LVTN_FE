@@ -1,8 +1,22 @@
 import { Link } from "react-router";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 import { Badge } from "../ui/badge";
-import { Star, Heart, ShoppingCart, ArrowRight, TrendingUp, Sparkles, Gift } from "lucide-react";
+import {
+  Star,
+  Heart,
+  ShoppingCart,
+  ArrowRight,
+  TrendingUp,
+  Sparkles,
+  Gift,
+} from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -75,7 +89,7 @@ export default function HomePage() {
       rating: 4.7,
       reviews: 56,
       image: "📹",
-      discount: 17
+      discount: 17,
     },
     {
       id: 4,
@@ -91,7 +105,12 @@ export default function HomePage() {
   ];
 
   const brands = [
-    "Fisher-Price", "Pampers", "Johnson's Baby", "Chicco", "Graco", "Huggies"
+    "Fisher-Price",
+    "Pampers",
+    "Johnson's Baby",
+    "Chicco",
+    "Graco",
+    "Huggies",
   ];
 
   const reviews = [
@@ -132,7 +151,10 @@ export default function HomePage() {
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
                       {slide.subtitle}
                     </h1>
-                    <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Button
+                      size="lg"
+                      className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    >
                       {slide.cta} <ArrowRight className="ml-2 size-5" />
                     </Button>
                   </div>
@@ -155,7 +177,10 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((category) => (
-            <Link key={category.name} to={`/products?category=${category.name}`}>
+            <Link
+              key={category.name}
+              to={`/products?category=${category.name}`}
+            >
               <Card className="hover:shadow-lg transition-shadow cursor-pointer border-primary-200">
                 <CardContent className="pt-6 text-center">
                   <div className="text-5xl mb-3">{category.icon}</div>
@@ -178,7 +203,10 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.slice(0, 4).map((product) => (
-              <Card key={product.id} className="group hover:shadow-xl transition-shadow">
+              <Card
+                key={product.id}
+                className="group hover:shadow-xl transition-shadow"
+              >
                 <CardHeader className="relative">
                   {product.badge && (
                     <Badge className="absolute top-4 left-4 z-10 bg-accent">
@@ -202,12 +230,20 @@ export default function HomePage() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
-                  <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {product.brand}
+                  </p>
+                  <h3 className="font-semibold mb-2 line-clamp-2">
+                    {product.name}
+                  </h3>
                   <div className="flex items-center gap-1 mb-2">
                     <Star className="size-4 fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-medium">{product.rating}</span>
-                    <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                    <span className="text-sm font-medium">
+                      {product.rating}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({product.reviews})
+                    </span>
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-lg font-bold text-accent">
@@ -221,7 +257,10 @@ export default function HomePage() {
                   </div>
                 </CardContent>
                 <CardFooter className="gap-2">
-                  <Button className="flex-1 bg-accent hover:bg-accent/90" asChild>
+                  <Button
+                    className="flex-1 bg-accent hover:bg-accent/90"
+                    asChild
+                  >
                     <Link to={`/product/${product.id}`}>
                       <ShoppingCart className="size-4 mr-2" /> Thêm vào giỏ hàng
                     </Link>
@@ -241,7 +280,10 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
-            <Card key={product.id} className="group hover:shadow-xl transition-shadow">
+            <Card
+              key={product.id}
+              className="group hover:shadow-xl transition-shadow"
+            >
               <CardHeader className="relative">
                 {product.badge && (
                   <Badge className="absolute top-4 left-4 z-10 bg-accent">
@@ -260,12 +302,18 @@ export default function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
-                <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {product.brand}
+                </p>
+                <h3 className="font-semibold mb-2 line-clamp-2">
+                  {product.name}
+                </h3>
                 <div className="flex items-center gap-1 mb-2">
                   <Star className="size-4 fill-amber-400 text-amber-400" />
                   <span className="text-sm font-medium">{product.rating}</span>
-                  <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({product.reviews})
+                  </span>
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-bold text-accent">
@@ -297,7 +345,10 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold mb-6 text-center">Thương hiệu nổi bật</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {brands.map((brand) => (
-              <Card key={brand} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card
+                key={brand}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 <CardContent className="p-6 text-center">
                   <div className="font-semibold text-primary">{brand}</div>
                 </CardContent>
@@ -325,7 +376,9 @@ export default function HomePage() {
                 <p className="text-sm mb-4">{review.text}</p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div>
-                    <p className="font-medium text-foreground">{review.author}</p>
+                    <p className="font-medium text-foreground">
+                      {review.author}
+                    </p>
                     <p>{review.product}</p>
                   </div>
                   <span>{review.date}</span>
