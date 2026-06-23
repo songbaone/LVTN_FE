@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "../ui/button";
 import {
   Card,
@@ -44,10 +44,24 @@ interface dataBrand {
   country: string;
   description: string;
 }
+
+interface dataFlashProducts {
+  product_id: number;
+  product_name: string;
+  sku: string;
+  category_name: string;
+  brand_name: string;
+  short_description: string;
+  thumbnail: string;
+  price: number;
+  discount_price: number;
+  total_rate: number;
+  reviews: string;
+}
 import { Skeleton } from "../ui/skeleton";
 export default function HomePage() {
   const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+  const navigate = useNavigate();
   const heroSlides = [
     {
       title: "Khuyến mãi mùa hè 2026",
@@ -69,6 +83,7 @@ export default function HomePage() {
     },
   ];
 
+  // Handle get list category
   const [listCategories, setListCategories] = useState<dataCategories[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -89,11 +104,14 @@ export default function HomePage() {
       setLoading(false);
     }
   };
+
+  // Handle get list brands
   const [listBrand, setListBrand] = useState<dataBrand[]>([]);
+  const [loadingBrands, setLoadingBrands] = useState(true);
 
   const getListBrands = async () => {
     try {
-      setLoading(true);
+      setLoadingBrands(true);
 
       const res = await axios.get(`${API_BASE_URL}/brands?limit=6`);
 
@@ -103,62 +121,85 @@ export default function HomePage() {
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      setLoadingBrands(false);
     }
   };
 
+  // handle get list flash sales products
+  const [listFlashSaleProducts, setListFlashSaleProducts] = useState<
+    dataFlashProducts[]
+  >([]);
+  const [loadingFlashSale, setLoadingFlashSale] = useState(true);
+
+  const getListFlashSaleProducts = async () => {
+    try {
+      setLoadingFlashSale(true);
+
+      const res = await axios.get(`${API_BASE_URL}/products?limit=5`);
+
+      if (res.status === 200) {
+        setListFlashSaleProducts(res.data.data.products);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingFlashSale(false);
+    }
+  };
+  // on Mounted
   useEffect(() => {
     getListCategories();
     getListBrands();
+    getListFlashSaleProducts();
   }, []);
 
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Bộ bodysuit cotton hữu cơ",
-      brand: "BabyComfort",
-      price: 450000,
-      originalPrice: 650000,
-      rating: 4.8,
-      reviews: 124,
-      image: "🧸",
-      discount: 30,
-      badge: "Bán chạy nhất",
-    },
-    {
-      id: 2,
-      name: "Bộ dụng cụ ăn dặm silicone",
-      brand: "SafeFeed",
-      price: 320000,
-      originalPrice: null,
-      rating: 4.9,
-      reviews: 89,
-      image: "🍽️",
-      badge: "Mới",
-    },
-    {
-      id: 3,
-      name: "Máy theo dõi trẻ em cao cấp",
-      brand: "SmartBaby",
-      price: 1250000,
-      originalPrice: 1500000,
-      rating: 4.7,
-      reviews: 56,
-      image: "📹",
-      discount: 17,
-    },
-    {
-      id: 4,
-      name: "Bộ thú nhồi bông mềm",
-      brand: "CuddleTime",
-      price: 280000,
-      originalPrice: null,
-      rating: 5.0,
-      reviews: 203,
-      image: "🧸",
-      badge: "Đánh giá cao nhất",
-    },
-  ];
+  // const featuredProducts = [
+  //   {
+  //     id: 1,
+  //     name: "Bộ bodysuit cotton hữu cơ",
+  //     brand: "BabyComfort",
+  //     price: 450000,
+  //     originalPrice: 650000,
+  //     rating: 4.8,
+  //     reviews: 124,
+  //     image: "🧸",
+  //     discount: 30,
+  //     badge: "Bán chạy nhất",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Bộ dụng cụ ăn dặm silicone",
+  //     brand: "SafeFeed",
+  //     price: 320000,
+  //     originalPrice: null,
+  //     rating: 4.9,
+  //     reviews: 89,
+  //     image: "🍽️",
+  //     badge: "Mới",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Máy theo dõi trẻ em cao cấp",
+  //     brand: "SmartBaby",
+  //     price: 1250000,
+  //     originalPrice: 1500000,
+  //     rating: 4.7,
+  //     reviews: 56,
+  //     image: "📹",
+  //     discount: 17,
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Bộ thú nhồi bông mềm",
+  //     brand: "CuddleTime",
+  //     price: 280000,
+  //     originalPrice: null,
+  //     rating: 5.0,
+  //     reviews: 203,
+  //     image: "🧸",
+  //     badge: "Đánh giá cao nhất",
+  //   },
+  // ];
 
   const reviews = [
     {
@@ -267,72 +308,107 @@ export default function HomePage() {
             <Badge className="bg-destructive">Kết thúc sau 2:45:30</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.slice(0, 4).map((product) => (
-              <Card
-                key={product.id}
-                className="group hover:shadow-xl transition-shadow"
-              >
-                <CardHeader className="relative">
-                  {product.badge && (
-                    <Badge className="absolute top-4 left-4 z-10 bg-accent">
-                      {product.badge}
-                    </Badge>
-                  )}
-                  {product.discount && (
-                    <Badge className="absolute top-4 right-4 z-10 bg-destructive">
-                      -{product.discount}%
-                    </Badge>
-                  )}
-                  <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-7xl mb-4">
-                    {product.image}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
+            {loadingFlashSale
+              ? Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index}>
+                    <CardHeader>
+                      <Skeleton className="aspect-square w-full rounded-lg" />
+                    </CardHeader>
+
+                    <CardContent>
+                      <Skeleton className="h-3 w-20 mb-2" />
+                      <Skeleton className="h-5 w-full mb-2" />
+                      <Skeleton className="h-5 w-3/4 mb-4" />
+
+                      <div className="flex gap-2 mb-4">
+                        <Skeleton className="h-4 w-12" />
+                        <Skeleton className="h-4 w-10" />
+                      </div>
+
+                      <Skeleton className="h-6 w-32" />
+                    </CardContent>
+
+                    <CardFooter>
+                      <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                  </Card>
+                ))
+              : listFlashSaleProducts.slice(0, 4).map((product) => (
+                  <Card
+                    onClick={() => navigate(`/product/${product.product_id}`)}
+                    key={product.product_id}
+                    className="group hover:shadow-xl transition-shadow"
                   >
-                    <Heart className="size-5" />
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {product.brand}
-                  </p>
-                  <h3 className="font-semibold mb-2 line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center gap-1 mb-2">
-                    <Star className="size-4 fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-medium">
-                      {product.rating}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({product.reviews})
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-accent">
-                      {product.price.toLocaleString()} ₫
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {product.originalPrice.toLocaleString()} ₫
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="gap-2">
-                  <Button
-                    className="flex-1 bg-accent hover:bg-accent/90"
-                    asChild
-                  >
-                    <Link to={`/product/${product.id}`}>
-                      <ShoppingCart className="size-4 mr-2" /> Thêm vào giỏ hàng
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                    <CardHeader className="relative">
+                      {product.discount_price && (
+                        <Badge className="absolute top-4 right-4 z-10 bg-destructive">
+                          -
+                          {Math.round(
+                            ((product.price - product.discount_price) /
+                              product.price) *
+                              100,
+                          )}
+                          %
+                        </Badge>
+                      )}
+
+                      <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center mb-4 overflow-hidden">
+                        <img
+                          src={product.thumbnail}
+                          alt={product.product_name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
+                      >
+                        <Heart className="size-5" />
+                      </Button>
+                    </CardHeader>
+
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {product.brand_name}
+                      </p>
+
+                      <h3 className="font-semibold mb-2 line-clamp-2">
+                        {product.product_name}
+                      </h3>
+
+                      <div className="flex items-center gap-1 mb-2">
+                        <Star className="size-4 fill-amber-400 text-amber-400" />
+                        <span className="text-sm font-medium">
+                          {product.total_rate}
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg font-bold text-accent">
+                          {product.discount_price.toLocaleString()} ₫
+                        </span>
+
+                        <span className="text-sm text-muted-foreground line-through">
+                          {product.price.toLocaleString()} ₫
+                        </span>
+                      </div>
+                    </CardContent>
+
+                    <CardFooter>
+                      <Button
+                        className="flex-1 bg-accent hover:bg-accent/90"
+                        asChild
+                      >
+                        <Link to={`/product/${product.product_id}`}>
+                          <ShoppingCart className="size-4 mr-2" />
+                          Thêm vào giỏ hàng
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
           </div>
         </div>
       </section>
@@ -344,63 +420,107 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold">Bán chạy nhất</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <Card
-              key={product.id}
-              className="group hover:shadow-xl transition-shadow"
-            >
-              <CardHeader className="relative">
-                {product.badge && (
-                  <Badge className="absolute top-4 left-4 z-10 bg-accent">
-                    {product.badge}
-                  </Badge>
-                )}
-                <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-7xl mb-4">
-                  {product.image}
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
+          {loadingFlashSale
+            ? Array.from({ length: 4 }).map((_, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <Skeleton className="aspect-square w-full rounded-lg" />
+                  </CardHeader>
+
+                  <CardContent>
+                    <Skeleton className="h-3 w-20 mb-2" />
+                    <Skeleton className="h-5 w-full mb-2" />
+                    <Skeleton className="h-5 w-3/4 mb-4" />
+
+                    <div className="flex gap-2 mb-4">
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-10" />
+                    </div>
+
+                    <Skeleton className="h-6 w-32" />
+                  </CardContent>
+
+                  <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                  </CardFooter>
+                </Card>
+              ))
+            : listFlashSaleProducts.slice(0, 4).map((product) => (
+                <Card
+                  onClick={() => navigate(`/product/${product.product_id}`)}
+                  key={product.product_id}
+                  className="group hover:shadow-xl transition-shadow"
                 >
-                  <Heart className="size-5" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground mb-1">
-                  {product.brand}
-                </p>
-                <h3 className="font-semibold mb-2 line-clamp-2">
-                  {product.name}
-                </h3>
-                <div className="flex items-center gap-1 mb-2">
-                  <Star className="size-4 fill-amber-400 text-amber-400" />
-                  <span className="text-sm font-medium">{product.rating}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({product.reviews})
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-bold text-accent">
-                    {product.price.toLocaleString()} ₫
-                  </span>
-                  {product.originalPrice && (
-                    <span className="text-sm text-muted-foreground line-through">
-                      {product.originalPrice.toLocaleString()} ₫
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="gap-2">
-                <Button variant="outline" size="icon">
-                  <Heart className="size-4" />
-                </Button>
-                <Button className="flex-1 bg-accent hover:bg-accent/90" asChild>
-                  <Link to={`/product/${product.id}`}>Thêm vào giỏ hàng</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  <CardHeader className="relative">
+                    {product.discount_price && (
+                      <Badge className="absolute top-4 right-4 z-10 bg-destructive">
+                        -
+                        {Math.round(
+                          ((product.price - product.discount_price) /
+                            product.price) *
+                            100,
+                        )}
+                        %
+                      </Badge>
+                    )}
+
+                    <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center mb-4 overflow-hidden">
+                      <img
+                        src={product.thumbnail}
+                        alt={product.product_name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
+                    >
+                      <Heart className="size-5" />
+                    </Button>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {product.brand_name}
+                    </p>
+
+                    <h3 className="font-semibold mb-2 line-clamp-2">
+                      {product.product_name}
+                    </h3>
+
+                    <div className="flex items-center gap-1 mb-2">
+                      <Star className="size-4 fill-amber-400 text-amber-400" />
+                      <span className="text-sm font-medium">
+                        {product.total_rate}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-lg font-bold text-accent">
+                        {product.discount_price.toLocaleString()} ₫
+                      </span>
+
+                      <span className="text-sm text-muted-foreground line-through">
+                        {product.price.toLocaleString()} ₫
+                      </span>
+                    </div>
+                  </CardContent>
+
+                  <CardFooter>
+                    <Button
+                      className="flex-1 bg-accent hover:bg-accent/90"
+                      asChild
+                    >
+                      <Link to={`/product/${product.product_id}`}>
+                        <ShoppingCart className="size-4 mr-2" />
+                        Thêm vào giỏ hàng
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
         </div>
       </section>
 
@@ -410,40 +530,46 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold mb-6 text-center">
             Thương hiệu nổi bật
           </h2>
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {listBrand.map((brand) => (
-              <Card
-                key={brand.brand_id}
-                className="hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
-              >
-                <CardContent className="p-4 flex flex-col items-center">
-                  {brand.logo_url ? (
-                    <img
-                      src={`${API_BASE_URL.replace("/api/v1", "")}${brand.logo_url}`}
-                      alt={brand.brand_name}
-                      className="h-12 object-contain mb-3"
-                    />
-                  ) : (
-                    <div className="h-12 flex items-center justify-center text-lg font-bold mb-3">
-                      {brand.brand_name.charAt(0)}
-                    </div>
-                  )}
+            {loadingBrands
+              ? Array.from({ length: 6 }).map((_, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-4 flex flex-col items-center">
+                      <Skeleton className="h-12 w-12 rounded-full mb-3" />
+                      <Skeleton className="h-4 w-20 mb-2" />
+                      <Skeleton className="h-3 w-16" />
+                    </CardContent>
+                  </Card>
+                ))
+              : listBrand.map((brand) => (
+                  <Card
+                    key={brand.brand_id}
+                    className="hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
+                  >
+                    <CardContent className="p-4 flex flex-col items-center">
+                      {brand.logo_url ? (
+                        <img
+                          src={`${API_BASE_URL.replace("/api/v1", "")}${brand.logo_url}`}
+                          alt={brand.brand_name}
+                          className="h-12 object-contain mb-3"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold mb-3">
+                          {brand.brand_name.charAt(0)}
+                        </div>
+                      )}
 
-                  <div className="font-semibold text-center">
-                    {brand.brand_name}
-                  </div>
-                </CardContent>
-                <CardContent className="p-6 text-center">
-                  <div className="font-semibold text-primary">
-                    {brand.brand_name}
-                  </div>
+                      <div className="font-semibold text-center">
+                        {brand.brand_name}
+                      </div>
 
-                  <div className="text-xs text-muted-foreground mt-2">
-                    {brand.country}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      <div className="text-xs text-muted-foreground mt-2">
+                        {brand.country}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
           </div>
         </div>
       </section>
