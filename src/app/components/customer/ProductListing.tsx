@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
@@ -6,11 +6,31 @@ import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { Slider } from "../ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Star, Heart, ShoppingCart, Grid3x3, List, Filter } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
+import axios from "axios";
 
+interface dataCategories {
+  category_id: number;
+  category_name: string;
+  description: string;
+}
 export default function ProductListing() {
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState([0, 2000000]);
 
@@ -19,35 +39,75 @@ export default function ProductListing() {
     name: `Baby Product ${i + 1}`,
     brand: ["BabyComfort", "SafeFeed", "SmartBaby", "CuddleTime"][i % 4],
     price: Math.floor(Math.random() * 1000000) + 200000,
-    originalPrice: i % 3 === 0 ? Math.floor(Math.random() * 1500000) + 500000 : null,
+    originalPrice:
+      i % 3 === 0 ? Math.floor(Math.random() * 1500000) + 500000 : null,
     rating: (Math.random() * 1.5 + 3.5).toFixed(1),
     reviews: Math.floor(Math.random() * 200) + 10,
     image: ["🧸", "🍼", "👶", "🛏️"][i % 4],
-    inStock: i % 5 !== 0
+    inStock: i % 5 !== 0,
   }));
 
-  const categories = [
-    "Clothing & Apparel",
-    "Feeding & Nursing",
-    "Diapers & Bath",
-    "Toys & Entertainment",
-    "Nursery & Gear",
-    "Health & Safety"
-  ];
+  const [listCategories, setListCategories] = useState<dataCategories[]>([]);
+  const [loading, setLoading] = useState(true);
+  const getListCategories = async () => {
+    try {
+      setLoading(true);
 
-  const brands = ["BabyComfort", "SafeFeed", "SmartBaby", "CuddleTime", "TinyToes", "LittleJoy"];
-  const ages = ["0-3 months", "3-6 months", "6-12 months", "1-2 years", "2+ years"];
+      const res = await axios.get(
+        `${API_BASE_URL}/categories/?page=1&limit=12`,
+      );
+
+      if (res.status === 200) {
+        setListCategories(res.data.data.categories);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getListCategories();
+  }, []);
+
+  const brands = [
+    "BabyComfort",
+    "SafeFeed",
+    "SmartBaby",
+    "CuddleTime",
+    "TinyToes",
+    "LittleJoy",
+  ];
+  const ages = [
+    "0-3 months",
+    "3-6 months",
+    "6-12 months",
+    "1-2 years",
+    "2+ years",
+  ];
 
   const FilterSidebar = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="font-semibold mb-3">Categories</h3>
+        <h3 className="font-semibold mb-3">Danh mục</h3>
+
         <div className="space-y-2">
-          {categories.map((cat) => (
-            <div key={cat} className="flex items-center gap-2">
-              <Checkbox id={cat} />
-              <Label htmlFor={cat} className="text-sm cursor-pointer">
-                {cat}
+          {listCategories.map((category) => (
+            <div key={category.category_id} className="flex items-center gap-2">
+              <Checkbox
+                id={`category-${category.category_id}`}
+                onCheckedChange={(checked) => {
+                  console.log("Category ID:", category.category_id);
+                  console.log("Checked:", checked);
+                }}
+              />
+
+              <Label
+                htmlFor={`category-${category.category_id}`}
+                className="text-sm cursor-pointer"
+              >
+                {category.category_name}
               </Label>
             </div>
           ))}
@@ -103,7 +163,10 @@ export default function ProductListing() {
           {[5, 4, 3].map((rating) => (
             <div key={rating} className="flex items-center gap-2">
               <Checkbox id={`rating-${rating}`} />
-              <Label htmlFor={`rating-${rating}`} className="flex items-center gap-1 text-sm cursor-pointer">
+              <Label
+                htmlFor={`rating-${rating}`}
+                className="flex items-center gap-1 text-sm cursor-pointer"
+              >
                 <Star className="size-4 fill-amber-400 text-amber-400" />
                 <span>{rating}+</span>
               </Label>
@@ -118,16 +181,18 @@ export default function ProductListing() {
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
-        <Link to="/" className="hover:text-primary">Home</Link>
+        <Link to="/" className="hover:text-primary">
+          Trang chủ
+        </Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">Products</span>
+        <span className="text-foreground">Sản phẩm</span>
       </nav>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters - Desktop */}
         <aside className="hidden lg:block w-64 flex-shrink-0">
           <div className="sticky top-24">
-            <h2 className="text-xl font-semibold mb-4">Filters</h2>
+            <h2 className="text-xl font-semibold mb-4">Bộ lọc</h2>
             <FilterSidebar />
           </div>
         </aside>
@@ -137,8 +202,10 @@ export default function ProductListing() {
           {/* Toolbar */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold mb-1">All Products</h1>
-              <p className="text-sm text-muted-foreground">{products.length} products found</p>
+              <h1 className="text-2xl font-bold mb-1">Tất cả sản phẩm</h1>
+              <p className="text-sm text-muted-foreground">
+                {products.length} sản phẩm được tìm thấy
+              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -197,13 +264,19 @@ export default function ProductListing() {
           </div>
 
           {/* Products Grid/List */}
-          <div className={viewMode === "grid"
-            ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
-            : "flex flex-col gap-4"
-          }>
-            {products.map((product) => (
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                : "flex flex-col gap-4"
+            }
+          >
+            {products.map((product) =>
               viewMode === "grid" ? (
-                <Card key={product.id} className="group hover:shadow-xl transition-shadow">
+                <Card
+                  key={product.id}
+                  className="group hover:shadow-xl transition-shadow"
+                >
                   <CardHeader className="relative">
                     {!product.inStock && (
                       <Badge className="absolute top-4 left-4 z-10 bg-muted">
@@ -212,7 +285,11 @@ export default function ProductListing() {
                     )}
                     {product.originalPrice && (
                       <Badge className="absolute top-4 right-4 z-10 bg-destructive">
-                        -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+                        -
+                        {Math.round(
+                          (1 - product.price / product.originalPrice) * 100,
+                        )}
+                        %
                       </Badge>
                     )}
                     <Link to={`/product/${product.id}`}>
@@ -229,7 +306,9 @@ export default function ProductListing() {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {product.brand}
+                    </p>
                     <Link to={`/product/${product.id}`}>
                       <h3 className="font-semibold mb-2 line-clamp-2 hover:text-accent transition-colors">
                         {product.name}
@@ -237,8 +316,12 @@ export default function ProductListing() {
                     </Link>
                     <div className="flex items-center gap-1 mb-2">
                       <Star className="size-4 fill-amber-400 text-amber-400" />
-                      <span className="text-sm font-medium">{product.rating}</span>
-                      <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                      <span className="text-sm font-medium">
+                        {product.rating}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({product.reviews})
+                      </span>
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-lg font-bold text-accent">
@@ -269,21 +352,33 @@ export default function ProductListing() {
                   </CardFooter>
                 </Card>
               ) : (
-                <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                <Card
+                  key={product.id}
+                  className="group hover:shadow-lg transition-shadow"
+                >
                   <div className="flex gap-4 p-4">
-                    <Link to={`/product/${product.id}`} className="relative flex-shrink-0">
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="relative flex-shrink-0"
+                    >
                       <div className="w-40 h-40 rounded-lg bg-secondary flex items-center justify-center text-5xl hover:bg-primary-50 transition-colors">
                         {product.image}
                       </div>
                       {product.originalPrice && (
                         <Badge className="absolute top-2 left-2 bg-destructive">
-                          -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+                          -
+                          {Math.round(
+                            (1 - product.price / product.originalPrice) * 100,
+                          )}
+                          %
                         </Badge>
                       )}
                     </Link>
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {product.brand}
+                        </p>
                         <Link to={`/product/${product.id}`}>
                           <h3 className="font-semibold text-lg mb-2 hover:text-accent transition-colors">
                             {product.name}
@@ -291,8 +386,12 @@ export default function ProductListing() {
                         </Link>
                         <div className="flex items-center gap-1 mb-3">
                           <Star className="size-4 fill-amber-400 text-amber-400" />
-                          <span className="text-sm font-medium">{product.rating}</span>
-                          <span className="text-xs text-muted-foreground">({product.reviews} reviews)</span>
+                          <span className="text-sm font-medium">
+                            {product.rating}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({product.reviews} reviews)
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -308,7 +407,9 @@ export default function ProductListing() {
                             )}
                           </div>
                           {!product.inStock && (
-                            <Badge variant="secondary" className="mt-1">Out of Stock</Badge>
+                            <Badge variant="secondary" className="mt-1">
+                              Out of Stock
+                            </Badge>
                           )}
                         </div>
                         <div className="flex gap-2">
@@ -327,15 +428,19 @@ export default function ProductListing() {
                     </div>
                   </div>
                 </Card>
-              )
-            ))}
+              ),
+            )}
           </div>
 
           {/* Pagination */}
           <div className="flex justify-center mt-8">
             <div className="flex gap-2">
-              <Button variant="outline" disabled>Previous</Button>
-              <Button variant="default" className="bg-primary">1</Button>
+              <Button variant="outline" disabled>
+                Previous
+              </Button>
+              <Button variant="default" className="bg-primary">
+                1
+              </Button>
               <Button variant="outline">2</Button>
               <Button variant="outline">3</Button>
               <Button variant="outline">Next</Button>
