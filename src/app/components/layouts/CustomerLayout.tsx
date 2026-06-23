@@ -3,7 +3,7 @@ import { Heart, ShoppingCart, User, Search, Menu, Baby } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,23 +12,62 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { Skeleton } from "../ui/skeleton";
 import { useNavigate } from "react-router";
 import Swal from "sweetalert2";
+import { categoryService } from "../../../services/category.service";
+
+interface CategoryNode {
+  category_id: number;
+  category_name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  status: boolean;
+  parent_id: number | null;
+  total_product_count: number;
+  children: CategoryNode[];
+}
 
 export default function CustomerLayout() {
   const location = useLocation();
   const [cartCount] = useState(3);
   const [wishlistCount] = useState(5);
   const navigate = useNavigate();
+  const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    "Clothing & Apparel",
-    "Feeding & Nursing",
-    "Diapers & Bath",
-    "Toys & Entertainment",
-    "Nursery & Gear",
-    "Health & Safety",
-  ];
+  useEffect(() => {
+    let mounted = true;
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await categoryService.getTree();
+        const tree: CategoryNode[] = response.data?.tree ?? response.data?.data?.tree ?? [];
+        if (mounted) {
+          setCategoryTree(tree);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category tree:", err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    fetchCategories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const activeParentCategories = categoryTree.filter(
+    (cat) => cat.status === true && cat.parent_id === null
+  );
+
+  const handleCategoryClick = (categoryId: number, categoryName: string) => {
+    navigate(`/products?category_id=${categoryId}&category_name=${encodeURIComponent(categoryName)}`);
+  };
 
   const loginExisting = async () => {
     const token = localStorage.getItem("AccessToken");
@@ -154,15 +193,31 @@ export default function CustomerLayout() {
                     <h2 className="text-lg font-semibold text-primary">
                       Danh mục
                     </h2>
-                    {categories.map((cat) => (
-                      <Link
-                        key={cat}
-                        to={`/products?category=${cat}`}
-                        className="transition-colors text-foreground hover:text-primary"
-                      >
-                        {cat}
-                      </Link>
-                    ))}
+                    {loading ? (
+                      <>
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-3/4" />
+                        <Skeleton className="h-8 w-5/6" />
+                        <Skeleton className="h-8 w-2/3" />
+                        <Skeleton className="h-8 w-4/5" />
+                      </>
+                    ) : activeParentCategories.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Chưa có danh mục sản phẩm
+                      </p>
+                    ) : (
+                      activeParentCategories.map((cat) => (
+                        <button
+                          key={cat.category_id}
+                          onClick={() =>
+                            handleCategoryClick(cat.category_id, cat.category_name)
+                          }
+                          className="text-left transition-colors text-foreground hover:text-primary"
+                        >
+                          {cat.category_name}
+                        </button>
+                      ))
+                    )}
                   </nav>
                 </SheetContent>
               </Sheet>
@@ -184,17 +239,33 @@ export default function CustomerLayout() {
 
         {/* Categories Navigation - Desktop */}
         <div className="hidden border-t md:block bg-primary-50 border-primary-100">
-          <div className="container px-4 mx-auto">
-            <nav className="flex items-center gap-6 py-3 overflow-x-auto">
-              {categories.map((cat) => (
-                <Link
-                  key={cat}
-                  to={`/products?category=${cat}`}
-                  className="text-sm transition-colors whitespace-nowrap text-foreground hover:text-accent"
-                >
-                  {cat}
-                </Link>
-              ))}
+          <div className="container px-4 mx-auto overflow-x-auto">
+            <nav className="flex items-center gap-6 py-3">
+              {loading ? (
+                <>
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </>
+              ) : activeParentCategories.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Chưa có danh mục sản phẩm
+                </p>
+              ) : (
+                activeParentCategories.map((cat) => (
+                  <button
+                    key={cat.category_id}
+                    onClick={() =>
+                      handleCategoryClick(cat.category_id, cat.category_name)
+                    }
+                    className="text-sm transition-colors whitespace-nowrap text-foreground hover:text-accent"
+                  >
+                    {cat.category_name}
+                  </button>
+                ))
+              )}
             </nav>
           </div>
         </div>
