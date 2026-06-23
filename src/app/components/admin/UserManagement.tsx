@@ -300,7 +300,6 @@ export default function UserManagement() {
     phone: "",
     gender: "Nam",
     birth_date: "",
-    role_id: "2",
   });
   const handleCreateStaff = async () => {
     try {
@@ -333,7 +332,6 @@ export default function UserManagement() {
           phone: "",
           gender: "",
           birth_date: "",
-          role_id: "",
         });
       } else {
         toast.error(data.message);
@@ -391,7 +389,6 @@ export default function UserManagement() {
                 }
               />
             </div>
-
             {/* Email */}
             <div>
               <Label className="mb-2">
@@ -408,7 +405,6 @@ export default function UserManagement() {
                 }
               />
             </div>
-
             {/* Password */}
             <div>
               <Label className="mb-2">
@@ -425,7 +421,6 @@ export default function UserManagement() {
                 }
               />
             </div>
-
             {/* Phone */}
             <div>
               <Label className="mb-2">Số điện thoại</Label>
@@ -439,7 +434,6 @@ export default function UserManagement() {
                 }
               />
             </div>
-
             {/* Gender */}
             <div>
               <Label className="mb-2">Giới tính</Label>
@@ -464,11 +458,11 @@ export default function UserManagement() {
                 </SelectContent>
               </Select>
             </div>
-
             {/* Birth Date */}
-            <div>
-              <Label className="mb-2">Ngày sinh</Label>
-
+            <div className="col-span-2">
+              <Label className="mb-2">
+                <Label className="mb-2 col-span-2">Ngày sinh</Label>
+              </Label>
               <Input
                 type="date"
                 value={staffForm.birth_date}
@@ -479,29 +473,6 @@ export default function UserManagement() {
                   })
                 }
               />
-            </div>
-            {/* Role*/}
-            <div>
-              <Label className="mb-2">Chức vụ</Label>
-
-              <Select
-                value={staffForm.role_id}
-                onValueChange={(value) =>
-                  setStaffForm({
-                    ...staffForm,
-                    role_id: value,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn chức vụ" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="1">Quản trị viên</SelectItem>
-                  <SelectItem value="2">Nhân viên</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
