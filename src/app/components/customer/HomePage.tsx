@@ -340,7 +340,8 @@ export default function HomePage() {
                     className="group hover:shadow-xl transition-shadow"
                   >
                     <CardHeader className="relative">
-                      {product.discount_price && (
+                      {product.discount_price != 0 &&
+                      product.discount_price != null ? (
                         <Badge className="absolute top-4 right-4 z-10 bg-destructive">
                           -
                           {Math.round(
@@ -350,11 +351,12 @@ export default function HomePage() {
                           )}
                           %
                         </Badge>
+                      ) : (
+                        ""
                       )}
-
                       <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center mb-4 overflow-hidden">
                         <img
-                          src={product.thumbnail}
+                          src={`http://localhost:3000${product.thumbnail}`}
                           alt={product.product_name}
                           className="w-full h-full object-cover"
                         />
@@ -371,11 +373,11 @@ export default function HomePage() {
 
                     <CardContent>
                       <p className="text-xs text-muted-foreground mb-1">
-                        {product.brand_name}
+                        {product?.brand_name}
                       </p>
 
                       <h3 className="font-semibold mb-2 line-clamp-2">
-                        {product.product_name}
+                        {product?.product_name}
                       </h3>
 
                       <div className="flex items-center gap-1 mb-2">
@@ -386,13 +388,21 @@ export default function HomePage() {
                       </div>
 
                       <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-bold text-accent">
-                          {product.discount_price.toLocaleString()} ₫
-                        </span>
+                        {product.discount_price === 0 ? (
+                          <span className="text-lg font-bold text-accent">
+                            {product?.price?.toLocaleString()} ₫
+                          </span>
+                        ) : (
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-lg font-bold text-accent">
+                              {product.discount_price.toLocaleString()} ₫
+                            </span>
 
-                        <span className="text-sm text-muted-foreground line-through">
-                          {product.price.toLocaleString()} ₫
-                        </span>
+                            <span className="text-sm text-muted-foreground line-through">
+                              {product?.price?.toLocaleString()} ₫
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
 
@@ -452,7 +462,8 @@ export default function HomePage() {
                   className="group hover:shadow-xl transition-shadow"
                 >
                   <CardHeader className="relative">
-                    {product.discount_price && (
+                    {product.discount_price != 0 &&
+                    product.discount_price != null ? (
                       <Badge className="absolute top-4 right-4 z-10 bg-destructive">
                         -
                         {Math.round(
@@ -462,11 +473,13 @@ export default function HomePage() {
                         )}
                         %
                       </Badge>
+                    ) : (
+                      ""
                     )}
 
                     <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center mb-4 overflow-hidden">
                       <img
-                        src={product.thumbnail}
+                        src={`http://localhost:3000${product.thumbnail}`}
                         alt={product.product_name}
                         className="w-full h-full object-cover"
                       />
@@ -498,13 +511,21 @@ export default function HomePage() {
                     </div>
 
                     <div className="flex items-baseline gap-2">
-                      <span className="text-lg font-bold text-accent">
-                        {product.discount_price.toLocaleString()} ₫
-                      </span>
+                      {product.discount_price === 0 ? (
+                        <span className="text-lg font-bold text-accent">
+                          {product?.price?.toLocaleString()} ₫
+                        </span>
+                      ) : (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-lg font-bold text-accent">
+                            {product.discount_price.toLocaleString()} ₫
+                          </span>
 
-                      <span className="text-sm text-muted-foreground line-through">
-                        {product.price.toLocaleString()} ₫
-                      </span>
+                          <span className="text-sm text-muted-foreground line-through">
+                            {product?.price?.toLocaleString()} ₫
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
 
