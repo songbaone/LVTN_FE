@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -132,6 +133,7 @@ const formatPrice = (price: number) => price.toLocaleString() + " ₫";
 // ---------------------------------------------------------------------------
 
 export default function ProductManagement() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -673,7 +675,16 @@ export default function ProductManagement() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1 w-fit cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                          onClick={() =>
+                            navigate(
+                              `/admin/product-variants?product_id=${product.product_id}`,
+                            )
+                          }
+                          title="View variants"
+                        >
                           <Layers className="size-3" />
                           {product.variant_count}
                         </Badge>
