@@ -19,6 +19,8 @@ import {
   Menu,
   X,
   History,
+  ChevronDown,
+  Layers,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -32,10 +34,20 @@ export default function AdminLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(
+    location.pathname.startsWith("/admin/product"),
+  );
 
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Sản phẩm", href: "/admin/products", icon: Package },
+    {
+      name: "Sản phẩm",
+      icon: Package,
+      children: [
+        { name: "Product List", href: "/admin/products", icon: Package },
+        { name: "Product Variants", href: "/admin/product-variants", icon: Layers },
+      ],
+    },
     { name: "Đơn hàng", href: "/admin/orders", icon: ShoppingCart },
     { name: "Tồn kho", href: "/admin/inventory", icon: FileSpreadsheet },
     { name: "Lịch sử tồn kho", href: "/admin/inventory/history", icon: History },
@@ -106,6 +118,66 @@ export default function AdminLayout() {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {navigation.map((item) => {
+            if ("children" in item) {
+              const isParentActive = item.children.some(
+                (child) =>
+                  location.pathname === child.href ||
+                  (child.href !== "/admin" &&
+                    location.pathname.startsWith(child.href)),
+              );
+              return (
+                <div key={item.name}>
+                  <button
+                    onClick={() => setProductsOpen(!productsOpen)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left",
+                      isParentActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-secondary",
+                    )}
+                  >
+                    <item.icon className="size-5 flex-shrink-0" />
+                    {sidebarOpen && (
+                      <>
+                        <span className="flex-1">{item.name}</span>
+                        <ChevronDown
+                          className={cn(
+                            "size-4 transition-transform",
+                            productsOpen && "rotate-180",
+                          )}
+                        />
+                      </>
+                    )}
+                  </button>
+                  {sidebarOpen && productsOpen && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      {item.children.map((child) => {
+                        const isChildActive =
+                          location.pathname === child.href ||
+                          (child.href !== "/admin" &&
+                            location.pathname.startsWith(child.href));
+                        return (
+                          <Link
+                            key={child.name}
+                            to={child.href}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                              isChildActive
+                                ? "bg-accent text-accent-foreground font-medium"
+                                : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                            )}
+                          >
+                            <child.icon className="size-4 flex-shrink-0" />
+                            <span>{child.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             const isActive =
               location.pathname === item.href ||
               (item.href !== "/admin" &&
@@ -170,6 +242,45 @@ export default function AdminLayout() {
             </div>
             <nav className="p-4 space-y-1">
               {navigation.map((item) => {
+                if ("children" in item) {
+                  return (
+                    <div key={item.name}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg text-foreground",
+                        )}
+                      >
+                        <item.icon className="size-5 flex-shrink-0" />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      <div className="ml-6 mt-1 space-y-1">
+                        {item.children.map((child) => {
+                          const isChildActive =
+                            location.pathname === child.href ||
+                            (child.href !== "/admin" &&
+                              location.pathname.startsWith(child.href));
+                          return (
+                            <Link
+                              key={child.name}
+                              to={child.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                                isChildActive
+                                  ? "bg-accent text-accent-foreground font-medium"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                              )}
+                            >
+                              <child.icon className="size-4 flex-shrink-0" />
+                              <span>{child.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+
                 const isActive =
                   location.pathname === item.href ||
                   (item.href !== "/admin" &&
