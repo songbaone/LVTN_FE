@@ -1,47 +1,125 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw } from "lucide-react";
+import {
+  Star,
+  Heart,
+  ShoppingCart,
+  Minus,
+  Plus,
+  Truck,
+  Shield,
+  RotateCcw,
+} from "lucide-react";
 import { Separator } from "../ui/separator";
+import axios from "axios";
+import { get } from "react-hook-form";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
 
+interface ProductImage {
+  image_id: number;
+  image_url: string;
+  is_main: boolean;
+}
+
+interface Category {
+  category_id: number;
+  category_name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  status: boolean;
+}
+
+interface Brand {
+  brand_id: number;
+  brand_name: string;
+  logo_url: string | null;
+  country: string;
+  description: string | null;
+  status: boolean;
+}
+
+interface Product {
+  product_id: number;
+  product_name: string;
+  slug: string;
+  sku: string;
+
+  category_id: number;
+  category_name: string;
+
+  brand_id: number;
+  brand_name: string;
+
+  description: string | null;
+  short_description: string | null;
+
+  thumbnail: string;
+
+  price: number;
+  discount_price: number;
+
+  weight: number | null;
+
+  age_from: number | null;
+  age_to: number | null;
+
+  status: boolean;
+
+  created_at: string;
+  updated_at: string;
+
+  images: ProductImage[];
+
+  variant_count: number;
+  total_stock: number;
+
+  total_rate: number;
+
+  reviews: number;
+}
+
+interface dataProductDetail {
+  product: Product;
+  category: Category;
+  brand: Brand;
+}
 export default function ProductDetail() {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState("Medium");
-  const [selectedColor, setSelectedColor] = useState("Pink");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-  const product = {
-    id: id || "1",
-    name: "Organic Cotton Onesie Set - Premium Baby Clothing",
-    brand: "BabyComfort",
-    sku: "BC-OCS-001",
-    price: 450000,
-    originalPrice: 650000,
-    rating: 4.8,
-    reviews: 124,
-    stock: 15,
-    description: "Premium organic cotton onesie set perfect for your baby's sensitive skin. Made with 100% certified organic cotton, breathable and soft fabric ensures maximum comfort throughout the day.",
-    images: ["🧸", "👶", "🎀", "💝"],
-    sizes: ["Small", "Medium", "Large"],
-    colors: ["Pink", "Blue", "White", "Yellow"],
-    specifications: {
-      Material: "100% Organic Cotton",
-      Age: "0-12 months",
-      Care: "Machine washable",
-      Origin: "Vietnam",
-      Certification: "GOTS Certified"
+  const [productDetail, setProductDetail] = useState<dataProductDetail | null>(
+    null,
+  );
+
+  const getDetailProduct = async (product_id: number) => {
+    const res = await axios.get(`${API_BASE_URL}/products/${product_id}`);
+    if (res.status === 200) {
+      setProductDetail(res.data.data);
     }
   };
+
+  useEffect(() => {
+    console.log("product_id_detail:", id);
+    if (!id) return;
+    const productId = Number(id);
+    if (Number.isNaN(productId)) return;
+    getDetailProduct(productId);
+  }, [id]);
 
   const relatedProducts = Array.from({ length: 4 }, (_, i) => ({
     id: i + 10,
     name: `Related Product ${i + 1}`,
     price: 350000,
     rating: 4.5,
-    image: ["🍼", "🧸", "👶", "🎀"][i]
+    image: ["🍼", "🧸", "👶", "🎀"][i],
   }));
 
   const reviews = [
@@ -50,45 +128,61 @@ export default function ProductDetail() {
       rating: 5,
       date: "2 days ago",
       text: "Excellent quality! My baby loves it. Very soft and comfortable material.",
-      verified: true
+      verified: true,
     },
     {
       author: "Trần Minh Anh",
       rating: 5,
       date: "1 week ago",
       text: "Great product, fast shipping. Highly recommended!",
-      verified: true
+      verified: true,
     },
     {
       author: "Lê Thanh Mai",
       rating: 4,
       date: "2 weeks ago",
       text: "Good quality but runs a bit small. Order one size up.",
-      verified: true
-    }
+      verified: true,
+    },
   ];
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
-        <Link to="/" className="hover:text-primary">Home</Link>
+        <Link to="/" className="hover:text-primary">
+          Home
+        </Link>
         <span className="mx-2">/</span>
-        <Link to="/products" className="hover:text-primary">Products</Link>
+        <Link to="/products" className="hover:text-primary">
+          Products
+        </Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">{product.name}</span>
+        <span className="text-foreground">
+          {productDetail?.product?.product_name}
+        </span>
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         {/* Product Images */}
         <div>
           <div className="aspect-square rounded-2xl bg-secondary flex items-center justify-center text-[200px] mb-4">
-            {product.images[0]}
+            <img
+              src={`http://localhost:3000${productDetail?.product?.thumbnail}`}
+              alt={productDetail?.product?.product_name}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="grid grid-cols-4 gap-4">
-            {product.images.map((img, i) => (
-              <div key={i} className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-5xl cursor-pointer hover:bg-primary-100 transition-colors border-2 border-transparent hover:border-primary">
-                {img}
+            {productDetail?.product?.images.map((img, i) => (
+              <div
+                key={i}
+                className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-5xl cursor-pointer hover:bg-primary-100 transition-colors border-2 border-transparent hover:border-primary"
+              >
+                <img
+                  src={`http://localhost:3000${img.image_url}`}
+                  key={img.image_id}
+                />
               </div>
             ))}
           </div>
@@ -96,8 +190,12 @@ export default function ProductDetail() {
 
         {/* Product Info */}
         <div>
-          <Badge className="mb-3 bg-accent">{product.brand}</Badge>
-          <h1 className="text-3xl font-bold mb-3">{product.name}</h1>
+          <Badge className="mb-3 bg-accent">
+            {productDetail?.brand?.brand_name}
+          </Badge>
+          <h1 className="text-3xl font-bold mb-3">
+            {productDetail?.product?.product_name}
+          </h1>
 
           {/* Rating & Reviews */}
           <div className="flex items-center gap-4 mb-4">
@@ -105,39 +203,58 @@ export default function ProductDetail() {
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`size-5 ${i < Math.floor(product.rating) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`}
+                  className={`size-5 ${i < Math.floor(productDetail?.product?.total_rate) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`}
                 />
               ))}
             </div>
-            <span className="text-lg font-medium">{product.rating}</span>
-            <span className="text-muted-foreground">({product.reviews} reviews)</span>
+            <span className="text-lg font-medium">
+              {productDetail?.product?.total_rate}
+            </span>
+            <span className="text-muted-foreground">
+              ({productDetail?.product?.reviews} reviews)
+            </span>
           </div>
 
           <div className="mb-4">
-            <span className="text-xs text-muted-foreground">SKU: {product.sku}</span>
+            <span className="text-xs text-muted-foreground">
+              SKU: {productDetail?.product?.sku}
+            </span>
           </div>
 
           {/* Price */}
           <div className="flex items-baseline gap-3 mb-6">
             <span className="text-4xl font-bold text-accent">
-              {product.price.toLocaleString()} ₫
+              {productDetail?.product?.discount_price.toLocaleString()} ₫
             </span>
             <span className="text-xl text-muted-foreground line-through">
-              {product.originalPrice.toLocaleString()} ₫
+              {productDetail?.product?.price.toLocaleString()} ₫
             </span>
             <Badge className="bg-destructive">
-              -{Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+              -
+              {Math.round(
+                ((productDetail?.product?.price -
+                  productDetail?.product?.discount_price) /
+                  productDetail?.product?.price) *
+                  100,
+              )}
+              % OFF
             </Badge>
           </div>
 
           {/* Stock Status */}
           <div className="mb-6">
-            {product.stock > 0 ? (
-              <Badge variant="secondary" className="bg-success/10 text-success border-success">
-                In Stock ({product.stock} available)
+            {productDetail?.product?.total_stock > 0 ? (
+              <Badge
+                variant="secondary"
+                className="bg-success/10 text-success border-success"
+              >
+                In Stock ({productDetail?.product?.total_stock} available)
               </Badge>
             ) : (
-              <Badge variant="secondary" className="bg-destructive/10 text-destructive border-destructive">
+              <Badge
+                variant="secondary"
+                className="bg-destructive/10 text-destructive border-destructive"
+              >
                 Out of Stock
               </Badge>
             )}
@@ -146,10 +263,10 @@ export default function ProductDetail() {
           <Separator className="my-6" />
 
           {/* Size Selection */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label className="font-medium mb-3 block">Size</label>
             <div className="flex gap-3">
-              {product.sizes.map((size) => (
+              {productDetail.product.sizes.map((size) => (
                 <Button
                   key={size}
                   variant={selectedSize === size ? "default" : "outline"}
@@ -160,9 +277,9 @@ export default function ProductDetail() {
                 </Button>
               ))}
             </div>
-          </div>
+          </div> */}
 
-          {/* Color Selection */}
+          {/* Color Selection
           <div className="mb-6">
             <label className="font-medium mb-3 block">Color</label>
             <div className="flex gap-3">
@@ -177,7 +294,7 @@ export default function ProductDetail() {
                 </Button>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Quantity */}
           <div className="mb-8">
@@ -190,11 +307,17 @@ export default function ProductDetail() {
               >
                 <Minus className="size-4" />
               </Button>
-              <span className="text-xl font-medium w-12 text-center">{quantity}</span>
+              <span className="text-xl font-medium w-12 text-center">
+                {quantity}
+              </span>
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                onClick={() =>
+                  setQuantity(
+                    Math.min(productDetail?.product?.total_stock, quantity + 1),
+                  )
+                }
               >
                 <Plus className="size-4" />
               </Button>
@@ -205,17 +328,25 @@ export default function ProductDetail() {
           <div className="flex gap-3 mb-6">
             <Button
               className="flex-1 bg-accent hover:bg-accent/90 text-lg py-6"
-              disabled={product.stock === 0}
+              disabled={productDetail?.product?.total_stock === 0}
             >
               <ShoppingCart className="mr-2 size-5" />
               Add to Cart
             </Button>
-            <Button variant="outline" size="icon" className="h-auto px-6 border-accent text-accent hover:bg-accent hover:text-accent-foreground">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-auto px-6 border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+            >
               <Heart className="size-5" />
             </Button>
           </div>
 
-          <Button variant="default" className="w-full bg-primary hover:bg-primary/90 text-lg py-6 mb-6" disabled={product.stock === 0}>
+          <Button
+            variant="default"
+            className="w-full bg-primary hover:bg-primary/90 text-lg py-6 mb-6"
+            disabled={productDetail?.product?.total_stock === 0}
+          >
             Buy Now
           </Button>
 
@@ -242,13 +373,15 @@ export default function ProductDetail() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="description">Description</TabsTrigger>
           <TabsTrigger value="specifications">Specifications</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger>
+          <TabsTrigger value="reviews">
+            Reviews ({productDetail?.product?.reviews})
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="description" className="mt-6">
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground leading-relaxed">
-                {product.description}
+                {productDetail?.product?.description}
               </p>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-start gap-2">
@@ -275,12 +408,15 @@ export default function ProductDetail() {
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-3">
-                {Object.entries(product.specifications).map(([key, value]) => (
-                  <div key={key} className="flex py-2 border-b border-border last:border-0">
+                {/* {Object.entries(product.specifications).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex py-2 border-b border-border last:border-0"
+                  >
                     <span className="font-medium w-40">{key}</span>
                     <span className="text-muted-foreground">{value}</span>
                   </div>
-                ))}
+                ))} */}
               </div>
             </CardContent>
           </Card>
@@ -295,7 +431,9 @@ export default function ProductDetail() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium">{review.author}</span>
                         {review.verified && (
-                          <Badge variant="secondary" className="text-xs">Verified Purchase</Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Verified Purchase
+                          </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-1">
@@ -307,7 +445,9 @@ export default function ProductDetail() {
                         ))}
                       </div>
                     </div>
-                    <span className="text-sm text-muted-foreground">{review.date}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {review.date}
+                    </span>
                   </div>
                   <p className="text-muted-foreground">{review.text}</p>
                 </CardContent>
@@ -334,7 +474,9 @@ export default function ProductDetail() {
                   <Star className="size-4 fill-amber-400 text-amber-400" />
                   <span className="text-sm">{item.rating}</span>
                 </div>
-                <span className="text-lg font-bold text-accent">{item.price.toLocaleString()} ₫</span>
+                <span className="text-lg font-bold text-accent">
+                  {item.price.toLocaleString()} ₫
+                </span>
               </CardContent>
             </Card>
           ))}
