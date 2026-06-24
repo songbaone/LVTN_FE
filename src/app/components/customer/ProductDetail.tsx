@@ -17,6 +17,8 @@ import {
 import { Separator } from "../ui/separator";
 import axios from "axios";
 import { get } from "react-hook-form";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
+
 interface ProductImage {
   image_id: number;
   image_url: string;
@@ -165,7 +167,11 @@ export default function ProductDetail() {
         {/* Product Images */}
         <div>
           <div className="aspect-square rounded-2xl bg-secondary flex items-center justify-center text-[200px] mb-4">
-            {productDetail?.product?.thumbnail}
+            <img
+              src={`http://localhost:3000${productDetail?.product?.thumbnail}`}
+              alt={productDetail?.product?.product_name}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="grid grid-cols-4 gap-4">
             {productDetail?.product?.images.map((img, i) => (
@@ -174,7 +180,7 @@ export default function ProductDetail() {
                 className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-5xl cursor-pointer hover:bg-primary-100 transition-colors border-2 border-transparent hover:border-primary"
               >
                 <img
-                  src={`${API_BASE_URL}/${img.image_url}`}
+                  src={`http://localhost:3000${img.image_url}`}
                   key={img.image_id}
                 />
               </div>

@@ -147,8 +147,14 @@ export default function ProductListing() {
 
   // ── Filter state (synced with URL, derived via string keys to avoid reference instability) ──
   const paramsStr = useMemo(() => searchParams.toString(), [searchParams]);
-  const currentPage = useMemo(() => Number(searchParams.get("page")) || 1, [paramsStr]);
-  const searchQuery = useMemo(() => searchParams.get("product_name") || "", [paramsStr]);
+  const currentPage = useMemo(
+    () => Number(searchParams.get("page")) || 1,
+    [paramsStr],
+  );
+  const searchQuery = useMemo(
+    () => searchParams.get("product_name") || "",
+    [paramsStr],
+  );
   const selectedCategoryId = useMemo(() => {
     const val = searchParams.get("category_id");
     return val ? Number(val) : null;
@@ -157,7 +163,10 @@ export default function ProductListing() {
     const raw = searchParams.get("brand_id");
     return raw?.split(",").map(Number).filter(Boolean) ?? [];
   }, [paramsStr]);
-  const sortBy = useMemo(() => searchParams.get("sort") || "popular", [paramsStr]);
+  const sortBy = useMemo(
+    () => searchParams.get("sort") || "popular",
+    [paramsStr],
+  );
   const selectedMinPrice = useMemo(() => {
     const val = searchParams.get("min_price");
     return val ? Number(val) : null;
@@ -182,14 +191,11 @@ export default function ProductListing() {
   const [brandsLoading, setBrandsLoading] = useState(true);
   const [brandSearchQuery, setBrandSearchQuery] = useState("");
 
-
   // ── Initialize data ──
   useEffect(() => {
     getCategoryTree();
     getBrands();
   }, []);
-
-
 
   // Sync search input when URL changes externally (e.g. browser back/forward)
   useEffect(() => {
@@ -280,7 +286,7 @@ export default function ProductListing() {
     } catch (error: any) {
       console.error("Failed to load products:", error);
       setProductsError(
-        error?.response?.data?.message || "Không thể tải danh sách sản phẩm"
+        error?.response?.data?.message || "Không thể tải danh sách sản phẩm",
       );
       // Only clear products on error during initial load — keep stale data otherwise
       if (initialLoadRef.current) {
@@ -291,7 +297,15 @@ export default function ProductListing() {
     } finally {
       setProductsLoading(false);
     }
-  }, [currentPage, selectedCategoryId, selectedBrandIds, searchQuery, sortBy, selectedMinPrice, selectedMaxPrice]);
+  }, [
+    currentPage,
+    selectedCategoryId,
+    selectedBrandIds,
+    searchQuery,
+    sortBy,
+    selectedMinPrice,
+    selectedMaxPrice,
+  ]);
 
   // Fetch products whenever filters change
   useEffect(() => {
@@ -323,10 +337,8 @@ export default function ProductListing() {
         setSearchParams(next);
       }, DEBOUNCE_MS);
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams],
   );
-
-
 
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -370,7 +382,7 @@ export default function ProductListing() {
         return next;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   // ══════════════════════════════════════════════════════
@@ -381,7 +393,7 @@ export default function ProductListing() {
     setExpandedCategories((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
+        : [...prev, categoryId],
     );
   }, []);
 
@@ -398,14 +410,14 @@ export default function ProductListing() {
         return next;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const isCategorySelected = useCallback(
     (categoryId: number): boolean => {
       return selectedCategoryId === categoryId;
     },
-    [selectedCategoryId]
+    [selectedCategoryId],
   );
 
   // ══════════════════════════════════════════════════════
@@ -416,11 +428,8 @@ export default function ProductListing() {
     (brandId: number, checked: boolean) => {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
-        const current = prev
-          .get("brand_id")
-          ?.split(",")
-          .map(Number)
-          .filter(Boolean) ?? [];
+        const current =
+          prev.get("brand_id")?.split(",").map(Number).filter(Boolean) ?? [];
         let updated: number[];
         if (checked) {
           updated = [...current, brandId];
@@ -436,22 +445,22 @@ export default function ProductListing() {
         return next;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const isBrandSelected = useCallback(
     (brandId: number): boolean => {
       return selectedBrandIds.includes(brandId);
     },
-    [selectedBrandIds]
+    [selectedBrandIds],
   );
 
   const filteredBrands = useMemo(
     () =>
       brands.filter((brand) =>
-        brand.brand_name.toLowerCase().includes(brandSearchQuery.toLowerCase())
+        brand.brand_name.toLowerCase().includes(brandSearchQuery.toLowerCase()),
       ),
-    [brands, brandSearchQuery]
+    [brands, brandSearchQuery],
   );
 
   // ══════════════════════════════════════════════════════
@@ -467,7 +476,7 @@ export default function ProductListing() {
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const handleSortChange = useCallback(
@@ -483,7 +492,7 @@ export default function ProductListing() {
         return next;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   // ══════════════════════════════════════════════════════
@@ -499,12 +508,12 @@ export default function ProductListing() {
           children: filterActiveCategories(cat.children),
         }));
     },
-    []
+    [],
   );
 
   const activeCategoryTree = useMemo(
     () => filterActiveCategories(categoryTree),
-    [categoryTree, filterActiveCategories]
+    [categoryTree, filterActiveCategories],
   );
 
   // ══════════════════════════════════════════════════════
@@ -546,7 +555,7 @@ export default function ProductListing() {
         ))}
       </div>
     ),
-    []
+    [],
   );
 
   const BrandSkeleton = useMemo(
@@ -560,7 +569,7 @@ export default function ProductListing() {
         ))}
       </div>
     ),
-    []
+    [],
   );
 
   // ══════════════════════════════════════════════════════
@@ -604,14 +613,16 @@ export default function ProductListing() {
   const renderProductCard = (product: ProductNode) => {
     const imageSrc = getProductImage(product);
     const hasDiscount =
-      product.discount_price !== null && product.discount_price < product.price;
+      product.discount_price !== 0 &&
+      product.discount_price !== null &&
+      product.discount_price < product.price;
     const inStock = product.total_stock > 0;
     const discountPercent = hasDiscount
       ? Math.round(
-        (1 - (product.discount_price ?? product.price) / product.price) * 100
-      )
+          (1 - (product.discount_price ?? product.price) / product.price) * 100,
+        )
       : 0;
-
+    console.log("hasDiscount:", hasDiscount);
     const cardContent = (
       <>
         <CardHeader className="relative">
@@ -628,7 +639,7 @@ export default function ProductListing() {
           <Link to={`/product/${product.product_id}`}>
             <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center mb-4 overflow-hidden">
               <ImageWithFallback
-                src={imageSrc}
+                src={`http://localhost:3000${product.thumbnail}`}
                 alt={product.product_name}
                 className="w-full h-full object-cover"
               />
@@ -703,7 +714,7 @@ export default function ProductListing() {
             >
               <div className="w-40 h-40 rounded-lg bg-secondary flex items-center justify-center overflow-hidden">
                 <ImageWithFallback
-                  src={imageSrc}
+                  src={`http://localhost:3000${product.thumbnail}`}
                   alt={product.product_name}
                   className="w-full h-full object-cover"
                 />
@@ -781,7 +792,8 @@ export default function ProductListing() {
         Không tìm thấy sản phẩm phù hợp
       </h3>
       <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-        Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm để tìm được sản phẩm mong muốn.
+        Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm để tìm được sản phẩm mong
+        muốn.
       </p>
       <Button
         variant="outline"
@@ -795,14 +807,8 @@ export default function ProductListing() {
   const renderErrorState = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <AlertCircle className="size-16 text-destructive/60 mb-4" />
-      <h3 className="text-lg font-semibold mb-2">
-        {productsError}
-      </h3>
-      <Button
-        variant="outline"
-        onClick={fetchProducts}
-        className="mt-4"
-      >
+      <h3 className="text-lg font-semibold mb-2">{productsError}</h3>
+      <Button variant="outline" onClick={fetchProducts} className="mt-4">
         <RefreshCw className="size-4 mr-2" />
         Thử lại
       </Button>
@@ -829,7 +835,7 @@ export default function ProductListing() {
             {activeCategoryTree.map((category) => {
               const hasChildren = category.children.length > 0;
               const isExpanded = expandedCategories.includes(
-                category.category_id
+                category.category_id,
               );
 
               return (
@@ -900,9 +906,7 @@ export default function ProductListing() {
 
       {/* ── Brand Filter ── */}
       <div>
-        <h3 className="font-semibold mb-3">
-          Thương hiệu ({brands.length})
-        </h3>
+        <h3 className="font-semibold mb-3">Thương hiệu ({brands.length})</h3>
 
         {!brandsLoading && brands.length > 0 && (
           <div className="relative mb-2">
@@ -937,11 +941,7 @@ export default function ProductListing() {
                 >
                   {brand.logo_url ? (
                     <img
-                      src={
-                        brand.logo_url.startsWith("http")
-                          ? brand.logo_url
-                          : import.meta.env.VITE_API_URL + brand.logo_url
-                      }
+                      src={`http://localhost:3000${brand.logo_url}`}
                       alt={brand.brand_name}
                       className="size-5 rounded object-contain"
                     />
@@ -966,7 +966,12 @@ export default function ProductListing() {
             return (
               <div key={id} className="flex items-center gap-2 py-1">
                 <button
-                  onClick={() => handlePriceRangeSelect(range.min_price ?? null, range.max_price ?? null)}
+                  onClick={() =>
+                    handlePriceRangeSelect(
+                      range.min_price ?? null,
+                      range.max_price ?? null,
+                    )
+                  }
                   className={`flex items-center gap-2 w-full text-left text-sm px-2 py-1 rounded transition-colors ${
                     isActive
                       ? "bg-accent/10 text-accent font-medium"
@@ -975,9 +980,7 @@ export default function ProductListing() {
                 >
                   <div
                     className={`size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      isActive
-                        ? "border-accent"
-                        : "border-muted-foreground/40"
+                      isActive ? "border-accent" : "border-muted-foreground/40"
                     }`}
                   >
                     {isActive && (
@@ -1116,7 +1119,7 @@ export default function ProductListing() {
                   {products.map((product) =>
                     viewMode === "grid"
                       ? renderProductCard(product)
-                      : renderProductCard(product)
+                      : renderProductCard(product),
                   )}
                 </div>
 
@@ -1161,7 +1164,7 @@ export default function ProductListing() {
                                 {page}
                               </PaginationLink>
                             </PaginationItem>
-                          )
+                          ),
                         )}
 
                         <PaginationItem>
@@ -1185,7 +1188,9 @@ export default function ProductListing() {
                 )}
 
                 {/* Loading overlay while re-fetching with existing products visible */}
-                {productsLoading && !initialLoadRef.current && renderLoadingOverlay()}
+                {productsLoading &&
+                  !initialLoadRef.current &&
+                  renderLoadingOverlay()}
               </>
             )}
           </div>
