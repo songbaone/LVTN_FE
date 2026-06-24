@@ -38,6 +38,7 @@ import AdminLayout from "./components/layouts/AdminLayout";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import ProductManagement from "./components/admin/ProductManagement";
 import ProductForm from "./components/admin/ProductForm";
+import ProductVariantsManagement from "./components/admin/ProductVariantsManagement";
 import OrderManagement from "./components/admin/OrderManagement";
 import AdminOrderDetail from "./components/admin/AdminOrderDetail";
 import InventoryManagement from "./components/admin/InventoryManagement";
@@ -142,6 +143,7 @@ function AppContent() {
             <Route path="products" element={<ProductManagement />} />
             <Route path="products/new" element={<ProductForm />} />
             <Route path="products/:id/edit" element={<ProductForm />} />
+            <Route path="product-variants" element={<ProductVariantsManagement />} />
             <Route path="orders" element={<OrderManagement />} />
             <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="inventory" element={<InventoryManagement />} />
