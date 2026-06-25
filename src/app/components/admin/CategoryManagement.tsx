@@ -70,7 +70,7 @@ const mapCategory = (item: any): Category => ({
 
   status: item.status ? "active" : "inactive",
 
-  createdAt: new Date().toISOString(),
+  createdAt: item.created_at || new Date().toISOString(),
 
   imageUrl: item.image_url || "",
 
@@ -144,6 +144,7 @@ export default function CategoryManagement() {
       setLoading(true);
 
       const response = await categoryService.getTree();
+      console.log("Categories loaded:", response.data.data);
 
       setCategories(response.data.data.tree.map(mapCategory));
     } catch (error) {
@@ -383,7 +384,7 @@ export default function CategoryManagement() {
             </Badge>
           </TableCell>
           <TableCell className="text-sm text-muted-foreground">
-            {new Date(selectedCategory?.createdAt).toLocaleDateString("vi-VN")}
+            {new Date(category?.createdAt).toLocaleDateString("vi-VN")}
           </TableCell>
           <TableCell className="text-right">
             <div className="flex gap-1 justify-end">
@@ -714,6 +715,7 @@ export default function CategoryManagement() {
                 onChange={(e) => handleChange("description", e.target.value)}
                 placeholder="Mô tả ngắn về danh mục"
                 rows={3}
+                maxLength={230}
               />
             </div>
           </div>

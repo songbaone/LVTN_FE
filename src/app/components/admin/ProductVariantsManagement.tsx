@@ -31,6 +31,7 @@ import {
   AlertTriangle,
   Package,
   Ban,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -121,7 +122,7 @@ const getStatusBadge = (variant: Variant) => {
   if (active) {
     return (
       <Badge className="bg-success hover:bg-success/90 whitespace-nowrap">
-        Hoạt động
+        Đang sử dụng
       </Badge>
     );
   }
@@ -130,25 +131,7 @@ const getStatusBadge = (variant: Variant) => {
       variant="destructive"
       className="bg-destructive hover:bg-destructive/90 whitespace-nowrap"
     >
-      Ngừng sử dụng
-    </Badge>
-  );
-};
-
-const getStockBadge = (quantity: number) => {
-  if (quantity > 0) {
-    return (
-      <Badge className="bg-success hover:bg-success/90 whitespace-nowrap">
-        Còn hàng ({quantity})
-      </Badge>
-    );
-  }
-  return (
-    <Badge
-      variant="destructive"
-      className="bg-destructive hover:bg-destructive/90 whitespace-nowrap"
-    >
-      Hết hàng
+      Ngưng sử dụng
     </Badge>
   );
 };
@@ -208,9 +191,12 @@ export default function ProductVariantsManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isSoftDeleteDialogOpen, setIsSoftDeleteDialogOpen] = useState(false);
+  const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [formData, setFormData] = useState<VariantFormData>(emptyFormData);
+
+  // ---- Toggle status state ------------------------------------------------
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   // ---- Product search (inside create dialog) ------------------------------
   const [productSearchText, setProductSearchText] = useState("");
@@ -398,9 +384,37 @@ export default function ProductVariantsManagement() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleOpenSoftDelete = (variant: Variant) => {
+  // ---- Toggle Status ------------------------------------------------------
+  const handleOpenToggleDialog = (variant: Variant) => {
     setSelectedVariant(variant);
-    setIsSoftDeleteDialogOpen(true);
+    setIsToggleDialogOpen(true);
+  };
+
+  const handleToggleVariantStatus = async () => {
+    if (!selectedVariant) return;
+
+    const newStatus = !isVariantActive(selectedVariant);
+
+    setIsTogglingStatus(true);
+    try {
+      await variantService.toggleStatus(selectedVariant.variant_id, newStatus);
+
+      const successMessage = newStatus
+        ? "Đã kích hoạt lại biến thể thành công"
+        : "Đã ngưng sử dụng biến thể thành công";
+
+      toast.success(successMessage);
+
+      setIsToggleDialogOpen(false);
+      setSelectedVariant(null);
+
+      // Reload variant list while keeping current page, filters, and search
+      await loadVariants();
+    } catch {
+      toast.error("Không thể cập nhật trạng thái biến thể");
+    } finally {
+      setIsTogglingStatus(false);
+    }
   };
 
   // ---- Form handler -------------------------------------------------------
@@ -475,23 +489,6 @@ export default function ProductVariantsManagement() {
       await loadVariants();
     } catch {
       toast.error("Xóa biến thể thất bại");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // ---- Soft Delete --------------------------------------------------------
-  const handleSoftDelete = async () => {
-    if (!selectedVariant) return;
-    setIsSaving(true);
-    try {
-      await variantService.softDelete(selectedVariant.variant_id);
-      toast.success("Đã ngừng sử dụng biến thể");
-      setIsSoftDeleteDialogOpen(false);
-      setSelectedVariant(null);
-      await loadVariants();
-    } catch {
-      toast.error("Ngừng sử dụng biến thể thất bại");
     } finally {
       setIsSaving(false);
     }
@@ -683,7 +680,18 @@ export default function ProductVariantsManagement() {
                         : "---"}
                     </TableCell>
                     <TableCell>
-                      {getStockBadge(variant.stock_quantity)}
+                      {variant.stock_quantity > 0 ? (
+                        <Badge className="bg-success hover:bg-success/90 whitespace-nowrap">
+                          Còn hàng ({variant.stock_quantity})
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="destructive"
+                          className="bg-destructive hover:bg-destructive/90 whitespace-nowrap"
+                        >
+                          Hết hàng
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(variant)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -700,16 +708,26 @@ export default function ProductVariantsManagement() {
                         >
                           <Edit2 className="size-3" />
                         </Button>
-                        {/* Soft Delete */}
-                        {isVariantActive(variant) && (
+                        {/* Toggle Status: Deactivate or Reactivate */}
+                        {isVariantActive(variant) ? (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenSoftDelete(variant)}
+                            onClick={() => handleOpenToggleDialog(variant)}
                             className="text-warning hover:bg-warning/10 border-warning/30"
                             title="Ngừng sử dụng"
                           >
                             <Ban className="size-3" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenToggleDialog(variant)}
+                            className="text-success hover:bg-success/10 border-success/30"
+                            title="Kích hoạt lại"
+                          >
+                            <CheckCircle2 className="size-3" />
                           </Button>
                         )}
                         {/* Hard Delete */}
@@ -1040,19 +1058,30 @@ export default function ProductVariantsManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* SOFT DELETE CONFIRMATION DIALOG */}
+      {/* TOGGLE STATUS CONFIRMATION DIALOG */}
       <Dialog
-        open={isSoftDeleteDialogOpen}
-        onOpenChange={setIsSoftDeleteDialogOpen}
+        open={isToggleDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && !isTogglingStatus) {
+            setIsToggleDialogOpen(false);
+            setSelectedVariant(null);
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="size-5 text-warning" />
-              Ngừng sử dụng biến thể
+              {selectedVariant && isVariantActive(selectedVariant)
+                ? "Ngừng sử dụng biến thể"
+                : "Kích hoạt lại biến thể"}
             </DialogTitle>
             <DialogDescription>
-              <p>Bạn có chắc muốn ngừng sử dụng biến thể này không?</p>
+              <p>
+                {selectedVariant && isVariantActive(selectedVariant)
+                  ? "Bạn có chắc muốn ngưng sử dụng biến thể này?"
+                  : "Bạn có chắc muốn kích hoạt lại biến thể này?"}
+              </p>
               {selectedVariant && (
                 <div className="mt-3 space-y-1">
                   <p className="font-medium">
@@ -1062,6 +1091,16 @@ export default function ProductVariantsManagement() {
                   <p className="text-sm text-muted-foreground">
                     Sản phẩm: {selectedVariant.product_name || "---"}
                   </p>
+                  <p className="text-sm text-muted-foreground">
+                    Trạng thái hiện tại:{" "}
+                    {isVariantActive(selectedVariant) ? (
+                      <Badge className="bg-success ml-1">Đang sử dụng</Badge>
+                    ) : (
+                      <Badge variant="destructive" className="ml-1">
+                        Ngưng sử dụng
+                      </Badge>
+                    )}
+                  </p>
                 </div>
               )}
             </DialogDescription>
@@ -1069,23 +1108,32 @@ export default function ProductVariantsManagement() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsSoftDeleteDialogOpen(false)}
-              disabled={isSaving}
+              onClick={() => {
+                setIsToggleDialogOpen(false);
+                setSelectedVariant(null);
+              }}
+              disabled={isTogglingStatus}
             >
               Hủy
             </Button>
             <Button
-              variant="default"
-              className="bg-warning hover:bg-warning/90 text-warning-foreground"
-              onClick={handleSoftDelete}
-              disabled={isSaving}
+              variant={selectedVariant && isVariantActive(selectedVariant) ? "default" : "default"}
+              className={
+                selectedVariant && isVariantActive(selectedVariant)
+                  ? "bg-warning hover:bg-warning/90 text-warning-foreground"
+                  : "bg-success hover:bg-success/90"
+              }
+              onClick={handleToggleVariantStatus}
+              disabled={isTogglingStatus}
             >
-              {isSaving ? (
+              {isTogglingStatus ? (
                 <>
                   <Loader2 className="size-4 mr-2 animate-spin" /> Đang xử lý...
                 </>
-              ) : (
+              ) : selectedVariant && isVariantActive(selectedVariant) ? (
                 "Ngừng sử dụng"
+              ) : (
+                "Kích hoạt lại"
               )}
             </Button>
           </DialogFooter>

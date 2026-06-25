@@ -20,8 +20,14 @@ export const variantService = {
   update: (variantId: number, data: Record<string, unknown>) =>
     axiosClient.put(`/variants/${variantId}`, data),
 
+  toggleStatus: (variantId: number, status: boolean) => {
+    const payload = { status: status ? 1 : 0 };
+    console.log("TOGGLE VARIANT STATUS CALLED", { variantId, status, payload });
+    return axiosClient.put(`/variants/${variantId}`, payload);
+  },
+
   softDelete: (variantId: number) =>
-    axiosClient.post(`/variants/soft-delete/${variantId}`),
+    axiosClient.delete(`/variants/soft-delete/${variantId}`),
 
   delete: (variantId: number) =>
     axiosClient.delete(`/variants/${variantId}`),
