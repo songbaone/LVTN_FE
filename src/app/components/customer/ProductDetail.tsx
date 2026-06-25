@@ -194,12 +194,15 @@ export default function ProductDetail() {
         .filter((material) => material && material.trim() !== ""),
     ),
   ];
-  const selectedVariant = productDetail?.product?.variants?.find(
-    (v) =>
-      (!selectedSize || v.size === selectedSize) &&
-      (!selectedColor || v.color === selectedColor) &&
-      (!selectedMaterial || v.material === selectedMaterial),
-  );
+  const selectedVariant =
+    selectedSize || selectedColor || selectedMaterial
+      ? productDetail?.product?.variants?.find(
+          (v) =>
+            (!selectedSize || v.size === selectedSize) &&
+            (!selectedColor || v.color === selectedColor) &&
+            (!selectedMaterial || v.material === selectedMaterial),
+        )
+      : null;
 
   // handle thêm sản phẩm vào giỏ hàng
   const handleAddToCart = async () => {
