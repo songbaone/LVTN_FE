@@ -146,8 +146,17 @@ export default function HomePage() {
       setLoadingFlashSale(false);
     }
   };
+
+  const getCarts = async () => {
+    try {
+      await axios.get(`${API_BASE_URL}/cart`);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   // on Mounted
   useEffect(() => {
+    getCarts();
     getListCategories();
     getListBrands();
     getListFlashSaleProducts();

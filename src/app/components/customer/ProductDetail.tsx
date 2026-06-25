@@ -4,6 +4,8 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { toast } from "sonner";
+
 import {
   Star,
   Heart,
@@ -41,6 +43,16 @@ interface Brand {
   country: string;
   description: string | null;
   status: boolean;
+}
+
+interface Variants {
+  variant_id: number;
+  size: string | null;
+  color: string | null;
+  material: string | null;
+  additional_price: number | null;
+  stock_quantity: number;
+  sku: string;
 }
 
 interface Product {
@@ -81,6 +93,7 @@ interface Product {
   total_rate: number;
 
   reviews: number;
+  variants: Variants[];
 }
 
 interface dataProductDetail {
@@ -93,6 +106,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [selectedMaterial, setSelectedMaterial] = useState("");
   const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   const [productDetail, setProductDetail] = useState<dataProductDetail | null>(
@@ -146,6 +160,74 @@ export default function ProductDetail() {
     },
   ];
 
+  const hasSize = productDetail?.product?.variants?.some(
+    (variant) => variant.size !== null && variant.size !== "",
+  );
+
+  const hasColor = productDetail?.product?.variants?.some(
+    (variant) => variant.color !== null && variant.color !== "",
+  );
+
+  const hasMaterial = productDetail?.product?.variants?.some(
+    (variant) => variant.material !== null && variant.material !== "",
+  );
+
+  const sizes = [
+    ...new Set(
+      productDetail?.product?.variants
+        ?.map((v) => v.size)
+        .filter((size) => size && size.trim() !== ""),
+    ),
+  ];
+  const colors = [
+    ...new Set(
+      productDetail?.product?.variants
+        ?.map((v) => v.color)
+        .filter((color) => color && color.trim() !== ""),
+    ),
+  ];
+
+  const materials = [
+    ...new Set(
+      productDetail?.product?.variants
+        ?.map((v) => v.material)
+        .filter((material) => material && material.trim() !== ""),
+    ),
+  ];
+  const selectedVariant = productDetail?.product?.variants?.find(
+    (v) =>
+      (!selectedSize || v.size === selectedSize) &&
+      (!selectedColor || v.color === selectedColor) &&
+      (!selectedMaterial || v.material === selectedMaterial),
+  );
+
+  // handle thêm sản phẩm vào giỏ hàng
+  const handleAddToCart = async () => {
+    try {
+      if (!selectedVariant) {
+        toast.warning("Vui lòng chọn loại sản phẩm (size,...)");
+        return;
+      }
+
+      const payload = {
+        variant_id: selectedVariant.variant_id,
+        quantity: quantity,
+      };
+
+      const res = await axios.post(`${API_BASE_URL}/cart/items`, payload, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("AccessToken")}`,
+        },
+      });
+
+      if (res.status === 201 || res.status === 200) {
+        toast.success("Đã thêm thành công");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Thêm vào giỏ hàng thất bại");
+    }
+  };
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
@@ -217,7 +299,7 @@ export default function ProductDetail() {
 
           <div className="mb-4">
             <span className="text-xs text-muted-foreground">
-              SKU: {productDetail?.product?.sku}
+              SKU: {selectedVariant?.sku}
             </span>
           </div>
 
@@ -241,64 +323,106 @@ export default function ProductDetail() {
             </Badge>
           </div>
 
-          {/* Stock Status */}
-          <div className="mb-6">
+          <div className="mb-6 space-y-3">
             {productDetail?.product?.total_stock > 0 ? (
-              <Badge
-                variant="secondary"
-                className="bg-success/10 text-success border-success"
-              >
-                In Stock ({productDetail?.product?.total_stock} available)
+              <Badge className="bg-green-100 text-green-700 border-green-300">
+                ✓ Còn hàng
               </Badge>
             ) : (
-              <Badge
-                variant="secondary"
-                className="bg-destructive/10 text-destructive border-destructive"
-              >
-                Out of Stock
+              <Badge className="bg-red-100 text-red-700 border-red-300">
+                ✕ Hết hàng
               </Badge>
+            )}
+
+            {selectedVariant && (
+              <div className="rounded-xl border bg-muted/30 p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">
+                    Số lượng còn lại
+                  </span>
+                  <span className="font-semibold">
+                    {selectedVariant.stock_quantity}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-muted-foreground">Giá sản phẩm</span>
+                  <span className="text-xl font-bold text-primary">
+                    {(
+                      (productDetail.product.discount_price ??
+                        productDetail.product.price) +
+                      (selectedVariant.additional_price ?? 0)
+                    ).toLocaleString()}
+                    ₫
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
           <Separator className="my-6" />
 
           {/* Size Selection */}
-          {/* <div className="mb-6">
-            <label className="font-medium mb-3 block">Size</label>
-            <div className="flex gap-3">
-              {productDetail.product.sizes.map((size) => (
-                <Button
-                  key={size}
-                  variant={selectedSize === size ? "default" : "outline"}
-                  onClick={() => setSelectedSize(size)}
-                  className={selectedSize === size ? "bg-primary" : ""}
-                >
-                  {size}
-                </Button>
-              ))}
-            </div>
-          </div> */}
+          {hasSize && (
+            <div className="mb-6">
+              <label className="font-medium mb-3 block">Size</label>
 
-          {/* Color Selection
-          <div className="mb-6">
-            <label className="font-medium mb-3 block">Color</label>
-            <div className="flex gap-3">
-              {product.colors.map((color) => (
-                <Button
-                  key={color}
-                  variant={selectedColor === color ? "default" : "outline"}
-                  onClick={() => setSelectedColor(color)}
-                  className={selectedColor === color ? "bg-primary" : ""}
-                >
-                  {color}
-                </Button>
-              ))}
+              <div className="flex gap-3 flex-wrap">
+                {sizes.map((size) => (
+                  <Button
+                    key={size}
+                    variant={selectedSize === size ? "default" : "outline"}
+                    onClick={() => setSelectedSize(size)}
+                  >
+                    {size}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div> */}
+          )}
 
+          {/* Color Selection */}
+          {hasColor && (
+            <div className="mb-6">
+              <label className="font-medium mb-3 block">Màu sắc</label>
+
+              <div className="flex gap-3 flex-wrap">
+                {colors.map((color) => (
+                  <Button
+                    key={color}
+                    variant={selectedColor === color ? "default" : "outline"}
+                    onClick={() => setSelectedColor(color)}
+                  >
+                    {color}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Material Selection */}
+          {hasMaterial && (
+            <div className="mb-6">
+              <label className="font-medium mb-3 block">Chất liệu</label>
+
+              <div className="flex gap-3 flex-wrap">
+                {materials.map((material) => (
+                  <Button
+                    key={material}
+                    variant={
+                      selectedMaterial === material ? "default" : "outline"
+                    }
+                    onClick={() => setSelectedMaterial(material)}
+                  >
+                    {material}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Quantity */}
           <div className="mb-8">
-            <label className="font-medium mb-3 block">Quantity</label>
+            <label className="font-medium mb-3 block">Số lượng</label>
             <div className="flex items-center gap-3 w-fit">
               <Button
                 variant="outline"
@@ -329,9 +453,10 @@ export default function ProductDetail() {
             <Button
               className="flex-1 bg-accent hover:bg-accent/90 text-lg py-6"
               disabled={productDetail?.product?.total_stock === 0}
+              onClick={handleAddToCart}
             >
               <ShoppingCart className="mr-2 size-5" />
-              Add to Cart
+              Thêm vào giỏ hàng
             </Button>
             <Button
               variant="outline"
@@ -347,22 +472,26 @@ export default function ProductDetail() {
             className="w-full bg-primary hover:bg-primary/90 text-lg py-6 mb-6"
             disabled={productDetail?.product?.total_stock === 0}
           >
-            Buy Now
+            Đặt hàng ngay
           </Button>
 
           {/* Features */}
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary">
               <Truck className="size-6 text-accent" />
-              <span className="text-xs font-medium">Free Shipping</span>
+              <span className="text-xs font-medium">
+                Miễn phí vận chuyển cho đơn từ 500k
+              </span>
             </div>
             <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary">
               <Shield className="size-6 text-accent" />
-              <span className="text-xs font-medium">Quality Guarantee</span>
+              <span className="text-xs font-medium">Đảm bảo chất lượng</span>
             </div>
             <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary">
               <RotateCcw className="size-6 text-accent" />
-              <span className="text-xs font-medium">30-Day Returns</span>
+              <span className="text-xs font-medium">
+                Hoàn trả trong vòng 30 ngày
+              </span>
             </div>
           </div>
         </div>
@@ -371,10 +500,10 @@ export default function ProductDetail() {
       {/* Product Details Tabs */}
       <Tabs defaultValue="description" className="mb-12">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="description">Description</TabsTrigger>
-          <TabsTrigger value="specifications">Specifications</TabsTrigger>
+          <TabsTrigger value="description">Mô tả sản phẩm</TabsTrigger>
+          <TabsTrigger value="specifications">Chi tiết thông số</TabsTrigger>
           <TabsTrigger value="reviews">
-            Reviews ({productDetail?.product?.reviews})
+            Đánh giá ({productDetail?.product?.reviews})
           </TabsTrigger>
         </TabsList>
         <TabsContent value="description" className="mt-6">
@@ -459,7 +588,7 @@ export default function ProductDetail() {
 
       {/* Related Products */}
       <div>
-        <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+        <h2 className="text-2xl font-bold mb-6">Các sản phẩm liên quan</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {relatedProducts.map((item) => (
             <Card key={item.id} className="hover:shadow-lg transition-shadow">
