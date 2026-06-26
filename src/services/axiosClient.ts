@@ -8,7 +8,9 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken") || localStorage.getItem("AccessTokenAdmin");
+  const token =
+    localStorage.getItem("AccessToken") ||
+    localStorage.getItem("AccessTokenAdmin");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

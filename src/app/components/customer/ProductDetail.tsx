@@ -20,7 +20,8 @@ import { Separator } from "../ui/separator";
 import axios from "axios";
 import { get } from "react-hook-form";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
-
+import { cartService } from "../../../services/cart.service";
+import { useCartStore } from "../../../helpers/cartStore";
 interface ProductImage {
   image_id: number;
   image_url: string;
@@ -205,6 +206,7 @@ export default function ProductDetail() {
       : null;
 
   // handle thêm sản phẩm vào giỏ hàng
+  const { fetchCart } = useCartStore(); //Cập nhật số lượng sản phẩm trong giỏ hàng
   const handleAddToCart = async () => {
     try {
       if (!selectedVariant) {
@@ -217,20 +219,22 @@ export default function ProductDetail() {
         quantity: quantity,
       };
 
-      const res = await axios.post(`${API_BASE_URL}/cart/items`, payload, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("AccessToken")}`,
-        },
-      });
+      const res = await cartService.createCart(payload);
 
       if (res.status === 201 || res.status === 200) {
-        toast.success("Đã thêm thành công");
+        await fetchCart();
+        toast.success("Đã thêm thành công", {
+          duration: 500,
+        });
       }
     } catch (error) {
       console.error(error);
-      toast.error("Thêm vào giỏ hàng thất bại");
+      toast.error("Thêm vào giỏ hàng thất bại", {
+        duration: 500,
+      });
     }
   };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}

@@ -162,54 +162,6 @@ export default function HomePage() {
     getListFlashSaleProducts();
   }, []);
 
-  // const featuredProducts = [
-  //   {
-  //     id: 1,
-  //     name: "Bộ bodysuit cotton hữu cơ",
-  //     brand: "BabyComfort",
-  //     price: 450000,
-  //     originalPrice: 650000,
-  //     rating: 4.8,
-  //     reviews: 124,
-  //     image: "🧸",
-  //     discount: 30,
-  //     badge: "Bán chạy nhất",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Bộ dụng cụ ăn dặm silicone",
-  //     brand: "SafeFeed",
-  //     price: 320000,
-  //     originalPrice: null,
-  //     rating: 4.9,
-  //     reviews: 89,
-  //     image: "🍽️",
-  //     badge: "Mới",
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Máy theo dõi trẻ em cao cấp",
-  //     brand: "SmartBaby",
-  //     price: 1250000,
-  //     originalPrice: 1500000,
-  //     rating: 4.7,
-  //     reviews: 56,
-  //     image: "📹",
-  //     discount: 17,
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Bộ thú nhồi bông mềm",
-  //     brand: "CuddleTime",
-  //     price: 280000,
-  //     originalPrice: null,
-  //     rating: 5.0,
-  //     reviews: 203,
-  //     image: "🧸",
-  //     badge: "Đánh giá cao nhất",
-  //   },
-  // ];
-
   const reviews = [
     {
       author: "Nguyễn Thu Hương",
