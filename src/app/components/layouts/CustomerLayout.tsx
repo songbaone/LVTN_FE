@@ -148,7 +148,7 @@ export default function CustomerLayout() {
                 <Search className="absolute -translate-y-1/2 left-3 top-1/2 size-5 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search for baby products..."
+                  placeholder="Tìm kiếm sản phẩm cho bé..."
                   className="py-6 pl-10 pr-4 bg-secondary border-primary-200"
                 />
               </div>
@@ -156,18 +156,6 @@ export default function CustomerLayout() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Wishlist */}
-              <Button variant="ghost" size="icon" asChild className="relative">
-                <Link to="/wishlist">
-                  <Heart className="size-5" />
-                  {wishlistCount > 0 && (
-                    <Badge className="absolute flex items-center justify-center p-0 -top-1 -right-1 size-5 bg-accent">
-                      {wishlistCount}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
-
               {/* Cart */}
               <Button
                 onClick={loginExisting}
@@ -200,9 +188,7 @@ export default function CustomerLayout() {
                   <DropdownMenuItem asChild>
                     <Link to="/orders">My Orders</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/wishlist">Wishlist</Link>
-                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/auth">Sign In</Link>

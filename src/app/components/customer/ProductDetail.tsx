@@ -257,11 +257,11 @@ export default function ProductDetail() {
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link to="/" className="hover:text-primary">
-          Home
+          Trang chủ
         </Link>
         <span className="mx-2">/</span>
         <Link to="/products" className="hover:text-primary">
-          Products
+          Sản phẩm
         </Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">
@@ -504,13 +504,6 @@ export default function ProductDetail() {
             >
               <ShoppingCart className="mr-2 size-5" />
               Thêm vào giỏ hàng
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-auto px-6 border-accent text-accent hover:bg-accent hover:text-accent-foreground"
-            >
-              <Heart className="size-5" />
             </Button>
           </div>
 
