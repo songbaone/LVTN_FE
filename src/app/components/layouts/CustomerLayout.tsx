@@ -78,7 +78,6 @@ export default function CustomerLayout() {
 
         if (res.status === 200) {
           setQuantityCart(res.data.data.total_unique_items);
-          console.log("total_unique_items:", res.data.data.total_unique_items);
         }
       } catch (err) {
         console.error("Failed to fetch category tree:", err);

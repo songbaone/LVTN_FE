@@ -5,7 +5,8 @@ import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { toast } from "sonner";
-
+import useEmblaCarousel from "embla-carousel-react";
+import { motion } from "motion/react";
 import {
   Star,
   Heart,
@@ -109,13 +110,18 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+  const [emblaRef] = useEmblaCarousel({
+    dragFree: true,
+    containScroll: "trimSnaps",
+  });
   const [productDetail, setProductDetail] = useState<dataProductDetail | null>(
     null,
   );
 
   const getDetailProduct = async (product_id: number) => {
     const res = await axios.get(`${API_BASE_URL}/products/${product_id}`);
+    console.log("API:", res.data.data.product.images);
+
     if (res.status === 200) {
       setProductDetail(res.data.data);
     }
@@ -128,6 +134,17 @@ export default function ProductDetail() {
     if (Number.isNaN(productId)) return;
     getDetailProduct(productId);
   }, [id]);
+  const [previewImage, setPreviewImage] = useState("");
+
+  useEffect(() => {
+    if (productDetail?.product?.images?.length) {
+      const mainImage =
+        productDetail.product.images.find((img) => img.is_main) ??
+        productDetail.product.images[0];
+
+      setPreviewImage(mainImage.image_url);
+    }
+  }, [productDetail]);
 
   const relatedProducts = Array.from({ length: 4 }, (_, i) => ({
     id: i + 10,
@@ -255,25 +272,48 @@ export default function ProductDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         {/* Product Images */}
         <div>
-          <div className="aspect-square rounded-2xl bg-secondary flex items-center justify-center text-[200px] mb-4">
-            <img
-              src={`http://localhost:3000${productDetail?.product?.thumbnail}`}
-              alt={productDetail?.product?.product_name}
-              className="w-full h-full object-cover"
+          <div className="aspect-square rounded-2xl overflow-hidden">
+            <motion.img
+              key={previewImage}
+              src={`http://localhost:3000${previewImage}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
             />
           </div>
-          <div className="grid grid-cols-4 gap-4">
-            {productDetail?.product?.images.map((img, i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-5xl cursor-pointer hover:bg-primary-100 transition-colors border-2 border-transparent hover:border-primary"
-              >
-                <img
-                  src={`http://localhost:3000${img.image_url}`}
-                  key={img.image_id}
-                />
-              </div>
-            ))}
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex gap-3">
+              {productDetail?.product?.images.map((img) => (
+                <div
+                  key={productDetail?.product?.product_id}
+                  className="min-w-[90px]"
+                >
+                  <div
+                    onClick={() => setPreviewImage(img.image_url)}
+                    className={`
+            h-24 w-24
+            rounded-xl
+            overflow-hidden
+            cursor-pointer
+            border-2
+            transition-all
+            duration-300
+            ${
+              previewImage === img.image_url
+                ? "border-primary shadow-lg scale-105"
+                : "border-transparent hover:border-primary hover:scale-105"
+            }
+          `}
+                  >
+                    <img
+                      src={`http://localhost:3000${img.image_url}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -497,7 +537,7 @@ export default function ProductDetail() {
             <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary">
               <RotateCcw className="size-6 text-accent" />
               <span className="text-xs font-medium">
-                Hoàn trả trong vòng 30 ngày
+                Hoàn trả trong vòng 7 ngày
               </span>
             </div>
           </div>
@@ -506,9 +546,8 @@ export default function ProductDetail() {
 
       {/* Product Details Tabs */}
       <Tabs defaultValue="description" className="mb-12">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="description">Mô tả sản phẩm</TabsTrigger>
-          <TabsTrigger value="specifications">Chi tiết thông số</TabsTrigger>
           <TabsTrigger value="reviews">
             Đánh giá ({productDetail?.product?.reviews})
           </TabsTrigger>
@@ -517,46 +556,27 @@ export default function ProductDetail() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground leading-relaxed">
-                {productDetail?.product?.description}
+                {productDetail?.product?.short_description}
               </p>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1">•</span>
-                  <span>Certified organic cotton for sensitive baby skin</span>
+                  <span>Thương hiệu: {productDetail?.product?.brand_name}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1">•</span>
-                  <span>Breathable and comfortable for all-day wear</span>
+                  <span>Danh mục: {productDetail?.product?.category_name}</span>
                 </li>
+
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1">•</span>
-                  <span>Easy snap closures for quick diaper changes</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-accent mt-1">•</span>
-                  <span>Machine washable and durable</span>
+                  <span> {productDetail?.product?.description}</span>
                 </li>
               </ul>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="specifications" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                {/* {Object.entries(product.specifications).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex py-2 border-b border-border last:border-0"
-                  >
-                    <span className="font-medium w-40">{key}</span>
-                    <span className="text-muted-foreground">{value}</span>
-                  </div>
-                ))} */}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
         <TabsContent value="reviews" className="mt-6">
           <div className="space-y-4">
             {reviews.map((review, i) => (
