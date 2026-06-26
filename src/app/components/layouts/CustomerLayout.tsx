@@ -72,21 +72,8 @@ export default function CustomerLayout() {
   const { cart, fetchCart } = useCartStore();
 
   useEffect(() => {
-    const fetchQuantityCart = async () => {
-      try {
-        const res = await cartService.getCart();
-
-        if (res.status === 200) {
-          setQuantityCart(res.data.data.total_unique_items);
-        }
-      } catch (err) {
-        console.error("Failed to fetch category tree:", err);
-      }
-    };
-    fetchQuantityCart();
     fetchCart();
-    return () => {};
-  });
+  }, []);
 
   const activeParentCategories = categoryTree.filter(
     (cat) => cat.status === true && cat.parent_id === null,
@@ -161,7 +148,6 @@ export default function CustomerLayout() {
                 onClick={loginExisting}
                 variant="ghost"
                 size="icon"
-                asChild
                 className="relative"
               >
                 <div>

@@ -18,90 +18,27 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { Separator } from "../ui/separator";
-import { cartService } from "../../../services/cart.service";
-interface CartProduct {
-  product_id: number;
-  product_name: string;
-  slug: string;
-  thumbnail: string;
-  image_url: string;
-}
-
-interface CartVariant {
-  variant_id: number;
-  sku: string;
-  color: string | null;
-  size: string | null;
-  material: string | null;
-  stock_quantity: number;
-}
-
-interface CartPricing {
-  price: number;
-  discount_price: number;
-  additional_price: number;
-  selling_price: number;
-}
-
-interface CartItem {
-  cart_item_id: number;
-  product: CartProduct;
-  variant: CartVariant;
-  quantity: number;
-  pricing: CartPricing;
-}
-
-interface CartData {
-  cart_id: number;
-  total_unique_items: number;
-  total_items: number;
-  subtotal_amount: number;
-  items: CartItem[];
-}
+import { useCartStore } from "../../../helpers/cartStore";
 
 export default function ShoppingCart() {
-  const [cartDetail, setCartDetail] = useState<CartData | null>(null);
-  const getAllCart = async () => {
-    const res = await cartService.getCart();
-    if (res.status === 200) {
-      const cart: CartData = res.data.data;
-      console.log(cart.total_items);
-      console.log(cart.subtotal_amount);
-      console.log(cart.items);
-      setCartDetail(res.data.data);
-    }
-  };
-
-  useEffect(() => {
-    getAllCart();
-  }, []);
+  const { cart, fetchCart, updateQuantity, deleteItem } = useCartStore();
 
   const modifyCart = async (cart_item_id: number, quantity: number) => {
     try {
-      const res = await cartService.updateCart(cart_item_id, {
-        quantity,
-      });
-
-      if (res.status === 200) {
-        getAllCart();
-      }
+      await updateQuantity(cart_item_id, quantity);
+      fetchCart();
     } catch (error) {
-      console.error("Update cart error:", error);
+      console.error(error);
+      toast.error("Cập nhật thất bại");
     }
   };
-
   const deleteItemCart = async (cart_item_id: number) => {
     try {
-      const res = await cartService.deleteCart(cart_item_id);
-
-      if (res.status === 200) {
-        getAllCart();
-
-        toast.success("Xóa sản phẩm thành công");
-      }
+      await deleteItem(cart_item_id);
+      fetchCart();
+      toast.success("Xóa sản phẩm thành công");
     } catch (error) {
-      console.error("delete cart error:", error);
-
+      console.error(error);
       toast.error("Xóa sản phẩm thất bại");
     }
   };
@@ -109,7 +46,7 @@ export default function ShoppingCart() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Giỏ hàng của bạn</h1>
-      {cartDetail?.total_items == 0 ? (
+      {cart?.total_items == 0 ? (
         <div className="flex flex-col justify-center items-center gap-3">
           <div className="aspect-square rounded-lg  flex items-center justify-center mb-4 overflow-hidden">
             <ImageWithFallback
@@ -128,7 +65,7 @@ export default function ShoppingCart() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
-            {cartDetail?.items.map((item) => (
+            {cart?.items.map((item) => (
               <Card key={item.cart_item_id}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
@@ -224,9 +161,7 @@ export default function ShoppingCart() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Tạm tính</span>
-                    <span>
-                      {cartDetail?.subtotal_amount.toLocaleString()} ₫
-                    </span>
+                    <span>{cart?.subtotal_amount.toLocaleString()} ₫</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Giảm giá</span>
@@ -239,7 +174,7 @@ export default function ShoppingCart() {
                   <div className="flex justify-between text-lg font-bold">
                     <span>Tổng cộng</span>
                     <span className="text-accent">
-                      {cartDetail?.subtotal_amount.toLocaleString()} ₫
+                      {cart?.subtotal_amount.toLocaleString()} ₫
                     </span>
                   </div>
                 </div>

@@ -147,16 +147,16 @@ export default function HomePage() {
     }
   };
 
-  const getCarts = async () => {
-    try {
-      await axios.get(`${API_BASE_URL}/cart`);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // const getCarts = async () => {
+  //   try {
+  //     await axios.get(`${API_BASE_URL}/cart`);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
   // on Mounted
   useEffect(() => {
-    getCarts();
+    // getCarts();
     getListCategories();
     getListBrands();
     getListFlashSaleProducts();
