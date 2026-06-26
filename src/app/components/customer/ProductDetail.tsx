@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
@@ -22,7 +22,11 @@ import axios from "axios";
 import { get } from "react-hook-form";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { cartService } from "../../../services/cart.service";
+import { productService } from "../../../services/product.service";
+
+// Cập nhật số lượng cho icon cart
 import { useCartStore } from "../../../helpers/cartStore";
+
 interface ProductImage {
   image_id: number;
   image_url: string;
@@ -103,12 +107,35 @@ interface dataProductDetail {
   category: Category;
   brand: Brand;
 }
+
+// data related products
+
+interface relatedProductImage {
+  image_url: string;
+}
+
+interface relatedProductData {
+  product_id: number;
+  product_name: string;
+  slug: string;
+  category_id: number;
+  category_name: string;
+  brand_id: number;
+  brand_name: string;
+  thumbnail: string | null;
+  price: number;
+  discount_price: number | null;
+  status: boolean;
+  total_stock: number;
+  images: relatedProductImage[];
+}
 export default function ProductDetail() {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
+
   const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [emblaRef] = useEmblaCarousel({
     dragFree: true,
@@ -145,14 +172,6 @@ export default function ProductDetail() {
       setPreviewImage(mainImage.image_url);
     }
   }, [productDetail]);
-
-  const relatedProducts = Array.from({ length: 4 }, (_, i) => ({
-    id: i + 10,
-    name: `Related Product ${i + 1}`,
-    price: 350000,
-    rating: 4.5,
-    image: ["🍼", "🧸", "👶", "🎀"][i],
-  }));
 
   const reviews = [
     {
@@ -252,6 +271,35 @@ export default function ProductDetail() {
     }
   };
 
+  // get list related products
+  const [relatedProducts, setRelatedProducts] = useState<relatedProductData[]>(
+    [],
+  );
+  const getRelatedProducts = async (brand_id: number) => {
+    try {
+      const res = await productService.getAll({
+        brand_id,
+        limit: 5,
+      });
+
+      if (res.status === 200) {
+        const products = res.data.data.products.filter(
+          (item: relatedProductData) =>
+            item.product_id !== productDetail?.product.product_id,
+        );
+
+        setRelatedProducts(products);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (productDetail?.brand?.brand_id) {
+      getRelatedProducts(productDetail.brand.brand_id);
+    }
+  }, [productDetail?.brand?.brand_id]);
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
@@ -285,10 +333,7 @@ export default function ProductDetail() {
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex gap-3">
               {productDetail?.product?.images.map((img) => (
-                <div
-                  key={productDetail?.product?.product_id}
-                  className="min-w-[90px]"
-                >
+                <div key={img.image_id} className="min-w-[90px]">
                   <div
                     onClick={() => setPreviewImage(img.image_url)}
                     className={`
@@ -609,23 +654,35 @@ export default function ProductDetail() {
       {/* Related Products */}
       <div>
         <h2 className="text-2xl font-bold mb-6">Các sản phẩm liên quan</h2>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {relatedProducts.map((item) => (
-            <Card key={item.id} className="hover:shadow-lg transition-shadow">
+          {relatedProducts?.map((item) => (
+            <Card
+              key={item.product_id}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardContent className="pt-6">
-                <Link to={`/product/${item.id}`}>
-                  <div className="aspect-square rounded-lg bg-secondary flex items-center justify-center text-6xl mb-4 hover:bg-primary-100 transition-colors">
-                    {item.image}
+                <Link to={`/product/${item.product_id}`}>
+                  <div className="aspect-square rounded-lg bg-secondary overflow-hidden mb-4">
+                    <img
+                      src={`http://localhost:3000${item.thumbnail}`}
+                      alt={item.product_name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                 </Link>
-                <h3 className="font-medium mb-2">{item.name}</h3>
-                <div className="flex items-center gap-1 mb-2">
-                  <Star className="size-4 fill-amber-400 text-amber-400" />
-                  <span className="text-sm">{item.rating}</span>
-                </div>
-                <span className="text-lg font-bold text-accent">
+
+                <h3 className="font-medium mb-2 line-clamp-2">
+                  {item.product_name}
+                </h3>
+
+                <p className="text-sm text-gray-500 line-through">
                   {item.price.toLocaleString()} ₫
-                </span>
+                </p>
+
+                <p className="text-lg font-bold text-accent">
+                  {item.discount_price.toLocaleString()} ₫
+                </p>
               </CardContent>
             </Card>
           ))}

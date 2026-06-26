@@ -113,21 +113,6 @@ const PRICE_RANGES: PriceRange[] = [
   { label: "Trên 1.000.000đ", min_price: 1000000 },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────
-const getProductImage = (product: ProductNode): string => {
-  if (product.thumbnail) {
-    return product.thumbnail.startsWith("http")
-      ? product.thumbnail
-      : import.meta.env.VITE_API_URL + product.thumbnail;
-  }
-  if (product.images?.[0]?.image_url) {
-    return product.images[0].image_url.startsWith("http")
-      ? product.images[0].image_url
-      : import.meta.env.VITE_API_URL + product.images[0].image_url;
-  }
-  return DEFAULT_PLACEHOLDER;
-};
-
 const formatPrice = (price: number): string => {
   return price.toLocaleString("vi-VN") + " ₫";
 };
@@ -611,7 +596,6 @@ export default function ProductListing() {
   );
 
   const renderProductCard = (product: ProductNode) => {
-    const imageSrc = getProductImage(product);
     const hasDiscount =
       product.discount_price !== 0 &&
       product.discount_price !== null &&
