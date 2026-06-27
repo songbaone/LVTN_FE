@@ -44,13 +44,21 @@ export default function AdminLayout() {
       name: "Sản phẩm",
       icon: Package,
       children: [
-        { name: "Product List", href: "/admin/products", icon: Package },
-        { name: "Product Variants", href: "/admin/product-variants", icon: Layers },
+        { name: "Danh sách sản phẩm", href: "/admin/products", icon: Package },
+        {
+          name: "Các biến thể sản phẩm",
+          href: "/admin/product-variants",
+          icon: Layers,
+        },
       ],
     },
     { name: "Đơn hàng", href: "/admin/orders", icon: ShoppingCart },
     { name: "Tồn kho", href: "/admin/inventory", icon: FileSpreadsheet },
-    { name: "Lịch sử tồn kho", href: "/admin/inventory/history", icon: History },
+    {
+      name: "Lịch sử tồn kho",
+      href: "/admin/inventory/history",
+      icon: History,
+    },
     { name: "Người dùng", href: "/admin/users", icon: Users },
     { name: "Danh mục sản phẩm", href: "/admin/categories", icon: FolderTree },
     { name: "Thương hiệu", href: "/admin/brands", icon: Tag },
@@ -73,9 +81,7 @@ export default function AdminLayout() {
     });
 
     if (result.isConfirmed) {
-      localStorage.removeItem("AccessToken");
       localStorage.removeItem("AccessTokenAdmin");
-      localStorage.removeItem("User");
 
       await Swal.fire({
         icon: "success",

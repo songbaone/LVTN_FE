@@ -327,7 +327,7 @@ export default function ProductDetail() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
-              className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
+              className="w-[90%] h-[90%] object-cover transition-all duration-500 hover:scale-110"
             />
           </div>
           <div className="overflow-hidden" ref={emblaRef}>
@@ -370,7 +370,6 @@ export default function ProductDetail() {
           <h1 className="text-3xl font-bold mb-3">
             {productDetail?.product?.product_name}
           </h1>
-
           {/* Rating & Reviews */}
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-1">
@@ -388,33 +387,57 @@ export default function ProductDetail() {
               ({productDetail?.product?.reviews} reviews)
             </span>
           </div>
-
           <div className="mb-4">
             <span className="text-xs text-muted-foreground">
               SKU: {selectedVariant?.sku}
             </span>
           </div>
-
           {/* Price */}
-          <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-4xl font-bold text-accent">
-              {productDetail?.product?.discount_price.toLocaleString()} ₫
-            </span>
-            <span className="text-xl text-muted-foreground line-through">
-              {productDetail?.product?.price.toLocaleString()} ₫
-            </span>
-            <Badge className="bg-destructive">
-              -
-              {Math.round(
-                ((productDetail?.product?.price -
-                  productDetail?.product?.discount_price) /
-                  productDetail?.product?.price) *
-                  100,
+          {productDetail?.product?.discount_price === 0 ||
+          productDetail?.product?.discount_price === null ||
+          productDetail?.product?.discount_price >
+            productDetail?.product?.price ? (
+            <div className="flex items-baseline gap-3 mb-6">
+              {selectedVariant ? (
+                <div className="text-4xl font-bold text-accent">
+                  {(
+                    (productDetail?.product.discount_price ??
+                      productDetail?.product.price) +
+                    (selectedVariant?.additional_price ?? 0)
+                  ).toLocaleString()}
+                  ₫
+                  <div>
+                    <span className="text-muted-foreground text-xs">
+                      Số lượng còn lại: {selectedVariant.stock_quantity}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <span className="text-4xl font-bold text-accent">
+                  {productDetail?.product?.price?.toLocaleString()} ₫
+                </span>
               )}
-              % OFF
-            </Badge>
-          </div>
-
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="text-4xl font-bold text-accent">
+                {productDetail?.product?.discount_price?.toLocaleString()} ₫
+              </span>
+              <span className="text-xl text-muted-foreground line-through">
+                {productDetail?.product?.price?.toLocaleString()} ₫
+              </span>
+              <Badge className="bg-destructive">
+                -
+                {Math.round(
+                  ((productDetail?.product?.price -
+                    productDetail?.product?.discount_price) /
+                    productDetail?.product?.price) *
+                    100,
+                )}
+                % OFF
+              </Badge>
+            </div>
+          )}
           <div className="mb-6 space-y-3">
             {productDetail?.product?.total_stock > 0 ? (
               <Badge className="bg-green-100 text-green-700 border-green-300">
@@ -425,35 +448,8 @@ export default function ProductDetail() {
                 ✕ Hết hàng
               </Badge>
             )}
-
-            {selectedVariant && (
-              <div className="rounded-xl border bg-muted/30 p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">
-                    Số lượng còn lại
-                  </span>
-                  <span className="font-semibold">
-                    {selectedVariant.stock_quantity}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-muted-foreground">Giá sản phẩm</span>
-                  <span className="text-xl font-bold text-primary">
-                    {(
-                      (productDetail.product.discount_price ??
-                        productDetail.product.price) +
-                      (selectedVariant.additional_price ?? 0)
-                    ).toLocaleString()}
-                    ₫
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
-
           <Separator className="my-6" />
-
           {/* Size Selection */}
           {hasSize && (
             <div className="mb-6">
@@ -472,7 +468,6 @@ export default function ProductDetail() {
               </div>
             </div>
           )}
-
           {/* Color Selection */}
           {hasColor && (
             <div className="mb-6">
@@ -491,7 +486,6 @@ export default function ProductDetail() {
               </div>
             </div>
           )}
-
           {/* Material Selection */}
           {hasMaterial && (
             <div className="mb-6">
@@ -539,7 +533,6 @@ export default function ProductDetail() {
               </Button>
             </div>
           </div>
-
           {/* Actions */}
           <div className="flex gap-3 mb-6">
             <Button
@@ -551,7 +544,6 @@ export default function ProductDetail() {
               Thêm vào giỏ hàng
             </Button>
           </div>
-
           <Button
             variant="default"
             className="w-full bg-primary hover:bg-primary/90 text-lg py-6 mb-6"
@@ -559,7 +551,6 @@ export default function ProductDetail() {
           >
             Đặt hàng ngay
           </Button>
-
           {/* Features */}
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary">
@@ -593,24 +584,33 @@ export default function ProductDetail() {
         <TabsContent value="description" className="mt-6">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-muted-foreground leading-relaxed">
-                {productDetail?.product?.short_description}
-              </p>
-              <ul className="mt-4 space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-accent mt-1">•</span>
-                  <span>Thương hiệu: {productDetail?.product?.brand_name}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-accent mt-1">•</span>
-                  <span>Danh mục: {productDetail?.product?.category_name}</span>
-                </li>
+              <div className="space-y-4">
+                {" "}
+                <p className="text-muted-foreground leading-relaxed">
+                  {productDetail?.product?.short_description}
+                </p>
+                {productDetail?.product?.description
+                  ?.split("\n")
+                  .filter(Boolean)
+                  .map((line, index) => {
+                    const isTitle = line.endsWith(":");
 
-                <li className="flex items-start gap-2">
-                  <span className="text-accent mt-1">•</span>
-                  <span> {productDetail?.product?.description}</span>
-                </li>
-              </ul>
+                    return isTitle ? (
+                      <h3
+                        key={index}
+                        className="text-lg font-bold text-accent mt-6"
+                      >
+                        {line}
+                      </h3>
+                    ) : (
+                      <div key={index} className="flex gap-3">
+                        <p className="leading-7 text-gray-700">
+                          {line.replace(/^- /, "")}
+                        </p>
+                      </div>
+                    );
+                  })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -673,15 +673,15 @@ export default function ProductDetail() {
                 </Link>
 
                 <h3 className="font-medium mb-2 line-clamp-2">
-                  {item.product_name}
+                  {item?.product_name}
                 </h3>
 
                 <p className="text-sm text-gray-500 line-through">
-                  {item.price.toLocaleString()} ₫
+                  {item.price?.toLocaleString()} ₫
                 </p>
 
                 <p className="text-lg font-bold text-accent">
-                  {item.discount_price.toLocaleString()} ₫
+                  {item.discount_price?.toLocaleString()} ₫
                 </p>
               </CardContent>
             </Card>

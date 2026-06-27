@@ -349,14 +349,16 @@ export default function HomePage() {
                       </div>
 
                       <div className="flex items-baseline gap-2">
-                        {product.discount_price === 0 ? (
+                        {product.discount_price === 0 ||
+                        product.discount_price === null ||
+                        product.discount_price > product.price ? (
                           <span className="text-lg font-bold text-accent">
                             {product?.price?.toLocaleString()} ₫
                           </span>
                         ) : (
                           <div className="flex items-baseline gap-2">
                             <span className="text-lg font-bold text-accent">
-                              {product.discount_price.toLocaleString()} ₫
+                              {product?.discount_price?.toLocaleString()} ₫
                             </span>
 
                             <span className="text-sm text-muted-foreground line-through">
@@ -472,14 +474,16 @@ export default function HomePage() {
                     </div>
 
                     <div className="flex items-baseline gap-2">
-                      {product.discount_price === 0 ? (
+                      {product.discount_price === 0 ||
+                      product.discount_price === null ||
+                      product.discount_price > product.price ? (
                         <span className="text-lg font-bold text-accent">
                           {product?.price?.toLocaleString()} ₫
                         </span>
                       ) : (
                         <div className="flex items-baseline gap-2">
                           <span className="text-lg font-bold text-accent">
-                            {product.discount_price.toLocaleString()} ₫
+                            {product?.discount_price?.toLocaleString()} ₫
                           </span>
 
                           <span className="text-sm text-muted-foreground line-through">

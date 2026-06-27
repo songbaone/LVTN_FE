@@ -86,8 +86,7 @@ interface PaginationMeta {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const formatPrice = (price: number): string =>
-  price.toLocaleString() + " ₫";
+const formatPrice = (price: number): string => price.toLocaleString() + " ₫";
 
 const formatDate = (dateStr: string): string => {
   try {
@@ -269,7 +268,7 @@ export default function ProductVariantsManagement() {
       // Support multiple response shapes
       const variantList: Variant[] = Array.isArray(data)
         ? data
-        : data?.variants ?? data?.results ?? [];
+        : (data?.variants ?? data?.results ?? []);
 
       // Enrich with product name
       const productMap = new Map(
@@ -416,8 +415,7 @@ export default function ProductVariantsManagement() {
     if (isNaN(additionalPrice) || additionalPrice < 0)
       return "Giá cộng thêm phải >= 0";
     const stockQty = Number(formData.stock_quantity);
-    if (isNaN(stockQty) || stockQty < 0)
-      return "Số lượng tồn kho phải >= 0";
+    if (isNaN(stockQty) || stockQty < 0) return "Số lượng tồn kho phải >= 0";
     return null;
   };
 
@@ -498,10 +496,13 @@ export default function ProductVariantsManagement() {
   };
 
   // ---- Pagination ---------------------------------------------------------
-  const goToPage = useCallback((p: number) => {
-    const target = Math.max(1, Math.min(p, pagination.totalPages));
-    setPage(target);
-  }, [pagination.totalPages]);
+  const goToPage = useCallback(
+    (p: number) => {
+      const target = Math.max(1, Math.min(p, pagination.totalPages));
+      setPage(target);
+    },
+    [pagination.totalPages],
+  );
 
   const goFirstPage = useCallback(() => setPage(1), []);
   const goPreviousPage = useCallback(() => {
@@ -518,15 +519,33 @@ export default function ProductVariantsManagement() {
   const renderSkeletonRows = () =>
     Array.from({ length: SKELETON_ROWS }).map((_, i) => (
       <TableRow key={`skeleton-${i}`}>
-        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-20" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-32" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-12" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-16" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-16" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-16" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-20" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-20" />
+        </TableCell>
+        <TableCell>
+          <Skeleton className="h-4 w-24" />
+        </TableCell>
         <TableCell className="text-right">
           <div className="flex gap-1 justify-end">
             <Skeleton className="h-8 w-8 rounded" />
@@ -590,7 +609,10 @@ export default function ProductVariantsManagement() {
               >
                 <option value="All">Tất cả sản phẩm</option>
                 {products.map((product) => (
-                  <option key={product.product_id} value={String(product.product_id)}>
+                  <option
+                    key={product.product_id}
+                    value={String(product.product_id)}
+                  >
                     {product.product_name}
                   </option>
                 ))}
@@ -866,7 +888,9 @@ export default function ProductVariantsManagement() {
                               ? products.filter((p) =>
                                   p.product_name
                                     .toLowerCase()
-                                    .includes(productSearchText.trim().toLowerCase())
+                                    .includes(
+                                      productSearchText.trim().toLowerCase(),
+                                    ),
                                 )
                               : products;
 
@@ -989,16 +1013,14 @@ export default function ProductVariantsManagement() {
                   id="stock_quantity"
                   type="number"
                   min="0"
-                  value={
-                    isEditDialogOpen
-                      ? formData.stock_quantity
-                      : "0"
-                  }
+                  value={isEditDialogOpen ? formData.stock_quantity : "0"}
                   onChange={(e) =>
                     handleChange("stock_quantity", e.target.value)
                   }
-                  disabled={!isEditDialogOpen}
-                  className={!isEditDialogOpen ? "bg-muted cursor-not-allowed" : ""}
+                  disabled
+                  className={
+                    !isEditDialogOpen ? "bg-muted cursor-not-allowed" : ""
+                  }
                   placeholder="0"
                 />
                 {!isEditDialogOpen && (
@@ -1104,8 +1126,7 @@ export default function ProductVariantsManagement() {
               <p>Bạn có chắc chắn muốn xóa biến thể này?</p>
               {selectedVariant && (
                 <p className="mt-2 font-medium">
-                  SKU:{" "}
-                  <span className="font-mono">{selectedVariant.sku}</span>
+                  SKU: <span className="font-mono">{selectedVariant.sku}</span>
                 </p>
               )}
               <p className="mt-1 text-sm text-destructive font-medium">
