@@ -240,6 +240,7 @@ export default function ProductDetail() {
             (!selectedMaterial || v.material === selectedMaterial),
         )
       : null;
+  console.log(selectedVariant);
 
   // handle thêm sản phẩm vào giỏ hàng
   const { fetchCart } = useCartStore(); //Cập nhật số lượng sản phẩm trong giỏ hàng
@@ -401,31 +402,45 @@ export default function ProductDetail() {
               {selectedVariant ? (
                 <div className="text-4xl font-bold text-accent">
                   {(
-                    (productDetail?.product.discount_price ??
-                      productDetail?.product.price) +
+                    productDetail?.product.price +
                     (selectedVariant?.additional_price ?? 0)
                   ).toLocaleString()}
                   ₫
                   <div>
                     <span className="text-muted-foreground text-xs">
-                      Số lượng còn lại: {selectedVariant.stock_quantity}
+                      Số lượng còn lại: {selectedVariant?.stock_quantity}
                     </span>
                   </div>
                 </div>
               ) : (
                 <span className="text-4xl font-bold text-accent">
-                  {productDetail?.product?.price?.toLocaleString()} ₫
+                  {(
+                    productDetail?.product?.price +
+                    (selectedVariant?.additional_price ?? 0)
+                  ).toLocaleString()}
+                  ₫{" "}
                 </span>
               )}
             </div>
           ) : (
             <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-4xl font-bold text-accent">
-                {productDetail?.product?.discount_price?.toLocaleString()} ₫
-              </span>
-              <span className="text-xl text-muted-foreground line-through">
-                {productDetail?.product?.price?.toLocaleString()} ₫
-              </span>
+              <div>
+                <span className="text-4xl font-bold text-accent">
+                  {(
+                    productDetail?.product?.price +
+                    (selectedVariant?.additional_price ?? 0)
+                  ).toLocaleString()}{" "}
+                  ₫
+                </span>
+                <span className="text-xl text-muted-foreground line-through">
+                  {productDetail?.product?.price?.toLocaleString()} ₫
+                </span>
+                <div>
+                  <span className="text-muted-foreground text-xs">
+                    Số lượng còn lại: {selectedVariant?.stock_quantity}
+                  </span>
+                </div>
+              </div>
               <Badge className="bg-destructive">
                 -
                 {Math.round(
@@ -460,7 +475,10 @@ export default function ProductDetail() {
                   <Button
                     key={size}
                     variant={selectedSize === size ? "default" : "outline"}
-                    onClick={() => setSelectedSize(size)}
+                    onClick={() => {
+                      console.log("Click:", size);
+                      setSelectedSize(size);
+                    }}
                   >
                     {size}
                   </Button>
