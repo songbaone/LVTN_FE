@@ -198,7 +198,9 @@ export default function InventoryManagement() {
   });
 
   // ── Detail Dialog ──
-  const [selectedStockRow, setSelectedStockRow] = useState<StockRow | null>(null);
+  const [selectedStockRow, setSelectedStockRow] = useState<StockRow | null>(
+    null,
+  );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // ── Import Dialog ──
@@ -254,7 +256,7 @@ export default function InventoryManagement() {
   const loadCategories = useCallback(async () => {
     try {
       const res = await categoryService.getAll({ limit: 100 });
-      console.log("Category data: ", res.data)
+      console.log("Category data: ", res.data);
       const items = res.data.data.categories ?? res.data ?? [];
       setCategoryOptions(items);
     } catch {
@@ -282,8 +284,10 @@ export default function InventoryManagement() {
         limit: pagination.pageSize,
       };
       if (searchQuery) params.search = searchQuery;
-      if (selectedCategoryId !== "all") params.category_id = parseInt(selectedCategoryId);
-      if (selectedBrandId !== "all") params.brand_id = parseInt(selectedBrandId);
+      if (selectedCategoryId !== "all")
+        params.category_id = parseInt(selectedCategoryId);
+      if (selectedBrandId !== "all")
+        params.brand_id = parseInt(selectedBrandId);
 
       const res = await stockService.getStocks(params);
       console.log("Inventory list response:", res.data);
@@ -304,7 +308,13 @@ export default function InventoryManagement() {
     } finally {
       setIsInventoryLoading(false);
     }
-  }, [searchQuery, selectedCategoryId, selectedBrandId, pagination.currentPage, pagination.pageSize]);
+  }, [
+    searchQuery,
+    selectedCategoryId,
+    selectedBrandId,
+    pagination.currentPage,
+    pagination.pageSize,
+  ]);
 
   // ── Load Low Stock ──
   const loadLowStock = useCallback(async () => {
@@ -312,7 +322,9 @@ export default function InventoryManagement() {
     try {
       const res = await stockService.getLowStock();
       console.log("Low stock response:", res.data);
-      setLowStockItems(res.data.data.variants ?? res.data.data ?? res.data ?? []);
+      setLowStockItems(
+        res.data.data.variants ?? res.data.data ?? res.data ?? [],
+      );
     } catch (error) {
       toast.error("Tải danh sách sắp hết hàng thất bại");
     } finally {
@@ -326,7 +338,9 @@ export default function InventoryManagement() {
     try {
       const res = await stockService.getOutOfStock();
       console.log("Out of stock response:", res.data);
-      setOutOfStockItems(res.data.data.variants ?? res.data.data ?? res.data ?? []);
+      setOutOfStockItems(
+        res.data.data.variants ?? res.data.data ?? res.data ?? [],
+      );
     } catch (error) {
       toast.error("Tải danh sách hết hàng thất bại");
     } finally {
@@ -560,7 +574,9 @@ export default function InventoryManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">Quản lý tồn kho</h1>
-          <p className="text-muted-foreground">Theo dõi và quản lý số lượng tồn kho sản phẩm</p>
+          <p className="text-muted-foreground">
+            Theo dõi và quản lý số lượng tồn kho sản phẩm
+          </p>
         </div>
         <Button onClick={handleExportReport} variant="outline">
           <Download className="size-4 mr-2" />
@@ -569,7 +585,11 @@ export default function InventoryManagement() {
       </div>
 
       {/* ── Tabs ── */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid grid-cols-4 w-full max-w-2xl">
           <TabsTrigger value="dashboard">
             <Package className="size-4 mr-2" />
@@ -607,8 +627,12 @@ export default function InventoryManagement() {
                   <Package className="size-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{dashboard.total_products}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Sản phẩm đang hoạt động</p>
+                  <div className="text-3xl font-bold">
+                    {dashboard.total_products}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Sản phẩm đang hoạt động
+                  </p>
                 </CardContent>
               </Card>
 
@@ -620,8 +644,12 @@ export default function InventoryManagement() {
                   <Boxes className="size-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{dashboard.total_variants}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Biến thể SKU</p>
+                  <div className="text-3xl font-bold">
+                    {dashboard.total_variants}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Biến thể SKU
+                  </p>
                 </CardContent>
               </Card>
 
@@ -633,8 +661,12 @@ export default function InventoryManagement() {
                   <Warehouse className="size-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{dashboard.total_stock?.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Đơn vị trong kho</p>
+                  <div className="text-3xl font-bold">
+                    {dashboard.total_stock?.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Đơn vị trong kho
+                  </p>
                 </CardContent>
               </Card>
 
@@ -646,8 +678,12 @@ export default function InventoryManagement() {
                   <AlertTriangle className="size-5 text-warning" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-warning">{dashboard.low_stock_count}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Dưới ngưỡng tối thiểu</p>
+                  <div className="text-3xl font-bold text-warning">
+                    {dashboard.low_stock_count}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Dưới ngưỡng tối thiểu
+                  </p>
                 </CardContent>
               </Card>
 
@@ -659,8 +695,12 @@ export default function InventoryManagement() {
                   <XCircle className="size-5 text-destructive" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-destructive">{dashboard.out_of_stock_count}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Cần nhập thêm</p>
+                  <div className="text-3xl font-bold text-destructive">
+                    {dashboard.out_of_stock_count}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Cần nhập thêm
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -701,7 +741,10 @@ export default function InventoryManagement() {
                   <SelectContent>
                     <SelectItem value="all">Tất cả danh mục</SelectItem>
                     {categoryOptions.map((cat) => (
-                      <SelectItem key={cat.category_id} value={String(cat.category_id)}>
+                      <SelectItem
+                        key={cat.category_id}
+                        value={String(cat.category_id)}
+                      >
                         {cat.category_name}
                       </SelectItem>
                     ))}
@@ -722,7 +765,10 @@ export default function InventoryManagement() {
                   <SelectContent>
                     <SelectItem value="all">Tất cả thương hiệu</SelectItem>
                     {brandOptions.map((brand) => (
-                      <SelectItem key={brand.brand_id} value={String(brand.brand_id)}>
+                      <SelectItem
+                        key={brand.brand_id}
+                        value={String(brand.brand_id)}
+                      >
                         {brand.brand_name}
                       </SelectItem>
                     ))}
@@ -779,7 +825,9 @@ export default function InventoryManagement() {
                           <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                             <Package className="size-8 text-muted-foreground" />
                           </div>
-                          <h3 className="text-lg font-semibold mb-2">Không tìm thấy dữ liệu</h3>
+                          <h3 className="text-lg font-semibold mb-2">
+                            Không tìm thấy dữ liệu
+                          </h3>
                           <p className="text-muted-foreground text-sm">
                             Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
                           </p>
@@ -790,17 +838,27 @@ export default function InventoryManagement() {
                     inventoryItems?.map((item) => {
                       const displayPrice = item.discount_price ?? item.price;
                       const stockQty = item.stock_quantity;
-                      const stockStatus: "in_stock" | "low_stock" | "out_of_stock" =
-                        stockQty === 0 ? "out_of_stock" : stockQty < 15 ? "low_stock" : "in_stock";
+                      const stockStatus:
+                        | "in_stock"
+                        | "low_stock"
+                        | "out_of_stock" =
+                        stockQty === 0
+                          ? "out_of_stock"
+                          : stockQty < 15
+                            ? "low_stock"
+                            : "in_stock";
 
                       return (
-                        <TableRow key={item.variant_id} className="hover:bg-secondary/50">
+                        <TableRow
+                          key={item.variant_id}
+                          className="hover:bg-secondary/50"
+                        >
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="size-10 rounded-lg bg-secondary flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {item.main_image_url ? (
                                   <img
-                                    src={item.main_image_url}
+                                    src={`http://localhost:3000${item.main_image_url}`}
                                     alt={item.product_name}
                                     className="size-full object-cover"
                                   />
@@ -809,14 +867,18 @@ export default function InventoryManagement() {
                                 )}
                               </div>
                               <div>
-                                <span className="font-medium block">{item.product_name}</span>
+                                <span className="font-medium block">
+                                  {item.product_name}
+                                </span>
                                 <span className="text-xs text-muted-foreground">
                                   {item.category_name} • {item.brand_name}
                                 </span>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{item.sku}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {item.sku}
+                          </TableCell>
                           <TableCell>{item.color ?? "-"}</TableCell>
                           <TableCell>{item.material ?? "-"}</TableCell>
                           <TableCell className="text-right font-medium">
@@ -824,12 +886,13 @@ export default function InventoryManagement() {
                           </TableCell>
                           <TableCell className="text-center">
                             <span
-                              className={`font-bold ${stockQty === 0
-                                ? "text-destructive"
-                                : stockQty < 15
-                                  ? "text-warning"
-                                  : "text-foreground"
-                                }`}
+                              className={`font-bold ${
+                                stockQty === 0
+                                  ? "text-destructive"
+                                  : stockQty < 15
+                                    ? "text-warning"
+                                    : "text-foreground"
+                              }`}
                             >
                               {stockQty}
                             </span>
@@ -896,10 +959,11 @@ export default function InventoryManagement() {
             {!isInventoryLoading && pagination.totalItems > 0 && (
               <div className="flex items-center justify-between px-6 py-4 border-t">
                 <p className="text-sm text-muted-foreground">
-                  Hiển thị {(pagination.currentPage - 1) * pagination.pageSize + 1}–
+                  Hiển thị{" "}
+                  {(pagination.currentPage - 1) * pagination.pageSize + 1}–
                   {Math.min(
                     pagination.currentPage * pagination.pageSize,
-                    pagination.totalItems
+                    pagination.totalItems,
                   )}{" "}
                   trên tổng số {pagination.totalItems} sản phẩm
                 </p>
@@ -912,10 +976,15 @@ export default function InventoryManagement() {
                   >
                     <ChevronLeft className="size-4" />
                   </Button>
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                  {Array.from(
+                    { length: pagination.totalPages },
+                    (_, i) => i + 1,
+                  ).map((page) => (
                     <Button
                       key={page}
-                      variant={pagination.currentPage === page ? "default" : "outline"}
+                      variant={
+                        pagination.currentPage === page ? "default" : "outline"
+                      }
                       size="sm"
                       onClick={() => handlePageChange(page)}
                     >
@@ -958,7 +1027,9 @@ export default function InventoryManagement() {
               ) : lowStockItems.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="size-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Không có sản phẩm sắp hết hàng</p>
+                  <p className="text-muted-foreground">
+                    Không có sản phẩm sắp hết hàng
+                  </p>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
@@ -979,12 +1050,18 @@ export default function InventoryManagement() {
                               <div className="size-10 rounded-lg bg-secondary flex items-center justify-center text-2xl">
                                 {item.image || "📦"}
                               </div>
-                              <span className="font-medium">{item.product_name}</span>
+                              <span className="font-medium">
+                                {item.product_name}
+                              </span>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{item.sku}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {item.sku}
+                          </TableCell>
                           <TableCell>
-                            <span className="font-bold text-warning">{item.stock_quantity}</span>
+                            <span className="font-bold text-warning">
+                              {item.stock_quantity}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <Button
@@ -1028,7 +1105,9 @@ export default function InventoryManagement() {
               ) : outOfStockItems.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="size-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Không có sản phẩm hết hàng</p>
+                  <p className="text-muted-foreground">
+                    Không có sản phẩm hết hàng
+                  </p>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
@@ -1049,12 +1128,18 @@ export default function InventoryManagement() {
                               <div className="size-10 rounded-lg bg-secondary flex items-center justify-center text-2xl">
                                 {item.image || "📦"}
                               </div>
-                              <span className="font-medium">{item.product_name}</span>
+                              <span className="font-medium">
+                                {item.product_name}
+                              </span>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{item.sku}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {item.sku}
+                          </TableCell>
                           <TableCell>
-                            <span className="font-bold text-destructive">{item.stock_quantity}</span>
+                            <span className="font-bold text-destructive">
+                              {item.stock_quantity}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <Button
@@ -1106,17 +1191,29 @@ export default function InventoryManagement() {
                 </div>
                 <div className="space-y-2 flex-1">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Tên sản phẩm</Label>
-                    <p className="font-semibold text-lg">{selectedStockRow.product_name}</p>
+                    <Label className="text-xs text-muted-foreground">
+                      Tên sản phẩm
+                    </Label>
+                    <p className="font-semibold text-lg">
+                      {selectedStockRow.product_name}
+                    </p>
                   </div>
                   <div className="flex gap-6">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Danh mục</Label>
-                      <p className="font-medium">{selectedStockRow.category_name}</p>
+                      <Label className="text-xs text-muted-foreground">
+                        Danh mục
+                      </Label>
+                      <p className="font-medium">
+                        {selectedStockRow.category_name}
+                      </p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Thương hiệu</Label>
-                      <p className="font-medium">{selectedStockRow.brand_name}</p>
+                      <Label className="text-xs text-muted-foreground">
+                        Thương hiệu
+                      </Label>
+                      <p className="font-medium">
+                        {selectedStockRow.brand_name}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1126,15 +1223,25 @@ export default function InventoryManagement() {
               <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-secondary/30">
                 <div>
                   <Label className="text-xs text-muted-foreground">SKU</Label>
-                  <p className="font-semibold mt-1 font-mono">{selectedStockRow.sku}</p>
+                  <p className="font-semibold mt-1 font-mono">
+                    {selectedStockRow.sku}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Màu sắc</Label>
-                  <p className="font-semibold mt-1">{selectedStockRow.color ?? "-"}</p>
+                  <Label className="text-xs text-muted-foreground">
+                    Màu sắc
+                  </Label>
+                  <p className="font-semibold mt-1">
+                    {selectedStockRow.color ?? "-"}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Chất liệu</Label>
-                  <p className="font-semibold mt-1">{selectedStockRow.material ?? "-"}</p>
+                  <Label className="text-xs text-muted-foreground">
+                    Chất liệu
+                  </Label>
+                  <p className="font-semibold mt-1">
+                    {selectedStockRow.material ?? "-"}
+                  </p>
                 </div>
               </div>
 
@@ -1143,13 +1250,17 @@ export default function InventoryManagement() {
                 {selectedStockRow.discount_price ? (
                   <>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Giá khuyến mãi</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Giá khuyến mãi
+                      </Label>
                       <p className="font-semibold mt-1 text-success">
                         {selectedStockRow.discount_price.toLocaleString()} ₫
                       </p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Giá gốc</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Giá gốc
+                      </Label>
                       <p className="font-semibold mt-1 line-through text-muted-foreground">
                         {selectedStockRow.price.toLocaleString()} ₫
                       </p>
@@ -1157,14 +1268,18 @@ export default function InventoryManagement() {
                   </>
                 ) : (
                   <div>
-                    <Label className="text-xs text-muted-foreground">Giá bán</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      Giá bán
+                    </Label>
                     <p className="font-semibold mt-1">
                       {selectedStockRow.price.toLocaleString()} ₫
                     </p>
                   </div>
                 )}
                 <div>
-                  <Label className="text-xs text-muted-foreground">Giá cộng thêm</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Giá cộng thêm
+                  </Label>
                   <p className="font-semibold mt-1">
                     {selectedStockRow.additional_price > 0
                       ? `${selectedStockRow.additional_price.toLocaleString()} ₫`
@@ -1176,20 +1291,25 @@ export default function InventoryManagement() {
               {/* Stock Information */}
               <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-secondary/30">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Tồn kho hiện tại</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Tồn kho hiện tại
+                  </Label>
                   <p
-                    className={`font-bold mt-1 text-2xl ${selectedStockRow.stock_quantity === 0
-                      ? "text-destructive"
-                      : selectedStockRow.stock_quantity < 15
-                        ? "text-warning"
-                        : "text-foreground"
-                      }`}
+                    className={`font-bold mt-1 text-2xl ${
+                      selectedStockRow.stock_quantity === 0
+                        ? "text-destructive"
+                        : selectedStockRow.stock_quantity < 15
+                          ? "text-warning"
+                          : "text-foreground"
+                    }`}
                   >
                     {selectedStockRow.stock_quantity}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Cập nhật lần cuối</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Cập nhật lần cuối
+                  </Label>
                   <p className="font-semibold mt-1">
                     {new Date(selectedStockRow.updated_at).toLocaleString()}
                   </p>
@@ -1197,7 +1317,9 @@ export default function InventoryManagement() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">Không có dữ liệu</div>
+            <div className="text-center py-8 text-muted-foreground">
+              Không có dữ liệu
+            </div>
           )}
 
           <DialogFooter>
@@ -1360,15 +1482,17 @@ export default function InventoryManagement() {
       {/* ═══════════════════════════════════════════════════════════════════════
          DIALOG: EXCEL IMPORT (4-Step Wizard)
          ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog open={isExcelImportOpen} onOpenChange={(open) => {
-        if (!open) handleResetExcelImport();
-      }}>
-        <DialogContent className="max-w-2xl">
+      <Dialog
+        open={isExcelImportOpen}
+        onOpenChange={(open) => {
+          if (!open) handleResetExcelImport();
+        }}
+      >
+        <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>Nhập kho Excel</DialogTitle>
             <DialogDescription>
-              Bước {excelStep} / 4:{" "}
-              {excelStep === 1 && "Tải file mẫu"}
+              Bước {excelStep} / 4: {excelStep === 1 && "Tải file mẫu"}
               {excelStep === 2 && "Tải file lên"}
               {excelStep === 3 && "Xem trước dữ liệu nhập"}
               {excelStep === 4 && "Nhập kho thành công"}
@@ -1380,19 +1504,25 @@ export default function InventoryManagement() {
             {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex items-center flex-1">
                 <div
-                  className={`size-8 rounded-full flex items-center justify-center text-sm font-medium ${excelStep > step
-                    ? "bg-accent text-white"
-                    : excelStep === step
+                  className={`size-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    excelStep > step
                       ? "bg-accent text-white"
-                      : "bg-secondary text-muted-foreground"
-                    }`}
+                      : excelStep === step
+                        ? "bg-accent text-white"
+                        : "bg-secondary text-muted-foreground"
+                  }`}
                 >
-                  {excelStep > step ? <CheckCircle2 className="size-5" /> : step}
+                  {excelStep > step ? (
+                    <CheckCircle2 className="size-5" />
+                  ) : (
+                    step
+                  )}
                 </div>
                 {step < 4 && (
                   <div
-                    className={`flex-1 h-1 mx-2 rounded ${excelStep > step ? "bg-accent" : "bg-secondary"
-                      }`}
+                    className={`flex-1 h-1 mx-2 rounded ${
+                      excelStep > step ? "bg-accent" : "bg-secondary"
+                    }`}
                   />
                 )}
               </div>
@@ -1453,7 +1583,9 @@ export default function InventoryManagement() {
                 <div className="py-8 text-center">
                   <Loader2 className="size-8 animate-spin text-accent mx-auto mb-4" />
                   <p className="text-muted-foreground">
-                    {isUploading ? "Đang tải và xử lý file..." : "Đang nhập dữ liệu..."}
+                    {isUploading
+                      ? "Đang tải và xử lý file..."
+                      : "Đang nhập dữ liệu..."}
                   </p>
                 </div>
               ) : (
@@ -1465,14 +1597,19 @@ export default function InventoryManagement() {
                           <TableHead>Dòng</TableHead>
                           <TableHead>SKU</TableHead>
                           <TableHead>Tên sản phẩm</TableHead>
-                          <TableHead className="text-center">Số lượng</TableHead>
+                          <TableHead className="text-center">
+                            Số lượng
+                          </TableHead>
                           <TableHead>Trạng thái</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {previewData.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            <TableCell
+                              colSpan={5}
+                              className="text-center py-8 text-muted-foreground"
+                            >
                               Không có dữ liệu để xem trước
                             </TableCell>
                           </TableRow>
@@ -1480,14 +1617,21 @@ export default function InventoryManagement() {
                           previewData.map((row, idx) => (
                             <TableRow key={idx}>
                               <TableCell>{row.row}</TableCell>
-                              <TableCell className="font-mono text-sm">{row.sku}</TableCell>
+                              <TableCell className="font-mono text-sm">
+                                {row.sku}
+                              </TableCell>
                               <TableCell>{row.product_name}</TableCell>
-                              <TableCell className="text-center">{row.import_quantity}</TableCell>
+                              <TableCell className="text-center">
+                                {row.import_quantity}
+                              </TableCell>
                               <TableCell>
                                 {row.status === "valid" ? (
                                   <Badge className="bg-success">Hợp lệ</Badge>
                                 ) : (
-                                  <Badge className="bg-destructive" title={row.error}>
+                                  <Badge
+                                    className="bg-destructive"
+                                    title={row.error}
+                                  >
                                     Lỗi: {row.error}
                                   </Badge>
                                 )}
@@ -1500,8 +1644,10 @@ export default function InventoryManagement() {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      {previewData.filter((r) => r.status === "valid").length} hợp lệ,{" "}
-                      {previewData.filter((r) => r.status === "error").length} lỗi
+                      {previewData.filter((r) => r.status === "valid").length}{" "}
+                      hợp lệ,{" "}
+                      {previewData.filter((r) => r.status === "error").length}{" "}
+                      lỗi
                     </span>
                   </div>
                 </>
@@ -1513,11 +1659,22 @@ export default function InventoryManagement() {
             <div className="py-8 text-center space-y-4">
               <CheckCircle2 className="size-16 text-success mx-auto" />
               <div>
-                <h3 className="text-lg font-semibold mb-2">Nhập kho thành công</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Nhập kho thành công
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Đã nhập thành công {previewData.filter((r) => r.status === "valid").length} sản phẩm.
-                  {previewData.filter((r) => r.status === "error").length > 0 && (
-                    <> {previewData.filter((r) => r.status === "error").length} dòng bị lỗi và đã được bỏ qua.</>
+                  Đã nhập thành công{" "}
+                  {previewData.filter((r) => r.status === "valid").length} sản
+                  phẩm.
+                  {previewData.filter((r) => r.status === "error").length >
+                    0 && (
+                    <>
+                      {" "}
+                      {
+                        previewData.filter((r) => r.status === "error").length
+                      }{" "}
+                      dòng bị lỗi và đã được bỏ qua.
+                    </>
                   )}
                 </p>
               </div>
@@ -1526,7 +1683,11 @@ export default function InventoryManagement() {
 
           <DialogFooter>
             {excelStep < 4 && (
-              <Button variant="outline" onClick={handleResetExcelImport} disabled={isUploading || isExcelImporting}>
+              <Button
+                variant="outline"
+                onClick={handleResetExcelImport}
+                disabled={isUploading || isExcelImporting}
+              >
                 Hủy
               </Button>
             )}
@@ -1535,27 +1696,26 @@ export default function InventoryManagement() {
                 Tiếp theo: Tải file lên
               </Button>
             )}
-            {excelStep === 2 && (
-              <Button disabled>
-                Tiếp theo: Xem trước
-              </Button>
-            )}
-            {excelStep === 3 && !isUploading && previewData.length > 0 && !isExcelImporting && (
-              <Button
-                onClick={handleConfirmImport}
-                disabled={isExcelImporting}
-                className="bg-accent hover:bg-accent/90"
-              >
-                {isExcelImporting ? (
-                  <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                    Đang nhập...
-                  </>
-                ) : (
-                  "Xác nhận nhập"
-                )}
-              </Button>
-            )}
+            {excelStep === 2 && <Button disabled>Tiếp theo: Xem trước</Button>}
+            {excelStep === 3 &&
+              !isUploading &&
+              previewData.length > 0 &&
+              !isExcelImporting && (
+                <Button
+                  onClick={handleConfirmImport}
+                  disabled={isExcelImporting}
+                  className="bg-accent hover:bg-accent/90"
+                >
+                  {isExcelImporting ? (
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" />
+                      Đang nhập...
+                    </>
+                  ) : (
+                    "Xác nhận nhập"
+                  )}
+                </Button>
+              )}
             {excelStep === 4 && (
               <Button onClick={handleResetExcelImport}>Đóng</Button>
             )}

@@ -16,6 +16,9 @@ import { Skeleton } from "../ui/skeleton";
 import { useNavigate } from "react-router";
 import Swal from "sweetalert2";
 import { categoryService } from "../../../services/category.service";
+import axios from "axios";
+import { cartService } from "../../../services/cart.service";
+import { useCartStore } from "../../../helpers/cartStore";
 
 interface CategoryNode {
   category_id: number;
@@ -29,21 +32,27 @@ interface CategoryNode {
   children: CategoryNode[];
 }
 
+interface cartTotal {
+  total_unique_items: number;
+}
+
 export default function CustomerLayout() {
   const location = useLocation();
   const [cartCount] = useState(3);
   const [wishlistCount] = useState(5);
   const navigate = useNavigate();
   const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
+  const [quantityCart, setQuantityCart] = useState(0);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   useEffect(() => {
     let mounted = true;
     const fetchCategories = async () => {
       try {
         setLoading(true);
         const response = await categoryService.getTree();
-        const tree: CategoryNode[] = response.data?.tree ?? response.data?.data?.tree ?? [];
+        const tree: CategoryNode[] =
+          response.data?.tree ?? response.data?.data?.tree ?? [];
         if (mounted) {
           setCategoryTree(tree);
         }
@@ -60,13 +69,20 @@ export default function CustomerLayout() {
       mounted = false;
     };
   }, []);
+  const { cart, fetchCart } = useCartStore();
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
 
   const activeParentCategories = categoryTree.filter(
-    (cat) => cat.status === true && cat.parent_id === null
+    (cat) => cat.status === true && cat.parent_id === null,
   );
 
   const handleCategoryClick = (categoryId: number, categoryName: string) => {
-    navigate(`/products?category_id=${categoryId}&category_name=${encodeURIComponent(categoryName)}`);
+    navigate(
+      `/products?category_id=${categoryId}&category_name=${encodeURIComponent(categoryName)}`,
+    );
   };
 
   const loginExisting = async () => {
@@ -119,7 +135,7 @@ export default function CustomerLayout() {
                 <Search className="absolute -translate-y-1/2 left-3 top-1/2 size-5 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search for baby products..."
+                  placeholder="Tìm kiếm sản phẩm cho bé..."
                   className="py-6 pl-10 pr-4 bg-secondary border-primary-200"
                 />
               </div>
@@ -127,31 +143,18 @@ export default function CustomerLayout() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Wishlist */}
-              <Button variant="ghost" size="icon" asChild className="relative">
-                <Link to="/wishlist">
-                  <Heart className="size-5" />
-                  {wishlistCount > 0 && (
-                    <Badge className="absolute flex items-center justify-center p-0 -top-1 -right-1 size-5 bg-accent">
-                      {wishlistCount}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
-
               {/* Cart */}
               <Button
                 onClick={loginExisting}
                 variant="ghost"
                 size="icon"
-                asChild
                 className="relative"
               >
                 <div>
                   <ShoppingCart className="size-5" />
                   {cartCount > 0 && (
                     <Badge className="absolute flex items-center justify-center p-0 -top-1 -right-1 size-5 bg-accent">
-                      {cartCount}
+                      {cart?.total_unique_items ?? 0}
                     </Badge>
                   )}
                 </div>
@@ -171,9 +174,7 @@ export default function CustomerLayout() {
                   <DropdownMenuItem asChild>
                     <Link to="/orders">My Orders</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/wishlist">Wishlist</Link>
-                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/auth">Sign In</Link>
@@ -210,7 +211,10 @@ export default function CustomerLayout() {
                         <button
                           key={cat.category_id}
                           onClick={() =>
-                            handleCategoryClick(cat.category_id, cat.category_name)
+                            handleCategoryClick(
+                              cat.category_id,
+                              cat.category_name,
+                            )
                           }
                           className="text-left transition-colors text-foreground hover:text-primary"
                         >

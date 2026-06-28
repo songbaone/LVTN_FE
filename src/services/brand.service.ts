@@ -1,11 +1,9 @@
 import axiosClient from "./axiosClient";
 
 export const brandService = {
-  getAll: (params?: any) =>
-    axiosClient.get("/brands", { params }),
+  getAll: (params?: any) => axiosClient.get("/brands", { params }),
 
-  getById: (id: number) =>
-    axiosClient.get(`/brands/${id}`),
+  getById: (id: number) => axiosClient.get(`/brands/${id}`),
 
   create: (data: FormData) =>
     axiosClient.post("/brands", data, {
@@ -17,6 +15,5 @@ export const brandService = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
-  delete: (id: number) =>
-    axiosClient.delete(`/brands/${id}`),
+  delete: (id: number) => axiosClient.delete(`/brands/${id}`),
 };
