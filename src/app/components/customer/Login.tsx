@@ -64,6 +64,7 @@ export default function Login() {
         window.location.href = "/";
       } else {
         localStorage.setItem("AccessToken", result.data.access_token);
+        localStorage.setItem("User", result.data.user);
 
         await Swal.fire({
           icon: "success",

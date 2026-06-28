@@ -47,7 +47,7 @@ import {
   Image as ImageIcon,
   Loader2,
   CheckSquare,
-  Square
+  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -96,16 +96,18 @@ export default function ReviewManagement() {
       customerAvatar: "NH",
       rating: 5,
       title: "Perfect for my baby!",
-      content: "The quality is excellent and my baby loves it. Very soft and comfortable. Highly recommend to all parents!",
+      content:
+        "The quality is excellent and my baby loves it. Very soft and comfortable. Highly recommend to all parents!",
       images: [],
       status: "approved",
       helpful: 12,
       createdAt: "2026-06-04 10:30",
       reply: {
-        content: "Thank you for your wonderful feedback! We're thrilled to hear your baby loves it.",
+        content:
+          "Thank you for your wonderful feedback! We're thrilled to hear your baby loves it.",
         repliedBy: "Admin",
-        repliedAt: "2026-06-04 14:20"
-      }
+        repliedAt: "2026-06-04 14:20",
+      },
     },
     {
       id: "R2",
@@ -117,11 +119,12 @@ export default function ReviewManagement() {
       customerAvatar: "TMA",
       rating: 4,
       title: "Great product but pricey",
-      content: "Works perfectly and the night vision is amazing. Only downside is the price, but worth it for peace of mind.",
+      content:
+        "Works perfectly and the night vision is amazing. Only downside is the price, but worth it for peace of mind.",
       images: [],
       status: "approved",
       helpful: 8,
-      createdAt: "2026-06-03 15:20"
+      createdAt: "2026-06-03 15:20",
     },
     {
       id: "R3",
@@ -133,11 +136,12 @@ export default function ReviewManagement() {
       customerAvatar: "LTM",
       rating: 5,
       title: "Best feeding set ever!",
-      content: "BPA-free, easy to clean, and my baby can't get enough of it. Colors are vibrant and attractive.",
+      content:
+        "BPA-free, easy to clean, and my baby can't get enough of it. Colors are vibrant and attractive.",
       images: [],
       status: "pending",
       helpful: 0,
-      createdAt: "2026-06-05 09:45"
+      createdAt: "2026-06-05 09:45",
     },
     {
       id: "R4",
@@ -149,11 +153,12 @@ export default function ReviewManagement() {
       customerAvatar: "PVD",
       rating: 3,
       title: "Decent but not amazing",
-      content: "Quality is okay but I expected more for the price. Fits well though.",
+      content:
+        "Quality is okay but I expected more for the price. Fits well though.",
       images: [],
       status: "pending",
       helpful: 0,
-      createdAt: "2026-06-05 11:15"
+      createdAt: "2026-06-05 11:15",
     },
     {
       id: "R5",
@@ -165,11 +170,12 @@ export default function ReviewManagement() {
       customerAvatar: "HTL",
       rating: 2,
       title: "Disappointed with quality",
-      content: "The stroller feels flimsy and the wheels are not smooth. Not worth the money.",
+      content:
+        "The stroller feels flimsy and the wheels are not smooth. Not worth the money.",
       images: [],
       status: "pending",
       helpful: 0,
-      createdAt: "2026-06-05 13:30"
+      createdAt: "2026-06-05 13:30",
     },
     {
       id: "R6",
@@ -181,11 +187,12 @@ export default function ReviewManagement() {
       customerAvatar: "VMQ",
       rating: 5,
       title: "Educational and fun!",
-      content: "My toddler loves these toys. They're well-made, safe, and help with motor skills. Highly recommend!",
+      content:
+        "My toddler loves these toys. They're well-made, safe, and help with motor skills. Highly recommend!",
       images: [],
       status: "approved",
       helpful: 15,
-      createdAt: "2026-06-02 16:40"
+      createdAt: "2026-06-02 16:40",
     },
     {
       id: "R7",
@@ -197,64 +204,76 @@ export default function ReviewManagement() {
       customerAvatar: "DTH",
       rating: 1,
       title: "Terrible product, do not buy!",
-      content: "This is spam content with inappropriate language and fake review. Should be rejected.",
+      content:
+        "This is spam content with inappropriate language and fake review. Should be rejected.",
       images: [],
       status: "rejected",
       helpful: 0,
-      createdAt: "2026-06-04 08:20"
-    }
+      createdAt: "2026-06-04 08:20",
+    },
   ]);
 
   // Statistics
   const stats = {
     total: reviews.length,
-    pending: reviews.filter(r => r.status === "pending").length,
-    approved: reviews.filter(r => r.status === "approved").length,
-    rejected: reviews.filter(r => r.status === "rejected").length,
-    avgRating: (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    pending: reviews.filter((r) => r.status === "pending").length,
+    approved: reviews.filter((r) => r.status === "approved").length,
+    rejected: reviews.filter((r) => r.status === "rejected").length,
+    avgRating: (
+      reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    ).toFixed(1),
   };
 
-  const ratingDistribution = [5, 4, 3, 2, 1].map(rating => ({
+  const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => ({
     rating,
-    count: reviews.filter(r => r.rating === rating).length,
-    percentage: ((reviews.filter(r => r.rating === rating).length / reviews.length) * 100).toFixed(0)
+    count: reviews.filter((r) => r.rating === rating).length,
+    percentage: (
+      (reviews.filter((r) => r.rating === rating).length / reviews.length) *
+      100
+    ).toFixed(0),
   }));
 
   const statusColors: Record<string, string> = {
-    "pending": "bg-warning",
-    "approved": "bg-success",
-    "rejected": "bg-destructive"
+    pending: "bg-warning",
+    approved: "bg-success",
+    rejected: "bg-destructive",
   };
 
   // Filtering and Sorting
-  const filteredReviews = reviews.filter(review => {
-    const matchesSearch =
-      review.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      review.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      review.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || review.status === statusFilter;
-    const matchesRating = ratingFilter === "all" || review.rating.toString() === ratingFilter;
-    return matchesSearch && matchesStatus && matchesRating;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case "date-desc":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case "rating-desc":
-        return b.rating - a.rating;
-      case "rating-asc":
-        return a.rating - b.rating;
-      case "helpful-desc":
-        return b.helpful - a.helpful;
-      default:
-        return 0;
-    }
-  });
+  const filteredReviews = reviews
+    .filter((review) => {
+      const matchesSearch =
+        review.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        review.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        review.content.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || review.status === statusFilter;
+      const matchesRating =
+        ratingFilter === "all" || review.rating.toString() === ratingFilter;
+      return matchesSearch && matchesStatus && matchesRating;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "date-desc":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "rating-desc":
+          return b.rating - a.rating;
+        case "rating-asc":
+          return a.rating - b.rating;
+        case "helpful-desc":
+          return b.helpful - a.helpful;
+        default:
+          return 0;
+      }
+    });
 
   const handleSelectReview = (id: string) => {
-    setSelectedReviews(prev =>
+    setSelectedReviews((prev) =>
       prev.includes(id)
-        ? prev.filter(reviewId => reviewId !== id)
-        : [...prev, id]
+        ? prev.filter((reviewId) => reviewId !== id)
+        : [...prev, id],
     );
   };
 
@@ -262,7 +281,7 @@ export default function ReviewManagement() {
     if (selectedReviews.length === filteredReviews.length) {
       setSelectedReviews([]);
     } else {
-      setSelectedReviews(filteredReviews.map(r => r.id));
+      setSelectedReviews(filteredReviews.map((r) => r.id));
     }
   };
 
@@ -278,16 +297,20 @@ export default function ReviewManagement() {
   };
 
   const handleApprove = async (reviewId: string) => {
-    setReviews(prev => prev.map(r =>
-      r.id === reviewId ? { ...r, status: "approved" as const } : r
-    ));
+    setReviews((prev) =>
+      prev.map((r) =>
+        r.id === reviewId ? { ...r, status: "approved" as const } : r,
+      ),
+    );
     toast.success("Review approved");
   };
 
   const handleReject = async (reviewId: string) => {
-    setReviews(prev => prev.map(r =>
-      r.id === reviewId ? { ...r, status: "rejected" as const } : r
-    ));
+    setReviews((prev) =>
+      prev.map((r) =>
+        r.id === reviewId ? { ...r, status: "rejected" as const } : r,
+      ),
+    );
     toast.success("Review rejected");
   };
 
@@ -316,7 +339,7 @@ export default function ReviewManagement() {
     }
 
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     toast.success("Reply posted successfully");
     setIsSaving(false);
@@ -345,7 +368,9 @@ export default function ReviewManagement() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Review Management</h1>
-        <p className="text-muted-foreground">Moderate customer reviews and feedback</p>
+        <p className="text-muted-foreground">
+          Moderate customer reviews and feedback
+        </p>
       </div>
 
       {/* KPI Cards */}
@@ -371,8 +396,12 @@ export default function ReviewManagement() {
             <AlertTriangle className="size-5 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-warning">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting moderation</p>
+            <div className="text-3xl font-bold text-warning">
+              {stats.pending}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Awaiting moderation
+            </p>
           </CardContent>
         </Card>
 
@@ -384,8 +413,12 @@ export default function ReviewManagement() {
             <CheckCircle className="size-5 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-success">{stats.approved}</div>
-            <p className="text-xs text-muted-foreground mt-1">Published reviews</p>
+            <div className="text-3xl font-bold text-success">
+              {stats.approved}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Published reviews
+            </p>
           </CardContent>
         </Card>
 
@@ -397,7 +430,9 @@ export default function ReviewManagement() {
             <XCircle className="size-5 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-destructive">{stats.rejected}</div>
+            <div className="text-3xl font-bold text-destructive">
+              {stats.rejected}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Not published</p>
           </CardContent>
         </Card>
@@ -410,7 +445,9 @@ export default function ReviewManagement() {
             <Star className="size-5 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-warning">{stats.avgRating}</div>
+            <div className="text-3xl font-bold text-warning">
+              {stats.avgRating}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Out of 5.0</p>
           </CardContent>
         </Card>
@@ -440,7 +477,9 @@ export default function ReviewManagement() {
                 </div>
                 <div className="w-24 text-right">
                   <span className="text-sm font-medium">{count} reviews</span>
-                  <span className="text-xs text-muted-foreground ml-2">({percentage}%)</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({percentage}%)
+                  </span>
                 </div>
               </div>
             ))}
@@ -503,7 +542,8 @@ export default function ReviewManagement() {
             {selectedReviews.length > 0 && (
               <div className="flex items-center justify-between p-4 rounded-lg bg-accent/10 border border-accent/20">
                 <p className="text-sm font-medium">
-                  {selectedReviews.length} {selectedReviews.length === 1 ? "review" : "reviews"} selected
+                  {selectedReviews.length}{" "}
+                  {selectedReviews.length === 1 ? "review" : "reviews"} selected
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -537,7 +577,8 @@ export default function ReviewManagement() {
               <TableRow>
                 <TableHead className="w-12">
                   <button onClick={handleSelectAll}>
-                    {selectedReviews.length === filteredReviews.length && filteredReviews.length > 0 ? (
+                    {selectedReviews.length === filteredReviews.length &&
+                    filteredReviews.length > 0 ? (
                       <CheckSquare className="size-4 text-accent" />
                     ) : (
                       <Square className="size-4" />
@@ -561,7 +602,9 @@ export default function ReviewManagement() {
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                         <MessageSquare className="size-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">No reviews found</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        No reviews found
+                      </h3>
                       <p className="text-muted-foreground text-sm">
                         Try adjusting your search or filters
                       </p>
@@ -585,7 +628,9 @@ export default function ReviewManagement() {
                         <div className="size-10 rounded-lg bg-secondary flex items-center justify-center text-2xl">
                           {review.productImage}
                         </div>
-                        <span className="font-medium text-sm">{review.productName}</span>
+                        <span className="font-medium text-sm">
+                          {review.productName}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -595,19 +640,27 @@ export default function ReviewManagement() {
                             {review.customerAvatar}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm font-medium">{review.customerName}</span>
+                        <span className="text-sm font-medium">
+                          {review.customerName}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {renderStars(review.rating)}
-                        <span className="ml-1 text-sm font-medium">{review.rating}.0</span>
+                        <span className="ml-1 text-sm font-medium">
+                          {review.rating}.0
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <div>
-                        <p className="font-semibold text-sm mb-1 line-clamp-1">{review.title}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{review.content}</p>
+                        <p className="font-semibold text-sm mb-1 line-clamp-1">
+                          {review.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {review.content}
+                        </p>
                         {review.helpful > 0 && (
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                             <ThumbsUp className="size-3" />
@@ -618,7 +671,8 @@ export default function ReviewManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColors[review.status]}>
-                        {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
+                        {review.status.charAt(0).toUpperCase() +
+                          review.status.slice(1)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -690,26 +744,38 @@ export default function ReviewManagement() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="font-semibold">{selectedReview.customerName}</p>
+                      <p className="font-semibold">
+                        {selectedReview.customerName}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(selectedReview.createdAt).toLocaleString()}
                       </p>
                     </div>
                     <Badge className={statusColors[selectedReview.status]}>
-                      {selectedReview.status.charAt(0).toUpperCase() + selectedReview.status.slice(1)}
+                      {selectedReview.status.charAt(0).toUpperCase() +
+                        selectedReview.status.slice(1)}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
                     {renderStars(selectedReview.rating)}
-                    <span className="font-semibold">{selectedReview.rating}.0</span>
+                    <span className="font-semibold">
+                      {selectedReview.rating}.0
+                    </span>
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">{selectedReview.title}</h3>
-                  <p className="text-muted-foreground mb-4">{selectedReview.content}</p>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {selectedReview.title}
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    {selectedReview.content}
+                  </p>
 
                   {selectedReview.images.length > 0 && (
                     <div className="flex gap-2 mb-4">
                       {selectedReview.images.map((img, index) => (
-                        <div key={index} className="size-20 rounded-lg bg-secondary flex items-center justify-center">
+                        <div
+                          key={index}
+                          className="size-20 rounded-lg bg-secondary flex items-center justify-center"
+                        >
                           <ImageIcon className="size-8 text-muted-foreground" />
                         </div>
                       ))}
@@ -719,7 +785,9 @@ export default function ReviewManagement() {
                   {selectedReview.helpful > 0 && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <ThumbsUp className="size-4" />
-                      <span>{selectedReview.helpful} people found this helpful</span>
+                      <span>
+                        {selectedReview.helpful} people found this helpful
+                      </span>
                     </div>
                   )}
                 </div>
@@ -732,7 +800,9 @@ export default function ReviewManagement() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Product</p>
-                    <p className="font-semibold">{selectedReview.productName}</p>
+                    <p className="font-semibold">
+                      {selectedReview.productName}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -741,11 +811,14 @@ export default function ReviewManagement() {
                 <div className="p-4 rounded-lg border border-accent/20 bg-accent/5">
                   <div className="flex items-center gap-2 mb-2">
                     <Reply className="size-4 text-accent" />
-                    <span className="font-semibold text-accent">Store Reply</span>
+                    <span className="font-semibold text-accent">
+                      Store Reply
+                    </span>
                   </div>
                   <p className="text-sm mb-2">{selectedReview.reply.content}</p>
                   <p className="text-xs text-muted-foreground">
-                    By {selectedReview.reply.repliedBy} • {new Date(selectedReview.reply.repliedAt).toLocaleString()}
+                    By {selectedReview.reply.repliedBy} •{" "}
+                    {new Date(selectedReview.reply.repliedAt).toLocaleString()}
                   </p>
                 </div>
               )}
@@ -775,24 +848,28 @@ export default function ReviewManagement() {
                     </Button>
                   </>
                 )}
-                {selectedReview.status === "approved" && !selectedReview.reply && (
-                  <Button
-                    onClick={() => {
-                      setIsDetailDialogOpen(false);
-                      handleOpenReply(selectedReview);
-                    }}
-                    className="bg-accent hover:bg-accent/90"
-                  >
-                    <Reply className="size-4 mr-2" />
-                    Reply to Review
-                  </Button>
-                )}
+                {selectedReview.status === "approved" &&
+                  !selectedReview.reply && (
+                    <Button
+                      onClick={() => {
+                        setIsDetailDialogOpen(false);
+                        handleOpenReply(selectedReview);
+                      }}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Reply className="size-4 mr-2" />
+                      Reply to Review
+                    </Button>
+                  )}
               </div>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDetailDialogOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>
@@ -819,14 +896,20 @@ export default function ReviewManagement() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold">{selectedReview.customerName}</p>
+                    <p className="font-semibold">
+                      {selectedReview.customerName}
+                    </p>
                     <div className="flex items-center gap-1">
                       {renderStars(selectedReview.rating)}
                     </div>
                   </div>
                 </div>
-                <p className="text-sm font-semibold mb-1">{selectedReview.title}</p>
-                <p className="text-sm text-muted-foreground">{selectedReview.content}</p>
+                <p className="text-sm font-semibold mb-1">
+                  {selectedReview.title}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedReview.content}
+                </p>
               </div>
 
               <div>
@@ -844,10 +927,18 @@ export default function ReviewManagement() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsReplyDialogOpen(false)} disabled={isSaving}>
+            <Button
+              variant="outline"
+              onClick={() => setIsReplyDialogOpen(false)}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveReply} disabled={isSaving} className="bg-accent hover:bg-accent/90">
+            <Button
+              onClick={handleSaveReply}
+              disabled={isSaving}
+              className="bg-accent hover:bg-accent/90"
+            >
               {isSaving && <Loader2 className="size-4 mr-2 animate-spin" />}
               {isSaving ? "Posting..." : "Post Reply"}
             </Button>

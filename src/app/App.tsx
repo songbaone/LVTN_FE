@@ -21,13 +21,11 @@ import Checkout from "./components/customer/Checkout";
 import OrderHistory from "./components/customer/OrderHistory";
 import OrderDetail from "./components/customer/OrderDetail";
 import CustomerProfile from "./components/customer/CustomerProfile";
-import Wishlist from "./components/customer/Wishlist";
 import Auth from "./components/customer/Auth";
 import AccountCenter from "./components/customer/AccountCenter";
 import PersonalInformation from "./components/customer/PersonalInformation";
 import ChangePassword from "./components/customer/ChangePassword";
 import AddressManagement from "./components/customer/AddressManagement";
-import WishlistManagement from "./components/customer/WishlistManagement";
 import CustomerReviewManagement from "./components/customer/ReviewManagement";
 import NotificationCenter from "./components/customer/NotificationCenter";
 
@@ -108,7 +106,6 @@ function AppContent() {
             <Route path="orders/:id" element={<OrderDetail />} />
 
             <Route path="profile" element={<CustomerProfile />} />
-            <Route path="wishlist" element={<Wishlist />} />
 
             <Route path="account" element={<AccountCenter />} />
             <Route path="account/personal" element={<PersonalInformation />} />
@@ -117,7 +114,6 @@ function AppContent() {
               element={<ChangePassword />}
             />
             <Route path="account/addresses" element={<AddressManagement />} />
-            <Route path="account/wishlist" element={<WishlistManagement />} />
             <Route
               path="account/reviews"
               element={<CustomerReviewManagement />}
@@ -143,11 +139,17 @@ function AppContent() {
             <Route path="products" element={<ProductManagement />} />
             <Route path="products/new" element={<ProductForm />} />
             <Route path="products/:id/edit" element={<ProductForm />} />
-            <Route path="product-variants" element={<ProductVariantsManagement />} />
+            <Route
+              path="product-variants"
+              element={<ProductVariantsManagement />}
+            />
             <Route path="orders" element={<OrderManagement />} />
             <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="inventory" element={<InventoryManagement />} />
-            <Route path="inventory/history" element={<StockHistoryManagement />} />
+            <Route
+              path="inventory/history"
+              element={<StockHistoryManagement />}
+            />
             <Route
               path="inventory/import"
               element={<ExcelImport type="inventory" />}
@@ -192,7 +194,6 @@ function AppContent() {
             isOpen={showLiveChat}
             onToggle={() => setShowLiveChat(!showLiveChat)}
           />
-
         </>
       )}
       <Toaster position="top-right" />
