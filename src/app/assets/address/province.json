@@ -1,0 +1,73 @@
+{
+    "Bắc": {
+      "tỉnh": [
+        "Lào Cai",
+        "Yên Bái",
+        "Tuyên Quang",
+        "Hà Giang",
+        "Lai Châu",
+        "Sơn La",
+        "Cao Bằng",
+        "Bắc Kạn",
+        "Điện Biên",
+        "Lạng Sơn",
+        "Bắc Giang",
+        "Phú Thọ",
+        "Quảng Ninh",
+        "Thái Nguyên",
+        "Bắc Ninh",
+        "Hòa Bình",
+        "Hà Nam",
+        "Hưng Yên",
+        "Hải Dương",
+        "Hải Phòng"
+      ]
+    },
+    "Trung": {
+      "tỉnh": [
+        "Thanh Hóa",
+        "Nghệ An",
+        "Hà Tĩnh",
+        "Quảng Bình",
+        "Quảng Trị",
+        "Thừa Thiên Huế",
+        "Đà Nẵng",
+        "Quảng Nam",
+        "Quảng Ngãi",
+        "Bình Định",
+        "Phú Yên",
+        "Khánh Hòa",
+        "Ninh Thuận",
+        "Bình Thuận",
+        "Kon Tum",
+        "Gia Lai",
+        "Đắk Lắk",
+        "Đắk Nông",
+        "Lâm Đồng"
+      ]
+    },
+    "Nam": {
+      "tỉnh": [
+        "Bình Phước",
+        "Tây Ninh",
+        "Bình Dương",
+        "Đồng Nai",
+        "Bà Rịa - Vũng Tàu",
+        "TP. Hồ Chí Minh",
+        "Long An",
+        "Tiền Giang",
+        "Bến Tre",
+        "Trà Vinh",
+        "Vĩnh Long",
+        "Đồng Tháp",
+        "An Giang",
+        "Kiên Giang",
+        "Cần Thơ",
+        "Hậu Giang",
+        "Sóc Trăng",
+        "Bạc Liêu",
+        "Cà Mau"
+      ]
+    }
+  }
+  

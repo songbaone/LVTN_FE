@@ -18,6 +18,7 @@ import ProductListing from "./components/customer/ProductListing";
 import ProductDetail from "./components/customer/ProductDetail";
 import ShoppingCart from "./components/customer/ShoppingCart";
 import Checkout from "./components/customer/Checkout";
+import PaymentResult from "./components/customer/PaymentResult";
 import OrderHistory from "./components/customer/OrderHistory";
 import OrderDetail from "./components/customer/OrderDetail";
 import CustomerProfile from "./components/customer/CustomerProfile";
@@ -179,6 +180,9 @@ function AppContent() {
           <Route path="inventory" element={<StaffInventory />} />
           <Route path="support" element={<StaffSupport />} />
         </Route>
+
+        {/* Standalone pages (no CustomerLayout) */}
+        <Route path="/payment-result" element={<PaymentResult />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
