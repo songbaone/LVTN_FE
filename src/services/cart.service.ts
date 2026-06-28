@@ -19,4 +19,6 @@ export const cartService = {
 
   deleteCart: (cart_item_id: number) =>
     axiosClient.delete(`cart/items/${cart_item_id}`),
+
+  clearCart: () => axiosClient.delete("/cart/clear"),
 };
