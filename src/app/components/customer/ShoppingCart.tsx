@@ -22,7 +22,6 @@ import { useCartStore } from "../../../helpers/cartStore";
 
 export default function ShoppingCart() {
   const { cart, fetchCart, updateQuantity, deleteItem } = useCartStore();
-
   const modifyCart = async (cart_item_id: number, quantity: number) => {
     try {
       await updateQuantity(cart_item_id, quantity);

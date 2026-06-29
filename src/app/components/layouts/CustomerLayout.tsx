@@ -5,6 +5,20 @@ import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { useEffect, useState } from "react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import { toast } from "sonner";
+import axiosClient from "../../../services/axiosClient";
+
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,8 +49,38 @@ interface CategoryNode {
 interface cartTotal {
   total_unique_items: number;
 }
+interface UserRole {
+  role_id: number;
+  role_name: string;
+  description: string | null;
+}
 
+interface User {
+  user_id: number;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  gender: string | null;
+  birth_date: string | null;
+  avatar: string | null;
+  status: boolean;
+  created_at: string;
+  updated_at: string;
+  role_id: number;
+  role: UserRole;
+}
 export default function CustomerLayout() {
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+  const dataUser: User | null = localStorage.getItem("User")
+    ? JSON.parse(localStorage.getItem("User")!)
+    : null;
+
+  const full_name = dataUser?.full_name ?? "";
+  const email = dataUser?.email ?? "";
+  const avatar = dataUser?.avatar ?? "";
+  const roleName = dataUser?.role.role_name ?? "";
+
   const location = useLocation();
   const [cartCount] = useState(3);
   const [wishlistCount] = useState(5);
@@ -44,7 +88,6 @@ export default function CustomerLayout() {
   const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
   const [quantityCart, setQuantityCart] = useState(0);
   const [loading, setLoading] = useState(true);
-  const API_BASE_URL = import.meta.env.VITE_API_URL;
   useEffect(() => {
     let mounted = true;
     const fetchCategories = async () => {
@@ -108,6 +151,24 @@ export default function CustomerLayout() {
     return false;
   };
 
+  const handleLogout = async () => {
+    try {
+      const result = await axiosClient.post("/auth/logout");
+
+      if (result.status === 200) {
+        localStorage.removeItem("AccessToken");
+        localStorage.removeItem("User");
+
+        toast.success("Đăng xuất thành công");
+
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Đăng xuất thất bại");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top Banner */}
@@ -169,15 +230,43 @@ export default function CustomerLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <Link to="/profile">My Profile</Link>
+                    <Link to="/profile">Xin chào, {full_name}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/orders">My Orders</Link>
+                    <Link to="/orders">Đơn hàng của tôi</Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/auth">Sign In</Link>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost">Đăng xuất</Button>
+                      </AlertDialogTrigger>
+
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Xác nhận đăng xuất
+                          </AlertDialogTitle>
+
+                          <AlertDialogDescription>
+                            Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này
+                            không?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Hủy</AlertDialogCancel>
+
+                          <AlertDialogAction
+                            onClick={handleLogout}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Đăng xuất
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
