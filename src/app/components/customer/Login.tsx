@@ -6,6 +6,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 export default function Login() {
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+
   const [lang, setLang] = useState<"en" | "vi">("vi");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,19 +46,16 @@ export default function Login() {
 
       console.log("Google ID Token:", idToken);
 
-      const apiResponse = await fetch(
-        "http://localhost:3000/api/v1/auth/google",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({
-            id_token: idToken,
-          }),
+      const apiResponse = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
         },
-      );
+        body: JSON.stringify({
+          id_token: idToken,
+        }),
+      });
 
       const result = await apiResponse.json();
       console.log(result);
@@ -108,7 +107,7 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
