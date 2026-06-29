@@ -63,7 +63,7 @@ export default function Login() {
         window.location.href = "/";
       } else {
         localStorage.setItem("AccessToken", result.data.access_token);
-        localStorage.setItem("User", result.data.user);
+        localStorage.setItem("User", JSON.stringify(result.data.user));
 
         await Swal.fire({
           icon: "success",
@@ -123,7 +123,7 @@ export default function Login() {
       if (!response.ok) {
         throw new Error(
           result?.message ||
-            (lang === "vi" ? "Đăng nhập thất bại" : "Login failed"),
+          (lang === "vi" ? "Đăng nhập thất bại" : "Login failed"),
         );
       }
 
@@ -191,18 +191,16 @@ export default function Login() {
       <div className="absolute top-4 right-4 flex gap-2">
         <button
           onClick={() => setLang("en")}
-          className={`px-3 py-2 rounded-md border ${
-            lang === "en" ? "bg-blue-600 text-white" : "bg-white"
-          }`}
+          className={`px-3 py-2 rounded-md border ${lang === "en" ? "bg-blue-600 text-white" : "bg-white"
+            }`}
         >
           English
         </button>
 
         <button
           onClick={() => setLang("vi")}
-          className={`px-3 py-2 rounded-md border ${
-            lang === "vi" ? "bg-blue-600 text-white" : "bg-white"
-          }`}
+          className={`px-3 py-2 rounded-md border ${lang === "vi" ? "bg-blue-600 text-white" : "bg-white"
+            }`}
         >
           Tiếng Việt
         </button>
