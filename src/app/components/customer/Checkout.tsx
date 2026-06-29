@@ -27,7 +27,11 @@ import {
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { addressService } from "../../../services/address.service";
-import { checkoutService, type CheckoutRequest, type CheckoutResponse } from "../../../services/checkout.service";
+import {
+  checkoutService,
+  type CheckoutRequest,
+  type CheckoutResponse,
+} from "../../../services/checkout.service";
 import { cartService } from "../../../services/cart.service";
 import { useCartStore } from "../../../helpers/cartStore";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -101,7 +105,9 @@ export default function Checkout() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [addressError, setAddressError] = useState<string | null>(null);
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null,
+  );
 
   // ── Payment ──
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -114,15 +120,11 @@ export default function Checkout() {
   const [checkingOut, setCheckingOut] = useState(false);
 
   // ── Order Preview ──
-  const {
-    preview,
-    previewLoading,
-    applyCoupon,
-    couponStatus,
-  } = useOrderPreview({
-    addressId: selectedAddressId,
-    couponCode,
-  });
+  const { preview, previewLoading, applyCoupon, couponStatus } =
+    useOrderPreview({
+      addressId: selectedAddressId,
+      couponCode,
+    });
 
   // ────────────────────────────────────────
   // Load cart & addresses
@@ -143,7 +145,9 @@ export default function Checkout() {
       // Auto-select default or first
       if (data.length > 0) {
         const defaultAddr = data.find((a) => a.is_default);
-        setSelectedAddressId(defaultAddr ? defaultAddr.address_id : data[0].address_id);
+        setSelectedAddressId(
+          defaultAddr ? defaultAddr.address_id : data[0].address_id,
+        );
       }
     } catch (err: any) {
       const msg =
@@ -170,7 +174,7 @@ export default function Checkout() {
         applyCoupon();
       }
     },
-    [applyCoupon]
+    [applyCoupon],
   );
 
   const handleCouponBlur = useCallback(() => {
@@ -183,7 +187,7 @@ export default function Checkout() {
     if (!cart?.items) return 0;
     return cart.items.reduce(
       (sum, item) => sum + item.pricing.selling_price * item.quantity,
-      0
+      0,
     );
   }, [cart]);
 
@@ -191,18 +195,22 @@ export default function Checkout() {
     if (!cart?.items) return 0;
     return cart.items.reduce(
       (sum, item) =>
-        sum +
-        (item.pricing.price - item.pricing.selling_price) * item.quantity,
-      0
+        sum + (item.pricing.price - item.pricing.selling_price) * item.quantity,
+      0,
     );
   }, [cart]);
 
   // ── Use preview values when available, fall back to local calculation ──
 
+  // const subtotal = preview?.subtotal ?? localSubtotal;
+  // const shippingFee =  preview?.shipping_fee ?? 0;
+
   const subtotal = preview?.subtotal ?? localSubtotal;
+
+  const shippingFee = subtotal > 500000 ? 0 : (preview?.shipping_fee ?? 0);
   const discountAmount = preview?.discount_amount ?? 0;
-  const shippingFee = preview?.shipping_fee ?? 0;
-  const finalAmount = preview?.final_amount ?? (localSubtotal + 0);
+
+  const finalAmount = preview?.final_amount ?? localSubtotal + 0;
   const hasCoupon = preview?.coupon != null || discountAmount > 0;
 
   // ────────────────────────────────────────
@@ -237,7 +245,8 @@ export default function Checkout() {
 
       const res = await checkoutService.checkout(payload);
       // Try res.data.data (project convention) or fall back to res.data (flat response)
-      const responseData: CheckoutResponse = (res.data?.data ?? res.data) as CheckoutResponse;
+      const responseData: CheckoutResponse = (res.data?.data ??
+        res.data) as CheckoutResponse;
 
       // ── VNPAY: redirect to payment gateway immediately ──
       // Do NOT show success toast, do NOT navigate, do NOT clear cart
@@ -360,17 +369,23 @@ export default function Checkout() {
             <div className="lg:col-span-2 space-y-6">
               {/* Address skeleton */}
               <Card>
-                <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
                 <CardContent>{renderAddressSkeleton()}</CardContent>
               </Card>
               {/* Products skeleton */}
               <Card>
-                <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
                 <CardContent>{renderProductSkeleton()}</CardContent>
               </Card>
               {/* Payment skeleton */}
               <Card>
-                <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
                 <CardContent className="space-y-3">
                   <Skeleton className="h-14 w-full rounded-xl" />
                   <Skeleton className="h-14 w-full rounded-xl" />
@@ -379,7 +394,9 @@ export default function Checkout() {
             </div>
             <div>
               <Card>
-                <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
                 <CardContent className="space-y-3">
                   <Skeleton className="h-5 w-full" />
                   <Skeleton className="h-5 w-full" />
@@ -395,7 +412,9 @@ export default function Checkout() {
             <div className="size-24 rounded-full bg-secondary flex items-center justify-center mb-6">
               <ShoppingBag className="size-12 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Giỏ hàng của bạn đang trống</h2>
+            <h2 className="text-2xl font-bold mb-2">
+              Giỏ hàng của bạn đang trống
+            </h2>
             <p className="text-muted-foreground text-center max-w-md mb-8">
               Hãy thêm sản phẩm vào giỏ hàng trước khi tiến hành thanh toán
             </p>
@@ -419,7 +438,12 @@ export default function Checkout() {
                       <MapPin className="size-5 text-primary" />
                       Địa chỉ nhận hàng
                     </CardTitle>
-                    <Button variant="link" size="sm" asChild className="text-accent">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      asChild
+                      className="text-accent"
+                    >
                       <Link to="/profile">Quản lý địa chỉ</Link>
                     </Button>
                   </div>
@@ -431,8 +455,14 @@ export default function Checkout() {
                   ) : addressError ? (
                     <div className="flex flex-col items-center justify-center py-8">
                       <AlertCircle className="size-10 text-destructive mb-3" />
-                      <p className="text-sm text-muted-foreground mb-4">{addressError}</p>
-                      <Button variant="outline" size="sm" onClick={fetchAddresses}>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {addressError}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchAddresses}
+                      >
                         <Loader2 className="size-4 mr-2" />
                         Thử lại
                       </Button>
@@ -442,7 +472,9 @@ export default function Checkout() {
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-3">
                         <MapPin className="size-8 text-muted-foreground" />
                       </div>
-                      <p className="font-semibold mb-1">Bạn chưa có địa chỉ nhận hàng</p>
+                      <p className="font-semibold mb-1">
+                        Bạn chưa có địa chỉ nhận hàng
+                      </p>
                       <p className="text-sm text-muted-foreground mb-4">
                         Vui lòng thêm địa chỉ trước khi đặt hàng
                       </p>
@@ -453,17 +485,21 @@ export default function Checkout() {
                   ) : (
                     <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                       {addresses.map((addr) => {
-                        const isSelected = selectedAddressId === addr.address_id;
+                        const isSelected =
+                          selectedAddressId === addr.address_id;
                         return (
                           <button
                             key={addr.address_id}
                             type="button"
-                            onClick={() => setSelectedAddressId(addr.address_id)}
+                            onClick={() =>
+                              setSelectedAddressId(addr.address_id)
+                            }
                             disabled={checkingOut}
-                            className={`w-full text-left rounded-xl border-2 p-4 transition-all ${isSelected
-                              ? "border-accent bg-accent/5 ring-1 ring-accent/20"
-                              : "border-border hover:border-accent/50 hover:bg-accent/5"
-                              } ${checkingOut ? "opacity-60 pointer-events-none" : "cursor-pointer"}`}
+                            className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
+                              isSelected
+                                ? "border-accent bg-accent/5 ring-1 ring-accent/20"
+                                : "border-border hover:border-accent/50 hover:bg-accent/5"
+                            } ${checkingOut ? "opacity-60 pointer-events-none" : "cursor-pointer"}`}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
@@ -484,14 +520,20 @@ export default function Checkout() {
                                     </Badge>
                                   )}
                                 </div>
-                                <p className="font-semibold text-base mt-1">{addr.recipient_name}</p>
-                                <p className="text-sm text-muted-foreground">{addr.phone}</p>
+                                <p className="font-semibold text-base mt-1">
+                                  {addr.recipient_name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {addr.phone}
+                                </p>
                                 <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
                                   <p>{addr.address_line}</p>
                                   <p>
                                     {addr.ward}, {addr.district}
                                   </p>
-                                  <p className="font-medium text-foreground/70">{addr.province}</p>
+                                  <p className="font-medium text-foreground/70">
+                                    {addr.province}
+                                  </p>
                                 </div>
                               </div>
                               {isSelected && (
@@ -526,16 +568,26 @@ export default function Checkout() {
                     <table className="w-full">
                       <thead>
                         <tr className="text-xs text-muted-foreground uppercase border-b border-border">
-                          <th className="text-left pb-3 pl-6 font-medium">Sản phẩm</th>
-                          <th className="text-center pb-3 font-medium">Đơn giá</th>
-                          <th className="text-center pb-3 font-medium">Số lượng</th>
-                          <th className="text-right pb-3 pr-6 font-medium">Thành tiền</th>
+                          <th className="text-left pb-3 pl-6 font-medium">
+                            Sản phẩm
+                          </th>
+                          <th className="text-center pb-3 font-medium">
+                            Đơn giá
+                          </th>
+                          <th className="text-center pb-3 font-medium">
+                            Số lượng
+                          </th>
+                          <th className="text-right pb-3 pr-6 font-medium">
+                            Thành tiền
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {cart.items.map((item) => {
-                          const imgSrc = item.product.thumbnail || item.product.image_url;
-                          const lineTotal = item.pricing.selling_price * item.quantity;
+                          const imgSrc =
+                            item.product.thumbnail || item.product.image_url;
+                          const lineTotal =
+                            item.pricing.selling_price * item.quantity;
                           return (
                             <tr
                               key={item.cart_item_id}
@@ -571,7 +623,9 @@ export default function Checkout() {
                                         <span>Màu: {item.variant.color}</span>
                                       )}
                                       {item.variant.material && (
-                                        <span>Chất liệu: {item.variant.material}</span>
+                                        <span>
+                                          Chất liệu: {item.variant.material}
+                                        </span>
                                       )}
                                     </div>
                                   </div>
@@ -611,8 +665,10 @@ export default function Checkout() {
                   {/* Mobile cards */}
                   <div className="md:hidden space-y-3 p-4">
                     {cart.items.map((item) => {
-                      const imgSrc = item.product.thumbnail || item.product.image_url;
-                      const lineTotal = item.pricing.selling_price * item.quantity;
+                      const imgSrc =
+                        item.product.thumbnail || item.product.image_url;
+                      const lineTotal =
+                        item.pricing.selling_price * item.quantity;
                       return (
                         <div
                           key={item.cart_item_id}
@@ -636,9 +692,15 @@ export default function Checkout() {
                               {item.product.product_name}
                             </p>
                             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-xs text-muted-foreground">
-                              {item.variant.sku && <span>SKU: {item.variant.sku}</span>}
-                              {item.variant.size && <span>Size: {item.variant.size}</span>}
-                              {item.variant.color && <span>{item.variant.color}</span>}
+                              {item.variant.sku && (
+                                <span>SKU: {item.variant.sku}</span>
+                              )}
+                              {item.variant.size && (
+                                <span>Size: {item.variant.size}</span>
+                              )}
+                              {item.variant.color && (
+                                <span>{item.variant.color}</span>
+                              )}
                             </div>
                             <div className="flex items-center justify-between mt-2">
                               <span className="text-sm font-medium text-accent">
@@ -686,7 +748,8 @@ export default function Checkout() {
                   <CouponStatusMessage status={couponStatus} />
 
                   <p className="text-xs text-muted-foreground mt-2">
-                    Mã giảm giá là tùy chọn. Nhấn Enter hoặc rời khỏi ô để áp dụng.
+                    Mã giảm giá là tùy chọn. Nhấn Enter hoặc rời khỏi ô để áp
+                    dụng.
                   </p>
                 </CardContent>
               </Card>
@@ -712,15 +775,22 @@ export default function Checkout() {
                       return (
                         <label
                           key={method.value}
-                          className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === method.value
-                            ? "border-accent bg-accent/5"
-                            : "border-border hover:border-accent/50"
-                            } ${checkingOut ? "opacity-60 pointer-events-none" : ""}`}
+                          className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                            paymentMethod === method.value
+                              ? "border-accent bg-accent/5"
+                              : "border-border hover:border-accent/50"
+                          } ${checkingOut ? "opacity-60 pointer-events-none" : ""}`}
                         >
-                          <RadioGroupItem value={method.value} id={method.value} />
+                          <RadioGroupItem
+                            value={method.value}
+                            id={method.value}
+                          />
                           <Icon
-                            className={`size-5 ${paymentMethod === method.value ? "text-accent" : "text-muted-foreground"
-                              }`}
+                            className={`size-5 ${
+                              paymentMethod === method.value
+                                ? "text-accent"
+                                : "text-muted-foreground"
+                            }`}
                           />
                           <Label
                             htmlFor={method.value}
@@ -751,7 +821,9 @@ export default function Checkout() {
                     {/* Subtotal */}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tạm tính</span>
-                      <span className="font-medium">{formatPrice(subtotal)}</span>
+                      <span className="font-medium">
+                        {formatPrice(subtotal)}
+                      </span>
                     </div>
 
                     {/* Discount – only when coupon is applied or discount_amount > 0 */}
@@ -766,7 +838,9 @@ export default function Checkout() {
 
                     {/* Shipping */}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Phí vận chuyển</span>
+                      <span className="text-muted-foreground">
+                        Phí vận chuyển
+                      </span>
                       <span className="font-medium">
                         {shippingFee === 0 ? (
                           <span className="text-success">Miễn phí</span>
@@ -797,7 +871,9 @@ export default function Checkout() {
                     {/* Grand total */}
                     <div className="flex justify-between items-center">
                       <div className="flex flex-col">
-                        <span className="font-bold text-base">Tổng thanh toán</span>
+                        <span className="font-bold text-base">
+                          Tổng thanh toán
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           (Đã gồm VAT)
                         </span>
