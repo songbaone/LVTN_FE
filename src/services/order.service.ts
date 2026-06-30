@@ -13,7 +13,7 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
-  image_url?: string;
+  thumbnail?: string;
 }
 
 export interface OrderAddress {
@@ -23,6 +23,7 @@ export interface OrderAddress {
   district: string;
   ward: string;
   address_line: string;
+  detail_address: string;
 }
 
 export interface OrderCoupon {
@@ -34,10 +35,11 @@ export interface OrderCoupon {
 export interface Order {
   order_id: number;
   order_code: string;
+  status: string;
   order_status: string;
   payment_method: string;
   payment_status: string;
-  total_amount: number
+  total_amount: number;
   discount_amount: number;
   shipping_fee: number;
   final_amount: number;

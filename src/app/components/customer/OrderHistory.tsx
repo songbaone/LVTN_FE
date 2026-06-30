@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
-import { orderService, type Order, type PaginationMeta } from "../../../services/order.service";
+import {
+  orderService,
+  type Order,
+  type PaginationMeta,
+} from "../../../services/order.service";
 import { formatDateTime } from "../../../helpers/format";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -49,27 +53,59 @@ import {
 
 // ── Status Constants ──
 // These must match the backend ORDER_STATUS_VALUES exactly
-const ORDER_STATUSES = ["Pending", "Confirmed", "Shipping", "Delivered", "Cancelled"] as const;
+const ORDER_STATUSES = [
+  "Pending",
+  "Confirmed",
+  "Shipping",
+  "Delivered",
+  "Cancelled",
+] as const;
 type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 // ── Status Badge Config ──
 // Single source of truth for status badge mapping
-const STATUS_BADGE_CONFIG: Record<string, { label: string; className: string }> = {
-  Pending: { label: "Chờ xác nhận", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" },
-  Confirmed: { label: "Đã xác nhận", className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
-  Shipping: { label: "Đang vận chuyển", className: "bg-purple-100 text-purple-800 hover:bg-purple-100" },
-  Delivered: { label: "Đã giao hàng", className: "bg-green-100 text-green-800 hover:bg-green-100" },
-  Cancelled: { label: "Đã hủy", className: "bg-red-100 text-red-800 hover:bg-red-100" },
+const STATUS_BADGE_CONFIG: Record<
+  string,
+  { label: string; className: string }
+> = {
+  Pending: {
+    label: "Chờ xác nhận",
+    className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+  },
+  Confirmed: {
+    label: "Đã xác nhận",
+    className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  },
+  Shipping: {
+    label: "Đang vận chuyển",
+    className: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  },
+  Delivered: {
+    label: "Đã giao hàng",
+    className: "bg-green-100 text-green-800 hover:bg-green-100",
+  },
+  Cancelled: {
+    label: "Đã hủy",
+    className: "bg-red-100 text-red-800 hover:bg-red-100",
+  },
 };
 
 function getBadgeProps(status: string) {
-  return STATUS_BADGE_CONFIG[status] ?? { label: status, className: "bg-gray-100 text-gray-800 hover:bg-gray-100" };
+  return (
+    STATUS_BADGE_CONFIG[status] ?? {
+      label: status,
+      className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+    }
+  );
 }
 
 // ── Status Tab Config ──
 const STATUS_TABS = [
   { key: "all", label: "Tất cả" },
-  ...ORDER_STATUSES.map((s) => ({ key: s, label: STATUS_BADGE_CONFIG[s].label })),
+  ...ORDER_STATUSES.map((s) => ({
+    key: s,
+    label: STATUS_BADGE_CONFIG[s].label,
+  })),
 ] as const;
 
 // ── Stats Card Config ──
@@ -146,7 +182,6 @@ export default function OrderHistory() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // ── Fetch orders ──
-
   const fetchOrders = useCallback(async (page: number) => {
     setLoading(true);
     setError(null);
@@ -195,35 +230,44 @@ export default function OrderHistory() {
   };
 
   // ── Filtered & searched orders ──
-
   const filteredOrders = useMemo(() => {
     let result = orders;
 
-    // Search filter - by order code, case insensitive
+    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       result = result.filter((o) => o.order_code.toLowerCase().includes(q));
     }
 
-    // Status tab filter
+    // Status filter
     if (activeTab !== "all") {
-      result = result.filter((o) => o.order_status === activeTab);
+      result = result.filter((o) => o.status === activeTab);
     }
 
-    // Sort: newest first (created_at DESC)
+    // Newest first
     return [...result].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
   }, [orders, activeTab, searchQuery]);
 
   // ── Statistics ──
-
   const statistics = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const status of ORDER_STATUSES) {
-      counts[status] = orders.filter((o) => o.order_status === status).length;
-    }
-    return counts;
+    const stats = {
+      Pending: 0,
+      Confirmed: 0,
+      Shipping: 0,
+      Delivered: 0,
+      Cancelled: 0,
+    };
+
+    orders.forEach((order) => {
+      if (stats.hasOwnProperty(order.status)) {
+        stats[order.status as keyof typeof stats]++;
+      }
+    });
+
+    return stats;
   }, [orders]);
 
   // ── Pagination helper ──
@@ -236,7 +280,11 @@ export default function OrderHistory() {
     const range: (number | "ellipsis")[] = [];
 
     for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
         range.push(i);
       } else if (range[range.length - 1] !== "ellipsis") {
         range.push("ellipsis");
@@ -318,7 +366,9 @@ export default function OrderHistory() {
             <AlertCircle className="size-10 text-destructive" />
           </div>
           <h3 className="text-lg font-semibold mb-2">Không thể tải đơn hàng</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{error}</p>
+          <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
+            {error}
+          </p>
           <Button variant="outline" onClick={() => fetchOrders(currentPage)}>
             <Loader2 className="size-4 mr-2" />
             Thử lại
@@ -337,7 +387,9 @@ export default function OrderHistory() {
           <div className="size-28 rounded-full bg-secondary flex items-center justify-center mb-6">
             <PackageOpen className="size-14 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Bạn chưa có đơn hàng nào</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            Bạn chưa có đơn hàng nào
+          </h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
             Hãy khám phá các sản phẩm dành cho bé và đặt hàng ngay hôm nay!
           </p>
@@ -362,8 +414,12 @@ export default function OrderHistory() {
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* ─────── Page Header ─────── */}
         <div className="mb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Đơn hàng của tôi</h1>
-          <p className="text-muted-foreground mt-1">Quản lý và theo dõi các đơn hàng của bạn</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            Đơn hàng của tôi
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Quản lý và theo dõi các đơn hàng của bạn
+          </p>
         </div>
 
         {/* ─────── Statistics Cards ─────── */}
@@ -371,16 +427,28 @@ export default function OrderHistory() {
           {STATS_CARDS.map((card) => {
             const Icon = card.icon;
             const count = statistics[card.key] ?? 0;
+
             return (
-              <Card key={card.key} className="border-border/60 shadow-sm overflow-hidden">
-                <CardContent className={`p-4 sm:p-5 bg-gradient-to-br ${card.gradient}`}>
+              <Card
+                key={card.key}
+                className="border-border/60 shadow-sm overflow-hidden"
+              >
+                <CardContent
+                  className={`p-4 sm:p-5 bg-gradient-to-br ${card.gradient}`}
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`size-10 rounded-lg ${card.iconBg} flex items-center justify-center shrink-0`}>
+                    <div
+                      className={`size-10 rounded-lg ${card.iconBg} flex items-center justify-center shrink-0`}
+                    >
                       <Icon className={`size-5 ${card.iconColor}`} />
                     </div>
                     <div className="min-w-0">
-                      <p className={`text-2xl font-bold ${card.textColor}`}>{count}</p>
-                      <p className={`text-xs ${card.labelColor} truncate`}>{card.label}</p>
+                      <p className={`text-2xl font-bold ${card.textColor}`}>
+                        {count}
+                      </p>
+                      <p className={`text-xs ${card.labelColor} truncate`}>
+                        {card.label}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -405,11 +473,11 @@ export default function OrderHistory() {
           <div className="flex gap-2 min-w-max">
             {STATUS_TABS.map((tab) => {
               const isActive = activeTab === tab.key;
+
               const count =
                 tab.key === "all"
                   ? orders.length
-                  : orders.filter((o) => o.order_status === tab.key).length;
-
+                  : orders.filter((o) => o.status === tab.key).length;
               return (
                 <button
                   key={tab.key}
@@ -442,7 +510,9 @@ export default function OrderHistory() {
             <div className="size-20 rounded-full bg-secondary flex items-center justify-center mb-4">
               <PackageOpen className="size-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">Không tìm thấy đơn hàng</h3>
+            <h3 className="text-lg font-semibold mb-1">
+              Không tìm thấy đơn hàng
+            </h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
               {searchQuery
                 ? `Không có đơn hàng nào khớp với "${searchQuery}"`
@@ -475,9 +545,9 @@ export default function OrderHistory() {
         {filteredOrders.length > 0 && (
           <div className="space-y-4">
             {filteredOrders.map((order) => {
-              const status = getBadgeProps(order.order_status);
-              const canCancel = order.order_status === "Pending";
-              const isDelivered = order.order_status === "Delivered";
+              const status = getBadgeProps(order.status);
+              const canCancel = order.status === "Pending";
+              const isDelivered = order.status === "Delivered";
 
               return (
                 <Card
@@ -487,8 +557,12 @@ export default function OrderHistory() {
                   {/* Order Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 sm:px-6 py-4 bg-secondary/30 border-b border-border/40">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <p className="font-semibold text-foreground">{order.order_code}</p>
-                      <span className="text-xs text-muted-foreground hidden sm:inline">•</span>
+                      <p className="font-semibold text-foreground">
+                        {order.order_code}
+                      </p>
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                        •
+                      </span>
                       <p className="text-sm text-muted-foreground">
                         {formatDateTime(order.created_at)}
                       </p>
@@ -526,7 +600,9 @@ export default function OrderHistory() {
                         <span>{formatPrice(order.total_amount)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Phí vận chuyển</span>
+                        <span className="text-muted-foreground">
+                          Phí vận chuyển
+                        </span>
                         <span>
                           {order.shipping_fee === 0 ? (
                             <span className="text-green-600">Miễn phí</span>
@@ -537,7 +613,9 @@ export default function OrderHistory() {
                       </div>
                       {order.discount_amount > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Giảm giá</span>
+                          <span className="text-muted-foreground">
+                            Giảm giá
+                          </span>
                           <span className="text-green-600">
                             -{formatPrice(order.discount_amount)}
                           </span>
@@ -575,11 +653,15 @@ export default function OrderHistory() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Xác nhận hủy đơn hàng
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
                                 Bạn có chắc chắn muốn hủy đơn hàng{" "}
-                                <span className="font-semibold">{order.order_code}</span>? Hành
-                                động này không thể hoàn tác.
+                                <span className="font-semibold">
+                                  {order.order_code}
+                                </span>
+                                ? Hành động này không thể hoàn tác.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -587,7 +669,9 @@ export default function OrderHistory() {
                               <AlertDialogAction
                                 className="bg-destructive hover:bg-destructive/90"
                                 disabled={cancellingId === order.order_id}
-                                onClick={() => handleCancelOrder(order.order_id)}
+                                onClick={() =>
+                                  handleCancelOrder(order.order_id)
+                                }
                               >
                                 {cancellingId === order.order_id && (
                                   <Loader2 className="size-4 mr-2 animate-spin" />
@@ -629,7 +713,9 @@ export default function OrderHistory() {
                       e.preventDefault();
                       if (currentPage > 1) setCurrentPage(currentPage - 1);
                     }}
-                    className={currentPage <= 1 ? "pointer-events-none opacity-40" : ""}
+                    className={
+                      currentPage <= 1 ? "pointer-events-none opacity-40" : ""
+                    }
                   />
                 </PaginationItem>
 
@@ -659,10 +745,13 @@ export default function OrderHistory() {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (currentPage < pagination.last_page) setCurrentPage(currentPage + 1);
+                      if (currentPage < pagination.last_page)
+                        setCurrentPage(currentPage + 1);
                     }}
                     className={
-                      currentPage >= pagination.last_page ? "pointer-events-none opacity-40" : ""
+                      currentPage >= pagination.last_page
+                        ? "pointer-events-none opacity-40"
+                        : ""
                     }
                   />
                 </PaginationItem>

@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
-import { orderService, type Order, type OrderAddress, type OrderCoupon, type OrderItem } from "../../../services/order.service";
+import {
+  orderService,
+  type Order,
+  type OrderAddress,
+  type OrderCoupon,
+  type OrderItem,
+} from "../../../services/order.service";
 import { formatDateTime } from "../../../helpers/format";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -38,15 +44,35 @@ import {
 // ── Status Badge Colors ──
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  Pending: { label: "Chờ xác nhận", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" },
-  Confirmed: { label: "Đã xác nhận", className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
-  Shipping: { label: "Đang vận chuyển", className: "bg-purple-100 text-purple-800 hover:bg-purple-100" },
-  Delivered: { label: "Đã giao hàng", className: "bg-green-100 text-green-800 hover:bg-green-100" },
-  Cancelled: { label: "Đã hủy", className: "bg-red-100 text-red-800 hover:bg-red-100" },
+  Pending: {
+    label: "Chờ xác nhận",
+    className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+  },
+  Confirmed: {
+    label: "Đã xác nhận",
+    className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  },
+  Shipping: {
+    label: "Đang vận chuyển",
+    className: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  },
+  Delivered: {
+    label: "Đã giao hàng",
+    className: "bg-green-100 text-green-800 hover:bg-green-100",
+  },
+  Cancelled: {
+    label: "Đã hủy",
+    className: "bg-red-100 text-red-800 hover:bg-red-100",
+  },
 };
 
 function getBadgeProps(status: string) {
-  return statusConfig[status] ?? { label: status, className: "bg-gray-100 text-gray-800 hover:bg-gray-100" };
+  return (
+    statusConfig[status] ?? {
+      label: status,
+      className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+    }
+  );
 }
 
 // ── Format Price ──
@@ -71,15 +97,29 @@ function getPaymentMethodLabel(method: string): string {
 
 // ── Payment status mapping ──
 
-const paymentStatusConfig: Record<string, { label: string; className: string }> = {
-  unpaid: { label: "Chưa thanh toán", className: "bg-yellow-100 text-yellow-800" },
+const paymentStatusConfig: Record<
+  string,
+  { label: string; className: string }
+> = {
+  unpaid: {
+    label: "Chưa thanh toán",
+    className: "bg-yellow-100 text-yellow-800",
+  },
   paid: { label: "Đã thanh toán", className: "bg-green-100 text-green-800" },
   refunded: { label: "Đã hoàn tiền", className: "bg-blue-100 text-blue-800" },
-  failed: { label: "Thanh toán thất bại", className: "bg-red-100 text-red-800" },
+  failed: {
+    label: "Thanh toán thất bại",
+    className: "bg-red-100 text-red-800",
+  },
 };
 
 function getPaymentStatusProps(status: string) {
-  return paymentStatusConfig[status.toLowerCase()] ?? { label: status, className: "bg-gray-100 text-gray-800" };
+  return (
+    paymentStatusConfig[status.toLowerCase()] ?? {
+      label: status,
+      className: "bg-gray-100 text-gray-800",
+    }
+  );
 }
 
 // ── Component ──
@@ -101,7 +141,7 @@ export default function OrderDetail() {
     setError(null);
     try {
       const res = await orderService.getOrderById(id);
-      console.log("data from res: ", res.data)
+      console.log("data from res: ", res.data);
       const data = res.data;
       if (data.success && data.data) {
         setOrder(data.data.order);
@@ -152,7 +192,9 @@ export default function OrderDetail() {
         <Skeleton className="h-5 w-32 mb-6" />
         <div className="space-y-6">
           <Card>
-            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
             <CardContent className="space-y-3">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -160,14 +202,18 @@ export default function OrderDetail() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
             <CardContent className="space-y-3">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
             <CardContent className="space-y-4">
               {[1, 2].map((i) => (
                 <div key={i} className="flex gap-4">
@@ -203,7 +249,9 @@ export default function OrderDetail() {
             <AlertCircle className="size-10 text-destructive" />
           </div>
           <h3 className="text-lg font-semibold mb-2">Không thể tải đơn hàng</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{error}</p>
+          <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
+            {error}
+          </p>
           <Button variant="outline" onClick={fetchOrder}>
             <Loader2 className="size-4 mr-2" />
             Thử lại
@@ -254,8 +302,8 @@ export default function OrderDetail() {
                 <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
                 <AlertDialogDescription>
                   Bạn có chắc chắn muốn hủy đơn hàng{" "}
-                  <span className="font-semibold">{order.order_code}</span>? Hành động này
-                  không thể hoàn tác.
+                  <span className="font-semibold">{order.order_code}</span>?
+                  Hành động này không thể hoàn tác.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -265,7 +313,9 @@ export default function OrderDetail() {
                   disabled={cancelling}
                   onClick={handleCancelOrder}
                 >
-                  {cancelling && <Loader2 className="size-4 mr-2 animate-spin" />}
+                  {cancelling && (
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                  )}
                   Xác nhận hủy
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -294,7 +344,9 @@ export default function OrderDetail() {
               <Badge className={status.className}>{status.label}</Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Phương thức thanh toán</p>
+              <p className="text-sm text-muted-foreground">
+                Phương thức thanh toán
+              </p>
               <p className="font-semibold flex items-center gap-1.5">
                 {order.payment_method?.toLowerCase() === "cod" ? (
                   <Banknote className="size-4 text-muted-foreground" />
@@ -305,12 +357,18 @@ export default function OrderDetail() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Trạng thái thanh toán</p>
-              <Badge className={paymentStatus.className}>{paymentStatus.label}</Badge>
+              <p className="text-sm text-muted-foreground">
+                Trạng thái thanh toán
+              </p>
+              <Badge className={paymentStatus.className}>
+                {paymentStatus.label}
+              </Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Ngày đặt</p>
-              <p className="font-semibold">{formatDateTime(order.created_at)}</p>
+              <p className="font-semibold">
+                {formatDateTime(order.created_at)}
+              </p>
             </div>
             {order.note && (
               <div className="sm:col-span-2 lg:col-span-3">
@@ -328,24 +386,29 @@ export default function OrderDetail() {
       {/* ───────── SECTION 2: Shipping Address ───────── */}
       {address && (
         <Card className="border-border/60 shadow-sm mb-6">
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-1">
             <CardTitle className="text-lg flex items-center gap-2">
               <MapPin className="size-5 text-primary" />
               Địa chỉ giao hàng
             </CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <MapPin className="size-5 text-primary" />
               </div>
               <div className="space-y-1 text-sm">
-                <p className="font-semibold text-base">{address.recipient_name}</p>
+                <p className="font-semibold text-base">
+                  {address.recipient_name}
+                </p>
                 <p className="text-muted-foreground">{address.phone}</p>
                 <p>{address.address_line}</p>
                 <p className="text-muted-foreground">
                   {address.ward}, {address.district}, {address.province}
+                </p>
+                <p className="text-muted-foreground">
+                  Địa chỉ chi tiết: {address.detail_address}
                 </p>
               </div>
             </div>
@@ -371,9 +434,9 @@ export default function OrderDetail() {
               >
                 {/* Product Image */}
                 <div className="size-16 sm:size-20 rounded-lg overflow-hidden bg-white border border-border shrink-0 flex items-center justify-center">
-                  {item.image_url ? (
+                  {item.thumbnail ? (
                     <ImageWithFallback
-                      src={item.image_url}
+                      src={`http://localhost:3000${item.thumbnail}`}
                       alt={item.product_name}
                       className="size-full object-cover"
                     />
@@ -426,7 +489,9 @@ export default function OrderDetail() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tạm tính</span>
-              <span className="font-medium">{formatPrice(order.total_amount)}</span>
+              <span className="font-medium">
+                {formatPrice(order.total_amount)}
+              </span>
             </div>
 
             {order.discount_amount > 0 && (
@@ -478,7 +543,9 @@ export default function OrderDetail() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-base">{coupon.coupon_code}</p>
-                <p className="text-sm text-muted-foreground">{coupon.coupon_name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {coupon.coupon_name}
+                </p>
                 <p className="text-sm font-semibold text-green-600 mt-1">
                   Giảm {formatPrice(coupon.discount_value)}
                 </p>
