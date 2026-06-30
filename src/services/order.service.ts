@@ -81,6 +81,9 @@ export const orderService = {
   getOrders: (page = 1) =>
     axiosClient.get<OrdersListResponse>(`/orders?page=${page}`),
 
+  getAdminOrders: (page = 1) =>
+    axiosClient.get<OrdersListResponse>(`/admin/orders?page=${page}`),
+
   getOrderById: (orderId: number | string) =>
     axiosClient.get<OrderDetailResponse>(`/orders/${orderId}`),
 
