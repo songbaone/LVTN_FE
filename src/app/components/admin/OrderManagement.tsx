@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useSearchParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -44,8 +45,6 @@ import {
   Eye,
   Edit2,
   Calendar,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   CheckSquare,
   Square,
   RefreshCcw,
@@ -68,32 +67,136 @@ import {
   PaginationNext,
   PaginationEllipsis,
 } from "../ui/pagination";
+import * as XLSX from "xlsx";
+
+// ── Date filter helpers ──
+
+function getDateRange(dateFilter: string): { start: Date; end: Date } | null {
+  const now = new Date();
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  switch (dateFilter) {
+    case "today": {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      return { start, end };
+    }
+    case "yesterday": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 1);
+      start.setHours(0, 0, 0, 0);
+      const yEnd = new Date(now);
+      yEnd.setDate(yEnd.getDate() - 1);
+      yEnd.setHours(23, 59, 59, 999);
+      return { start, end: yEnd };
+    }
+    case "week": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 7);
+      start.setHours(0, 0, 0, 0);
+      return { start, end };
+    }
+    case "month": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      return { start, end };
+    }
+    case "this-month": {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      start.setHours(0, 0, 0, 0);
+      return { start, end };
+    }
+    case "last-month": {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      start.setHours(0, 0, 0, 0);
+      const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      lmEnd.setHours(23, 59, 59, 999);
+      return { start, end: lmEnd };
+    }
+    default:
+      return null;
+  }
+}
+
+function filterByDate(order: Order, dateFilter: string): boolean {
+  if (dateFilter === "all") return true;
+  const range = getDateRange(dateFilter);
+  if (!range) return true;
+  const orderDate = new Date(order.created_at);
+  return orderDate >= range.start && orderDate <= range.end;
+}
+
+function sortOrders(orders: Order[], sortBy: string): Order[] {
+  const sorted = [...orders];
+  switch (sortBy) {
+    case "date-asc":
+      return sorted.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      );
+    case "total-desc":
+      return sorted.sort((a, b) => b.final_amount - a.final_amount);
+    case "total-asc":
+      return sorted.sort((a, b) => a.final_amount - b.final_amount);
+    case "date-desc":
+    default:
+      return sorted.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+  }
+}
 
 export default function OrderManagement() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // ── Loading & Error ──
   const [loading, setLoading] = useState(true);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // ── Pagination ──
   const [pagination, setPagination] = useState<AdminPagination | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const p = searchParams.get("page");
+    return p ? parseInt(p, 10) : 1;
+  });
   const limit = 10;
 
-  // ── Filters ──
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [paymentFilter, setPaymentFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("date-desc");
+  // ── Filters (initialized from URL) ──
+  const [searchQuery, setSearchQuery] = useState(
+    () => searchParams.get("search") || "",
+  );
+  const [debouncedSearch, setDebouncedSearch] = useState(
+    () => searchParams.get("search") || "",
+  );
+  const [statusFilter, setStatusFilter] = useState(
+    () => searchParams.get("status") || "all",
+  );
+  const [paymentFilter, setPaymentFilter] = useState(
+    () => searchParams.get("payment") || "all",
+  );
+  const [dateFilter, setDateFilter] = useState(
+    () => searchParams.get("date") || "all",
+  );
+  const [sortBy, setSortBy] = useState(
+    () => searchParams.get("sort") || "date-desc",
+  );
+
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialMount = useRef(true);
 
   // ── Selection ──
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
 
   // ── Data ──
   const [orders, setOrders] = useState<Order[]>([]);
+  const [rawOrders, setRawOrders] = useState<Order[]>([]);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
 
   // ── Order Detail Dialog ──
@@ -101,7 +204,6 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailData, setDetailData] = useState<{
     address?: {
-
       province: string;
       district: string;
       ward: string;
@@ -137,18 +239,44 @@ export default function OrderManagement() {
   );
   const [newStatus, setNewStatus] = useState("");
 
+  // ── Debounce search ──
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // ── Sync filters to URL ──
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (page > 1) params.page = String(page);
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (statusFilter !== "all") params.status = statusFilter;
+    if (paymentFilter !== "all") params.payment = paymentFilter;
+    if (dateFilter !== "all") params.date = dateFilter;
+    if (sortBy !== "date-desc") params.sort = sortBy;
+    setSearchParams(params, { replace: true });
+  }, [page, debouncedSearch, statusFilter, paymentFilter, dateFilter, sortBy, setSearchParams]);
+
   // ── Build query params from filters ──
   const buildQueryParams = useCallback(
     (pageNum: number) => {
       const params: Record<string, string | number> = { page: pageNum, limit };
-      if (searchQuery.trim()) params.search = searchQuery.trim();
-      if (statusFilter !== "all") params.status = statusFilter;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (statusFilter !== "all") params.order_status = statusFilter;
       if (paymentFilter !== "all") params.payment_method = paymentFilter;
-      if (dateFilter !== "all") params.date = dateFilter;
       if (sortBy !== "date-desc") params.sort = sortBy;
       return params;
     },
-    [searchQuery, statusFilter, paymentFilter, dateFilter, sortBy],
+    [debouncedSearch, statusFilter, paymentFilter, sortBy],
   );
 
   // ── Fetch Dashboard (only on mount) ──
@@ -160,13 +288,13 @@ export default function OrderManagement() {
         setDashboard(res.data.data);
       }
     } catch (err: any) {
-      // Silent fail - dashboard is non-critical
+      // Silent fail
     } finally {
       setDashboardLoading(false);
     }
   }, []);
 
-  // ── Fetch Orders (only table loading; dashboard stays unchanged) ──
+  // ── Fetch Orders ──
   const fetchOrders = useCallback(
     async (pageNum: number, showLoader = true) => {
       if (showLoader) setLoading(true);
@@ -176,10 +304,27 @@ export default function OrderManagement() {
         const res = await adminOrderService.getOrders(params);
         const data = res.data;
         if (data.success && data.data) {
-          setOrders(data.data.orders);
+          // Store all orders for client-side filtering
+          // If date filter is active, we need all orders across pages for accurate date filter
+          // But since backend paginates, we apply date filter client-side on the returned page
+          let filteredOrders = data.data.orders;
+
+          // Client-side date filtering
+          if (dateFilter !== "all") {
+            filteredOrders = filteredOrders.filter((o) =>
+              filterByDate(o, dateFilter),
+            );
+          }
+
+          // Client-side sorting as fallback
+          filteredOrders = sortOrders(filteredOrders, sortBy);
+
+          setOrders(filteredOrders);
+          setRawOrders(data.data.orders);
           setPagination(data.data.pagination);
         } else {
           setOrders([]);
+          setRawOrders([]);
           setPagination(null);
         }
       } catch (err: any) {
@@ -193,7 +338,7 @@ export default function OrderManagement() {
         if (showLoader) setLoading(false);
       }
     },
-    [buildQueryParams],
+    [buildQueryParams, dateFilter, sortBy],
   );
 
   // ── Fetch Detail ──
@@ -224,6 +369,7 @@ export default function OrderManagement() {
     fetchDashboard();
   }, [fetchDashboard]);
 
+  // ── Fetch orders when page or filters change ──
   useEffect(() => {
     fetchOrders(page);
   }, [page, fetchOrders]);
@@ -231,7 +377,12 @@ export default function OrderManagement() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, statusFilter, paymentFilter, dateFilter, sortBy]);
+  }, [debouncedSearch, statusFilter, paymentFilter, dateFilter, sortBy]);
+
+  // Mark initial mount complete
+  useEffect(() => {
+    isInitialMount.current = false;
+  }, []);
 
   // ── Status Colors ──
   const statusColors: Record<string, string> = {
@@ -248,7 +399,7 @@ export default function OrderManagement() {
     refunded: "bg-info",
   };
 
-  // ── Status display labels (translate backend values to Vietnamese) ──
+  // ── Status display labels ──
   const statusLabels: Record<string, string> = {
     Pending: "Chờ xác nhận",
     Confirmed: "Đã xác nhận",
@@ -269,9 +420,10 @@ export default function OrderManagement() {
   const paymentMethodLabels: Record<string, string> = {
     cod: "COD",
     vnpay: "VNPay",
-    momo: "MoMo",
-    "bank transfer": "Chuyển khoản ngân hàng",
   };
+
+  // ── Current orders for display (already filtered/sorted) ──
+  const displayOrders = useMemo(() => orders, [orders]);
 
   // ── Handle View Detail ──
   const handleViewDetail = async (order: Order) => {
@@ -281,7 +433,7 @@ export default function OrderManagement() {
     await fetchOrderDetail(order.order_id);
   };
 
-  // ── Handle Open Status Update ──
+  // ── Handle Print ──
   const handlePrintInvoice = () => {
     if (!selectedOrder || !detailData) return;
     window.print();
@@ -295,7 +447,11 @@ export default function OrderManagement() {
 
   // ── Handle Status Update ──
   const handleUpdateStatus = async () => {
-    if (!statusUpdateTarget || !newStatus || newStatus === statusUpdateTarget.status) {
+    if (
+      !statusUpdateTarget ||
+      !newStatus ||
+      newStatus === statusUpdateTarget.status
+    ) {
       return;
     }
     setUpdatingStatus(true);
@@ -306,7 +462,6 @@ export default function OrderManagement() {
       );
       toast.success("Cập nhật trạng thái đơn hàng thành công");
       setStatusDialogOpen(false);
-      // Refresh only orders table (keep dashboard unchanged), keep current page
       await fetchOrders(page, false);
     } catch (err: any) {
       const msg =
@@ -335,13 +490,89 @@ export default function OrderManagement() {
     }
   };
 
-  const handleExport = () => {
+  // ── Handle Export Excel ──
+  const handleExport = async () => {
     const ordersToExport =
       selectedOrders.length > 0
-        ? orders.filter((o) => selectedOrders.includes(o.order_id))
-        : orders;
+        ? displayOrders.filter((o) => selectedOrders.includes(o.order_id))
+        : displayOrders;
 
-    toast.success(`Đang xuất ${ordersToExport.length} đơn hàng...`);
+    if (ordersToExport.length === 0) {
+      toast.error("Không có đơn hàng nào để xuất");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Build worksheet data
+      const wsData = ordersToExport.map((order, index) => ({
+        STT: index + 1,
+        "Mã đơn hàng": order.order_code,
+        "Ngày tạo": new Date(order.created_at).toLocaleString("vi-VN"),
+        "Người nhận": order.customer_name || "--",
+        "Số điện thoại": "",
+        "Trạng thái":
+          statusLabels[order.order_status] || order.order_status,
+        "Phương thức thanh toán":
+          paymentMethodLabels[order.payment_method?.toLowerCase()] ||
+          order.payment_method ||
+          "--",
+        "Trạng thái thanh toán":
+          paymentStatusLabels[order.payment_status] ||
+          order.payment_status ||
+          "--",
+        "Tạm tính": order.total_amount,
+        "Phí vận chuyển": order.shipping_fee,
+        "Giảm giá": order.discount_amount || 0,
+        "Thành tiền": order.final_amount,
+      }));
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(wsData);
+
+      // Column widths
+      const colWidths = [
+        { wch: 5 },  // STT
+        { wch: 22 }, // Mã đơn hàng
+        { wch: 18 }, // Ngày tạo
+        { wch: 25 }, // Người nhận
+        { wch: 15 }, // Số điện thoại
+        { wch: 16 }, // Trạng thái
+        { wch: 22 }, // Phương thức thanh toán
+        { wch: 20 }, // Trạng thái thanh toán
+        { wch: 14 }, // Tạm tính
+        { wch: 14 }, // Phí vận chuyển
+        { wch: 12 }, // Giảm giá
+        { wch: 14 }, // Thành tiền
+      ];
+      ws["!cols"] = colWidths;
+
+      // Header styling range
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1:L1");
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (!ws[addr]) continue;
+        ws[addr].s = {
+          font: { bold: true, sz: 11 },
+          alignment: { horizontal: "center" },
+          fill: { fgColor: { rgb: "D9E2F3" } },
+        };
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, "Đơn hàng");
+
+      // Generate filename
+      const today = new Date().toISOString().split("T")[0];
+      const filename = `orders-${today}.xlsx`;
+
+      XLSX.writeFile(wb, filename);
+      toast.success(`Xuất ${ordersToExport.length} đơn hàng thành công!`);
+    } catch (err: any) {
+      toast.error("Xuất Excel thất bại");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleBulkStatusUpdate = () => {
@@ -638,10 +869,8 @@ export default function OrderManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả phương thức</SelectItem>
-                  <SelectItem value="vnpay">Thanh toán qua VNPay</SelectItem>
-                  <SelectItem value="momo">Thanh toán qua MoMo</SelectItem>
-                  <SelectItem value="cod">Thanh toán khi nhận hàng (COD)</SelectItem>
-                  <SelectItem value="bank transfer">Chuyển khoản ngân hàng</SelectItem>
+                  <SelectItem value="COD">Thanh toán khi nhận hàng (COD)</SelectItem>
+                  <SelectItem value="VNPAY">Thanh toán qua VNPay</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -653,8 +882,11 @@ export default function OrderManagement() {
                 <SelectContent>
                   <SelectItem value="all">Tất cả thời gian</SelectItem>
                   <SelectItem value="today">Hôm nay</SelectItem>
+                  <SelectItem value="yesterday">Hôm qua</SelectItem>
                   <SelectItem value="week">7 ngày qua</SelectItem>
                   <SelectItem value="month">30 ngày qua</SelectItem>
+                  <SelectItem value="this-month">Tháng này</SelectItem>
+                  <SelectItem value="last-month">Tháng trước</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -676,7 +908,8 @@ export default function OrderManagement() {
 
                 <span className="text-sm text-muted-foreground">
                   {pagination?.total ?? 0} đơn hàng
-                  {pagination && ` (trang ${pagination.page}/${pagination.totalPages})`}
+                  {pagination &&
+                    ` (trang ${pagination.page}/${pagination.totalPages})`}
                 </span>
               </div>
 
@@ -691,9 +924,18 @@ export default function OrderManagement() {
                     Cập nhật trạng thái ({selectedOrders.length})
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                  <Download className="size-4 mr-2" />
-                  Xuất Excel
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={exporting}
+                >
+                  {exporting ? (
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="size-4 mr-2" />
+                  )}
+                  {exporting ? "Đang xuất..." : "Xuất Excel"}
                 </Button>
               </div>
             </div>
@@ -709,7 +951,8 @@ export default function OrderManagement() {
               <TableRow>
                 <TableHead className="w-12">
                   <button onClick={handleSelectAll}>
-                    {selectedOrders.length === orders.length && orders.length > 0 ? (
+                    {selectedOrders.length === orders.length &&
+                      orders.length > 0 ? (
                       <CheckSquare className="size-4 text-accent" />
                     ) : (
                       <Square className="size-4" />
@@ -718,8 +961,12 @@ export default function OrderManagement() {
                 </TableHead>
                 <TableHead>Mã đơn hàng</TableHead>
                 <TableHead>Khách hàng</TableHead>
-                <TableHead className="text-center">Phương thức thanh toán</TableHead>
-                <TableHead className="text-center">Trạng thái thanh toán</TableHead>
+                <TableHead className="text-center">
+                  Phương thức thanh toán
+                </TableHead>
+                <TableHead className="text-center">
+                  Trạng thái thanh toán
+                </TableHead>
                 <TableHead>Trạng thái đơn hàng</TableHead>
                 <TableHead className="text-right">Tổng tiền</TableHead>
                 <TableHead>Ngày tạo</TableHead>
@@ -730,18 +977,36 @@ export default function OrderManagement() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
-                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-4" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-28" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16 mx-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16 mx-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24 ml-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16 ml-auto" />
+                    </TableCell>
                   </TableRow>
                 ))
-              ) : orders.length === 0 ? (
+              ) : displayOrders.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-16">
                     <div className="flex flex-col items-center">
@@ -749,7 +1014,7 @@ export default function OrderManagement() {
                         <Package className="size-8 text-muted-foreground" />
                       </div>
                       <h3 className="text-lg font-semibold mb-2">
-                        Không tìm thấy đơn hàng
+                        Không tìm thấy đơn hàng phù hợp
                       </h3>
                       <p className="text-muted-foreground text-sm">
                         Thử điều chỉnh tìm kiếm hoặc bộ lọc
@@ -758,13 +1023,15 @@ export default function OrderManagement() {
                   </TableCell>
                 </TableRow>
               ) : (
-                orders.map((order) => (
+                displayOrders.map((order) => (
                   <TableRow
                     key={order.order_id}
                     className="hover:bg-secondary/50"
                   >
                     <TableCell>
-                      <button onClick={() => handleSelectOrder(order.order_id)}>
+                      <button
+                        onClick={() => handleSelectOrder(order.order_id)}
+                      >
                         {selectedOrders.includes(order.order_id) ? (
                           <CheckSquare className="size-4 text-accent" />
                         ) : (
@@ -773,12 +1040,10 @@ export default function OrderManagement() {
                       </button>
                     </TableCell>
 
-                    {/* Order Code */}
                     <TableCell className="font-mono font-medium">
                       {order.order_code}
                     </TableCell>
 
-                    {/* Customer */}
                     <TableCell>
                       <div>
                         <p className="font-medium">
@@ -787,40 +1052,41 @@ export default function OrderManagement() {
                       </div>
                     </TableCell>
 
-                    {/* Payment Method */}
                     <TableCell className="text-center text-sm">
-                      {paymentMethodLabels[order.payment_method?.toLowerCase()] || order.payment_method || "--"}
+                      {paymentMethodLabels[
+                        order.payment_method?.toLowerCase()
+                      ] || order.payment_method || "--"}
                     </TableCell>
 
-                    {/* Payment Status */}
                     <TableCell className="text-center">
                       <Badge
                         variant="outline"
                         className={`text-xs ${paymentStatusColors[order.payment_status] || ""
                           }`}
                       >
-                        {paymentStatusLabels[order.payment_status] || order.payment_status || "--"}
+                        {paymentStatusLabels[order.payment_status] ||
+                          order.payment_status ||
+                          "--"}
                       </Badge>
                     </TableCell>
 
-                    {/* Order Status */}
                     <TableCell>
-                      <Badge className={statusColors[order.order_status] || ""}>
-                        {statusLabels[order.order_status] || order.order_status}
+                      <Badge
+                        className={statusColors[order.order_status] || ""}
+                      >
+                        {statusLabels[order.order_status] ||
+                          order.order_status}
                       </Badge>
                     </TableCell>
 
-                    {/* Total Amount */}
                     <TableCell className="text-right font-bold text-accent">
                       {order.final_amount.toLocaleString()} ₫
                     </TableCell>
 
-                    {/* Created Date */}
                     <TableCell className="text-sm">
                       {new Date(order.created_at).toLocaleString("vi-VN")}
                     </TableCell>
 
-                    {/* Actions */}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button
@@ -849,7 +1115,7 @@ export default function OrderManagement() {
         </div>
 
         {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
+        {pagination && pagination.totalPages > 1 && !loading && (
           <CardContent className="pt-6">
             <Pagination>
               <PaginationContent>
@@ -860,7 +1126,11 @@ export default function OrderManagement() {
                       e.preventDefault();
                       if (pagination.hasPrevPage) setPage((p) => p - 1);
                     }}
-                    className={!pagination.hasPrevPage ? "pointer-events-none opacity-50" : ""}
+                    className={
+                      !pagination.hasPrevPage
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
                   />
                 </PaginationItem>
 
@@ -900,7 +1170,11 @@ export default function OrderManagement() {
                       e.preventDefault();
                       if (pagination.hasNextPage) setPage((p) => p + 1);
                     }}
-                    className={!pagination.hasNextPage ? "pointer-events-none opacity-50" : ""}
+                    className={
+                      !pagination.hasNextPage
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -911,17 +1185,21 @@ export default function OrderManagement() {
 
       {/* ─── Order Detail Dialog ─── */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className=" w-[95vw]
+        <DialogContent
+          className=" w-[95vw]
       max-w-7xl
       h-[90vh]
       overflow-hidden
-      p-0">
+      p-0"
+        >
           <div className="h-full overflow-y-auto p-6">
             <DialogHeader>
               <div className="flex items-center justify-between w-full pr-10">
                 <DialogTitle>
                   Chi tiết đơn hàng{" "}
-                  <span className="font-mono">{selectedOrder?.order_code}</span>
+                  <span className="font-mono">
+                    {selectedOrder?.order_code}
+                  </span>
                 </DialogTitle>
                 <Button
                   variant="outline"
@@ -935,7 +1213,6 @@ export default function OrderManagement() {
               </div>
             </DialogHeader>
 
-            {/* Hidden invoice for printing */}
             {selectedOrder && detailData && (
               <div className="hidden-print-invoice" aria-hidden="true">
                 <OrderInvoicePrint
@@ -963,19 +1240,28 @@ export default function OrderManagement() {
                   <div className="grid grid-cols-2 gap-3 text-sm bg-secondary/50 p-4 rounded-lg">
                     <div>
                       <span className="text-muted-foreground">Mã đơn:</span>{" "}
-                      <span className="font-medium font-mono">{selectedOrder?.order_code}</span>
+                      <span className="font-medium font-mono">
+                        {selectedOrder?.order_code}
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Trạng thái:</span>{" "}
-                      <Badge className={statusColors[selectedOrder?.order_status || ""]}>
-                        {statusLabels[selectedOrder?.order_status || ""] || selectedOrder?.order_status}
+                      <Badge
+                        className={
+                          statusColors[selectedOrder?.order_status || ""]
+                        }
+                      >
+                        {statusLabels[selectedOrder?.order_status || ""] ||
+                          selectedOrder?.order_status}
                       </Badge>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Ngày tạo:</span>{" "}
                       <span className="font-medium">
                         {selectedOrder?.created_at
-                          ? new Date(selectedOrder.created_at).toLocaleString("vi-VN")
+                          ? new Date(
+                            selectedOrder.created_at,
+                          ).toLocaleString("vi-VN")
                           : "--"}
                       </span>
                     </div>
@@ -995,7 +1281,9 @@ export default function OrderManagement() {
                     </h3>
                     <div className="text-sm bg-secondary/50 p-4 rounded-lg space-y-1">
                       <p>
-                        <span className="text-muted-foreground">Người nhận:</span>{" "}
+                        <span className="text-muted-foreground">
+                          Người nhận:
+                        </span>{" "}
                         <span className="font-medium">
                           {detailData.address.receiver_name}
                         </span>
@@ -1015,7 +1303,9 @@ export default function OrderManagement() {
                       </p>
                       {detailData.address.detail_address && (
                         <p>
-                          <span className="text-muted-foreground">Chi tiết:</span>{" "}
+                          <span className="text-muted-foreground">
+                            Chi tiết:
+                          </span>{" "}
                           <span>{detailData.address.detail_address}</span>
                         </p>
                       )}
@@ -1031,73 +1321,88 @@ export default function OrderManagement() {
                   </h3>
                   <div className="text-sm bg-secondary/50 p-4 rounded-lg space-y-1">
                     <p>
-                      <span className="text-muted-foreground">Phương thức:</span>{" "}
+                      <span className="text-muted-foreground">
+                        Phương thức:
+                      </span>{" "}
                       <span className="font-medium">
-                        {paymentMethodLabels[selectedOrder?.payment_method?.toLowerCase()] || selectedOrder?.payment_method || "--"}
+                        {paymentMethodLabels[
+                          selectedOrder?.payment_method?.toLowerCase()
+                        ] || selectedOrder?.payment_method || "--"}
                       </span>
                     </p>
                     <p>
-                      <span className="text-muted-foreground">Trạng thái:</span>{" "}
+                      <span className="text-muted-foreground">
+                        Trạng thái:
+                      </span>{" "}
                       <Badge
                         variant="outline"
-                        className={`text-xs ${paymentStatusColors[selectedOrder?.payment_status || ""] || ""
+                        className={`text-xs ${paymentStatusColors[
+                          selectedOrder?.payment_status || ""
+                        ] || ""
                           }`}
                       >
-                        {paymentStatusLabels[selectedOrder?.payment_status || ""] || selectedOrder?.payment_status || "--"}
+                        {paymentStatusLabels[
+                          selectedOrder?.payment_status || ""
+                        ] || selectedOrder?.payment_status || "--"}
                       </Badge>
                     </p>
                   </div>
                 </div>
 
                 {/* Order Items */}
-                {detailData.order_details && detailData.order_details.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Package className="size-4" />
-                      Sản phẩm
-                    </h3>
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Sản phẩm</TableHead>
-                            <TableHead>SKU</TableHead>
-                            <TableHead>Phân loại</TableHead>
-                            <TableHead className="text-right">SL</TableHead>
-                            <TableHead className="text-right">Đơn giá</TableHead>
-                            <TableHead className="text-right">Thành tiền</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {detailData.order_details.map((item) => (
-                            <TableRow key={item.order_detail_id}>
-                              <TableCell className="font-medium">
-                                {item.product_name}
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {item.sku}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {[item.color, item.size, item.material]
-                                  .filter(Boolean)
-                                  .join(" / ") || "--"}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {item.quantity}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {item.unit_price.toLocaleString()} ₫
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {item.subtotal.toLocaleString()} ₫
-                              </TableCell>
+                {detailData.order_details &&
+                  detailData.order_details.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <Package className="size-4" />
+                        Sản phẩm
+                      </h3>
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Sản phẩm</TableHead>
+                              <TableHead>SKU</TableHead>
+                              <TableHead>Phân loại</TableHead>
+                              <TableHead className="text-right">SL</TableHead>
+                              <TableHead className="text-right">
+                                Đơn giá
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Thành tiền
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {detailData.order_details.map((item) => (
+                              <TableRow key={item.order_detail_id}>
+                                <TableCell className="font-medium">
+                                  {item.product_name}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {item.sku}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {[item.color, item.size, item.material]
+                                    .filter(Boolean)
+                                    .join(" / ") || "--"}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {item.quantity}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {item.unit_price.toLocaleString()} ₫
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {item.subtotal.toLocaleString()} ₫
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Coupon */}
                 {detailData.coupon && (
@@ -1130,7 +1435,9 @@ export default function OrderManagement() {
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Phí vận chuyển:</span>
+                    <span className="text-muted-foreground">
+                      Phí vận chuyển:
+                    </span>
                     <span className="font-medium">
                       {(selectedOrder?.shipping_fee ?? 0).toLocaleString()} ₫
                     </span>
@@ -1158,7 +1465,6 @@ export default function OrderManagement() {
               </p>
             )}
           </div>
-
         </DialogContent>
       </Dialog>
 
@@ -1168,7 +1474,9 @@ export default function OrderManagement() {
           <DialogHeader>
             <DialogTitle>
               Cập nhật trạng thái đơn hàng{" "}
-              <span className="font-mono">{statusUpdateTarget?.order_code}</span>
+              <span className="font-mono">
+                {statusUpdateTarget?.order_code}
+              </span>
             </DialogTitle>
           </DialogHeader>
 
@@ -1177,9 +1485,12 @@ export default function OrderManagement() {
               <p className="text-sm text-muted-foreground">
                 Trạng thái hiện tại:{" "}
                 <Badge
-                  className={statusColors[statusUpdateTarget?.order_status || ""]}
+                  className={
+                    statusColors[statusUpdateTarget?.order_status || ""]
+                  }
                 >
-                  {statusLabels[statusUpdateTarget?.order_status || ""] || statusUpdateTarget?.order_status}
+                  {statusLabels[statusUpdateTarget?.order_status || ""] ||
+                    statusUpdateTarget?.order_status}
                 </Badge>
               </p>
             </div>
