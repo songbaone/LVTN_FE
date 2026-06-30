@@ -270,7 +270,7 @@ export default function OrderManagement() {
   const buildQueryParams = useCallback(
     (pageNum: number) => {
       const params: Record<string, string | number> = { page: pageNum, limit };
-      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (debouncedSearch.trim()) params.order_code = debouncedSearch.trim();
       if (statusFilter !== "all") params.order_status = statusFilter;
       if (paymentFilter !== "all") params.payment_method = paymentFilter;
       if (sortBy !== "date-desc") params.sort = sortBy;
