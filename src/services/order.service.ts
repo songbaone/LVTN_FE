@@ -17,8 +17,8 @@ export interface OrderItem {
 }
 
 export interface OrderAddress {
-  recipient_name: string;
-  phone: string;
+  receiver_name?: string;
+  receiver_phone?: string;
   province: string;
   district: string;
   ward: string;
@@ -37,6 +37,7 @@ export interface Order {
   order_code: string;
   status: string;
   order_status: string;
+  customer_name?: string;
   payment_method: string;
   payment_status: string;
   total_amount: number;
