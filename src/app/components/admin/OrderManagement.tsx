@@ -1,9 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
+import {
+  orderService,
+  type Order,
+  type PaginationMeta,
+} from "../../../services/order.service";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationLink,
+  PaginationNext,
+  PaginationEllipsis,
+} from "../ui/pagination";
 import {
   Select,
   SelectContent,
@@ -23,6 +37,7 @@ import {
   Package,
   Clock,
   CheckCircle,
+  Truck,
   TrendingUp,
   DollarSign,
   Search,
@@ -35,203 +50,166 @@ import {
   ChevronRight,
   CheckSquare,
   Square,
-  RefreshCcw
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface Order {
-  id: string;
-  customerId: string;
-  customerName: string;
-  customerEmail: string;
-  date: string;
-  items: number;
-  total: number;
-  status: "pending" | "confirmed" | "shipping" | "delivered" | "cancelled";
-  paymentMethod: string;
-  paymentStatus: "paid" | "unpaid" | "refunded";
-}
-
 export default function OrderManagement() {
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date-desc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const itemsPerPage = 10;
 
-  const [orders] = useState<Order[]>([
-    {
-      id: "ORD-2026-001234",
-      customerId: "CUST-123",
-      customerName: "Nguyễn Thu Hương",
-      customerEmail: "nguyen.huong@email.com",
-      date: "2026-06-04 10:30",
-      items: 3,
-      total: 2420000,
-      status: "delivered",
-      paymentMethod: "VNPay",
-      paymentStatus: "paid"
-    },
-    {
-      id: "ORD-2026-001235",
-      customerId: "CUST-124",
-      customerName: "Trần Minh Anh",
-      customerEmail: "tran.anh@email.com",
-      date: "2026-06-04 14:15",
-      items: 2,
-      total: 1890000,
-      status: "shipping",
-      paymentMethod: "COD",
-      paymentStatus: "unpaid"
-    },
-    {
-      id: "ORD-2026-001236",
-      customerId: "CUST-125",
-      customerName: "Lê Thị Mai",
-      customerEmail: "le.mai@email.com",
-      date: "2026-06-05 09:20",
-      items: 1,
-      total: 450000,
-      status: "confirmed",
-      paymentMethod: "MoMo",
-      paymentStatus: "paid"
-    },
-    {
-      id: "ORD-2026-001237",
-      customerId: "CUST-126",
-      customerName: "Phạm Văn Đức",
-      customerEmail: "pham.duc@email.com",
-      date: "2026-06-05 11:45",
-      items: 5,
-      total: 3750000,
-      status: "pending",
-      paymentMethod: "Bank Transfer",
-      paymentStatus: "unpaid"
-    },
-    {
-      id: "ORD-2026-001238",
-      customerId: "CUST-127",
-      customerName: "Hoàng Thị Lan",
-      customerEmail: "hoang.lan@email.com",
-      date: "2026-06-05 13:10",
-      items: 2,
-      total: 980000,
-      status: "cancelled",
-      paymentMethod: "VNPay",
-      paymentStatus: "refunded"
-    },
-    {
-      id: "ORD-2026-001239",
-      customerId: "CUST-128",
-      customerName: "Vũ Minh Quân",
-      customerEmail: "vu.quan@email.com",
-      date: "2026-06-05 15:30",
-      items: 4,
-      total: 2150000,
-      status: "shipping",
-      paymentMethod: "COD",
-      paymentStatus: "unpaid"
-    },
-    {
-      id: "ORD-2026-001240",
-      customerId: "CUST-129",
-      customerName: "Đặng Thị Hoa",
-      customerEmail: "dang.hoa@email.com",
-      date: "2026-06-05 16:50",
-      items: 1,
-      total: 750000,
-      status: "confirmed",
-      paymentMethod: "VNPay",
-      paymentStatus: "paid"
+  const [orders, setOrders] = useState<Order[]>([]);
+  const fetchOrders = useCallback(async (page: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await orderService.getAdminOrders(page);
+      const data = res.data;
+      if (data.success && data.data) {
+        setOrders(data.data.orders);
+        setPagination(data.data.pagination);
+      } else {
+        setOrders([]);
+        setPagination(null);
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể tải danh sách đơn hàng";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  }, []);
+  useEffect(() => {
+    fetchOrders(currentPage);
+  }, [currentPage, fetchOrders]);
 
   const statusColors: Record<string, string> = {
-    "pending": "bg-warning text-warning-foreground",
-    "confirmed": "bg-info text-info-foreground",
-    "shipping": "bg-primary text-primary-foreground",
-    "delivered": "bg-success text-success-foreground",
-    "cancelled": "bg-destructive text-destructive-foreground"
+    Pending: "bg-yellow-100 text-yellow-700",
+    Confirmed: "bg-blue-100 text-blue-700",
+    Shipping: "bg-purple-100 text-purple-700",
+    Delivered: "bg-green-100 text-green-700",
+    Cancelled: "bg-red-100 text-red-700",
   };
-
   const paymentStatusColors: Record<string, string> = {
-    "paid": "bg-success",
-    "unpaid": "bg-warning",
-    "refunded": "bg-info"
+    paid: "bg-success",
+    unpaid: "bg-warning",
+    refunded: "bg-info",
   };
 
   // Statistics
-  const stats = {
-    total: orders.length,
-    pending: orders.filter(o => o.status === "pending").length,
-    processing: orders.filter(o => o.status === "confirmed" || o.status === "shipping").length,
-    completed: orders.filter(o => o.status === "delivered").length,
-    revenue: orders.filter(o => o.paymentStatus === "paid").reduce((sum, o) => sum + o.total, 0)
-  };
+  const stats = useMemo(
+    () => ({
+      total: orders.length,
+
+      pending: orders.filter((o) => o.status === "Pending").length,
+
+      processing: orders.filter(
+        (o) => o.status === "Confirmed" || o.status === "Shipping",
+      ).length,
+
+      completed: orders.filter((o) => o.status === "Delivered").length,
+
+      revenue: orders
+        .filter((o) => o.status === "Delivered")
+        .reduce((sum, o) => sum + o.final_amount, 0),
+    }),
+    [orders],
+  );
 
   // Filtering and Sorting
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerEmail.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
 
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    const matchesPayment = paymentFilter === "all" || order.paymentMethod.toLowerCase() === paymentFilter.toLowerCase();
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
 
-    // Simple date filter
-    let matchesDate = true;
-    if (dateFilter !== "all") {
-      const orderDate = new Date(order.date);
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      if (dateFilter === "today") {
-        matchesDate = orderDate >= today;
-      } else if (dateFilter === "week") {
-        const weekAgo = new Date(today);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        matchesDate = orderDate >= weekAgo;
-      } else if (dateFilter === "month") {
-        const monthAgo = new Date(today);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        matchesDate = orderDate >= monthAgo;
-      }
+      result = result.filter((o) => o.order_code.toLowerCase().includes(q));
     }
 
-    return matchesSearch && matchesStatus && matchesPayment && matchesDate;
-  }).sort((a, b) => {
+    if (statusFilter !== "all") {
+      result = result.filter((o) => o.status === statusFilter);
+    }
+
+    if (dateFilter !== "all") {
+      const now = new Date();
+
+      result = result.filter((o) => {
+        const date = new Date(o.created_at);
+
+        switch (dateFilter) {
+          case "today":
+            return date.toDateString() === now.toDateString();
+
+          case "week": {
+            const weekAgo = new Date();
+            weekAgo.setDate(now.getDate() - 7);
+            return date >= weekAgo;
+          }
+
+          case "month": {
+            const monthAgo = new Date();
+            monthAgo.setMonth(now.getMonth() - 1);
+            return date >= monthAgo;
+          }
+
+          default:
+            return true;
+        }
+      });
+    }
+
     switch (sortBy) {
       case "date-desc":
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+        result.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        break;
+
       case "date-asc":
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
+        result.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        );
+        break;
+
       case "total-desc":
-        return b.total - a.total;
+        result.sort((a, b) => b.final_amount - a.final_amount);
+        break;
+
       case "total-asc":
-        return a.total - b.total;
-      case "customer":
-        return a.customerName.localeCompare(b.customerName);
-      default:
-        return 0;
+        result.sort((a, b) => a.final_amount - b.final_amount);
+        break;
     }
-  });
+
+    return result;
+  }, [orders, searchQuery, statusFilter, dateFilter, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
-  const handleSelectOrder = (orderId: string) => {
-    setSelectedOrders(prev =>
+  const handleSelectOrder = (orderId: number) => {
+    setSelectedOrders((prev) =>
       prev.includes(orderId)
-        ? prev.filter(id => id !== orderId)
-        : [...prev, orderId]
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId],
     );
   };
 
@@ -239,14 +217,15 @@ export default function OrderManagement() {
     if (selectedOrders.length === paginatedOrders.length) {
       setSelectedOrders([]);
     } else {
-      setSelectedOrders(paginatedOrders.map(o => o.id));
+      setSelectedOrders(paginatedOrders.map((o) => o.order_id));
     }
   };
 
   const handleExport = () => {
-    const ordersToExport = selectedOrders.length > 0
-      ? orders.filter(o => selectedOrders.includes(o.id))
-      : filteredOrders;
+    const ordersToExport =
+      selectedOrders.length > 0
+        ? orders.filter((o) => selectedOrders.includes(o.order_id))
+        : filteredOrders;
 
     toast.success(`Exporting ${ordersToExport.length} orders...`);
   };
@@ -263,8 +242,10 @@ export default function OrderManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Order Management</h1>
-        <p className="text-muted-foreground">Monitor and manage customer orders</p>
+        <h1 className="text-3xl font-bold mb-2">Quản lí đơn hàng</h1>
+        <p className="text-muted-foreground">
+          Theo dõi và quản lý đơn hàng của khách hàng
+        </p>
       </div>
 
       {/* KPI Cards */}
@@ -272,55 +253,77 @@ export default function OrderManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Orders
+              Tổng số đơn hàng
             </CardTitle>
             <Package className="size-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">All time</p>
+            <p className="text-xs text-muted-foreground mt-1">Đơn hàng</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending
+              Chờ xác nhận
             </CardTitle>
             <Clock className="size-5 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-warning">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting confirmation</p>
+            <div className="text-3xl font-bold text-warning">
+              {stats.pending}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Đang chờ xác nhận
+            </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Processing
+              Xử lí
             </CardTitle>
             <RefreshCcw className="size-5 text-info" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-info">{stats.processing}</div>
-            <p className="text-xs text-muted-foreground mt-1">In progress</p>
+            <div className="text-3xl font-bold text-info">
+              {stats.processing}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Đang chuẩn bị đơn hàng
+            </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Completed
+              Vận chuyển
+            </CardTitle>
+            <Truck className="size-5 text-success" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-success">
+              {stats.completed}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Đang vận chuyển
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Hoàn thành
             </CardTitle>
             <CheckCircle className="size-5 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-success">{stats.completed}</div>
-            <p className="text-xs text-muted-foreground mt-1">Successfully delivered</p>
+            <div className="text-3xl font-bold text-success">
+              {stats.completed}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Đã được giao</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -360,11 +363,11 @@ export default function OrderManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="shipping">Shipping</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Confirmed">Confirmed</SelectItem>
+                  <SelectItem value="Shipping">Shipping</SelectItem>
+                  <SelectItem value="Delivered">Delivered</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -412,7 +415,8 @@ export default function OrderManagement() {
                 </Select>
 
                 <span className="text-sm text-muted-foreground">
-                  {filteredOrders.length} {filteredOrders.length === 1 ? "order" : "orders"}
+                  {filteredOrders.length}{" "}
+                  {filteredOrders.length === 1 ? "order" : "orders"}
                 </span>
               </div>
 
@@ -429,11 +433,7 @@ export default function OrderManagement() {
                     </Button>
                   </>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExport}
-                >
+                <Button variant="outline" size="sm" onClick={handleExport}>
                   <Download className="size-4 mr-2" />
                   Export
                 </Button>
@@ -451,7 +451,8 @@ export default function OrderManagement() {
               <TableRow>
                 <TableHead className="w-12">
                   <button onClick={handleSelectAll}>
-                    {selectedOrders.length === paginatedOrders.length && paginatedOrders.length > 0 ? (
+                    {selectedOrders.length === paginatedOrders.length &&
+                    paginatedOrders.length > 0 ? (
                       <CheckSquare className="size-4 text-accent" />
                     ) : (
                       <Square className="size-4" />
@@ -476,7 +477,9 @@ export default function OrderManagement() {
                       <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                         <Package className="size-8 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">No orders found</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        No orders found
+                      </h3>
                       <p className="text-muted-foreground text-sm">
                         Try adjusting your search or filters
                       </p>
@@ -485,58 +488,86 @@ export default function OrderManagement() {
                 </TableRow>
               ) : (
                 paginatedOrders.map((order) => (
-                  <TableRow key={order.id} className="hover:bg-secondary/50">
+                  <TableRow
+                    key={order.order_id}
+                    className="hover:bg-secondary/50"
+                  >
                     <TableCell>
-                      <button onClick={() => handleSelectOrder(order.id)}>
-                        {selectedOrders.includes(order.id) ? (
+                      <button onClick={() => handleSelectOrder(order.order_id)}>
+                        {selectedOrders.includes(order.order_id) ? (
                           <CheckSquare className="size-4 text-accent" />
                         ) : (
                           <Square className="size-4" />
                         )}
                       </button>
                     </TableCell>
+
+                    {/* Mã đơn */}
                     <TableCell className="font-mono font-medium">
                       <Link
-                        to={`/admin/orders/${order.id}`}
+                        to={`/admin/orders/${order.order_id}`}
                         className="text-accent hover:underline"
                       >
-                        {order.id}
+                        {order.order_code}
                       </Link>
                     </TableCell>
+
+                    {/* Khách hàng */}
                     <TableCell>
                       <div>
-                        <p className="font-medium">{order.customerName}</p>
-                        <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
+                        <p className="font-medium">
+                          {order.address?.recipient_name ?? "--"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {order.address?.phone ?? "--"}
+                        </p>
                       </div>
                     </TableCell>
+
+                    {/* Ngày đặt */}
                     <TableCell className="text-sm">
-                      {new Date(order.date).toLocaleString()}
+                      {new Date(order.created_at).toLocaleString("vi-VN")}
                     </TableCell>
+
+                    {/* Số sản phẩm */}
                     <TableCell className="text-center font-medium">
-                      {order.items}
+                      {order.order_details?.length ?? 0}
                     </TableCell>
+
+                    {/* Tổng tiền */}
                     <TableCell className="text-right font-bold text-accent">
-                      {order.total.toLocaleString()} ₫
+                      {order.final_amount.toLocaleString()} ₫
                     </TableCell>
+
+                    {/* Trạng thái */}
                     <TableCell>
                       <Badge className={statusColors[order.status]}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        {order.status}
                       </Badge>
                     </TableCell>
+
+                    {/* Thanh toán */}
                     <TableCell>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">{order.paymentMethod}</p>
+                        <p className="text-sm font-medium">
+                          {order.payment_method}
+                        </p>
+
                         <Badge
                           variant="outline"
-                          className={`text-xs ${paymentStatusColors[order.paymentStatus]}`}
+                          className={`text-xs ${
+                            paymentStatusColors[order.payment_status]
+                          }`}
                         >
-                          {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                          {order.payment_status}
                         </Badge>
                       </div>
                     </TableCell>
+
+                    {/* Action */}
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/admin/orders/${order.id}`}>
+                        <Link to={`/admin/orders/${order.order_id}`}>
                           <Eye className="size-3 mr-1" />
                           View
                         </Link>
@@ -554,7 +585,7 @@ export default function OrderManagement() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
                 {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of{" "}
                 {filteredOrders.length} orders
               </p>
@@ -562,7 +593,7 @@ export default function OrderManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="size-4 mr-1" />
@@ -570,10 +601,12 @@ export default function OrderManagement() {
                 </Button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => {
-                      return page === 1 ||
-                             page === totalPages ||
-                             (page >= currentPage - 1 && page <= currentPage + 1);
+                    .filter((page) => {
+                      return (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      );
                     })
                     .map((page, index, array) => (
                       <div key={page} className="flex items-center">
@@ -594,7 +627,9 @@ export default function OrderManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   Next
