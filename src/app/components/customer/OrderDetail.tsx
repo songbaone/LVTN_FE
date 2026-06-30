@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { toast } from "sonner";
+import OrderInvoicePrint from "./OrderInvoicePrint";
 import {
   ArrowLeft,
   Package,
@@ -39,6 +40,7 @@ import {
   CreditCard,
   Banknote,
   FileText,
+  Printer,
 } from "lucide-react";
 
 // ── Status Badge Colors ──
@@ -134,6 +136,10 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const fetchOrder = async () => {
     if (!id) return;
@@ -286,42 +292,48 @@ export default function OrderDetail() {
           <h1 className="text-2xl lg:text-3xl font-bold">Chi tiết đơn hàng</h1>
           <p className="text-muted-foreground mt-1">{order.order_code}</p>
         </div>
-        {canCancel && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="text-destructive border-destructive/30 hover:bg-destructive/10"
-              >
-                <XCircle className="size-4 mr-2" />
-                Hủy đơn hàng
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bạn có chắc chắn muốn hủy đơn hàng{" "}
-                  <span className="font-semibold">{order.order_code}</span>?
-                  Hành động này không thể hoàn tác.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Quay lại</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive hover:bg-destructive/90"
-                  disabled={cancelling}
-                  onClick={handleCancelOrder}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="size-4 mr-2" />
+            In hóa đơn
+          </Button>
+          {canCancel && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
                 >
-                  {cancelling && (
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                  )}
-                  Xác nhận hủy
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+                  <XCircle className="size-4 mr-2" />
+                  Hủy đơn hàng
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn có chắc chắn muốn hủy đơn hàng{" "}
+                    <span className="font-semibold">{order.order_code}</span>?
+                    Hành động này không thể hoàn tác.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Quay lại</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive hover:bg-destructive/90"
+                    disabled={cancelling}
+                    onClick={handleCancelOrder}
+                  >
+                    {cancelling && (
+                      <Loader2 className="size-4 mr-2 animate-spin" />
+                    )}
+                    Xác nhận hủy
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </div>
 
       {/* ───────── SECTION 1: Order Information ───────── */}
@@ -400,9 +412,9 @@ export default function OrderDetail() {
               </div>
               <div className="space-y-1 text-sm">
                 <p className="font-semibold text-base">
-                  {address.recipient_name}
+                  {address.receiver_name}
                 </p>
-                <p className="text-muted-foreground">{address.phone}</p>
+                <p className="text-muted-foreground">{address.receiver_phone}</p>
                 <p>{address.address_line}</p>
                 <p className="text-muted-foreground">
                   {address.ward}, {address.district}, {address.province}
@@ -525,6 +537,14 @@ export default function OrderDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ───────── PRINT INVOICE (hidden, only visible during print) ───────── */}
+      <OrderInvoicePrint
+        order={order}
+        address={address}
+        coupon={coupon}
+        orderDetails={orderDetails}
+      />
 
       {/* ───────── SECTION 5: Coupon ───────── */}
       {coupon && (
