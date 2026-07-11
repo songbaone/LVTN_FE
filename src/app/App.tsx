@@ -51,6 +51,7 @@ import CouponManagement from "./components/admin/CouponManagement";
 import ReviewManagement from "./components/admin/ReviewManagement";
 import PaymentManagement from "./components/admin/PaymentManagement";
 import ReportsAnalytics from "./components/admin/ReportsAnalytics";
+import AdminChatPage from "./components/admin/chat/AdminChatPage";
 import SystemSettings from "./components/admin/SystemSettings";
 import ExcelImport from "./components/admin/ExcelImport";
 
@@ -62,7 +63,6 @@ import StaffInventory from "./components/staff/StaffInventory";
 import StaffSupport from "./components/staff/StaffSupport";
 
 // Shared Widgets
-import AIChatbot from "./components/widgets/AIChatbot";
 import LiveSupportChat from "./components/widgets/LiveSupportChat";
 import AuthCustomerLayout from "./components/layouts/AutCustomerLayout";
 import ProtectedRoute from "./components/protectedRouteCus/ProtectedRoute";
@@ -70,7 +70,6 @@ import AuthAdminLayout from "./components/layouts/AutAdminLayout";
 import ProtectedRouteAdmin from "./components/protectedRouteAdmin/ProtectedRouteAdmin";
 
 function AppContent() {
-  const [showAIChat, setShowAIChat] = useState(false);
   const [showLiveChat, setShowLiveChat] = useState(false);
 
   const location = useLocation();
@@ -169,6 +168,7 @@ function AppContent() {
             <Route path="reviews" element={<ReviewManagement />} />
             <Route path="payments" element={<PaymentManagement />} />
             <Route path="reports" element={<ReportsAnalytics />} />
+            <Route path="chat" element={<AdminChatPage />} />
             <Route path="settings" element={<SystemSettings />} />
           </Route>
         </Route>
@@ -188,17 +188,10 @@ function AppContent() {
       </Routes>
 
       {!hideWidgets && (
-        <>
-          <AIChatbot
-            isOpen={showAIChat}
-            onToggle={() => setShowAIChat(!showAIChat)}
-          />
-
-          <LiveSupportChat
-            isOpen={showLiveChat}
-            onToggle={() => setShowLiveChat(!showLiveChat)}
-          />
-        </>
+        <LiveSupportChat
+          isOpen={showLiveChat}
+          onToggle={() => setShowLiveChat(!showLiveChat)}
+        />
       )}
       <Toaster position="top-right" />
     </div>

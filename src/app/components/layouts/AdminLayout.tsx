@@ -21,6 +21,7 @@ import {
   History,
   ChevronDown,
   Layers,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -65,6 +66,7 @@ export default function AdminLayout() {
     { name: "Khuyến mãi", href: "/admin/coupons", icon: Ticket },
     { name: "Đánh giá", href: "/admin/reviews", icon: MessageSquare },
     { name: "Thanh toán", href: "/admin/payments", icon: CreditCard },
+    { name: "Chat hỗ trợ", href: "/admin/chat", icon: MessageCircle },
     { name: "Báo cáo", href: "/admin/reports", icon: BarChart3 },
     { name: "Cài đặt", href: "/admin/settings", icon: Settings },
   ];
